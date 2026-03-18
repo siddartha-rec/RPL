@@ -46,8 +46,12 @@ public class User {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
-    // NOTE: @ManyToMany to PermissionGroup will be added in Task 4 after PermissionGroup entity exists
-    @Transient
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_groups",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "group_id")
+    )
     @Builder.Default
-    private Set<Object> permissionGroups = new HashSet<>();
+    private Set<com.rpl.auction.rbac.entity.PermissionGroup> permissionGroups = new HashSet<>();
 }
