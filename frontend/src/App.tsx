@@ -3,6 +3,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { LeagueProvider } from './context/LeagueContext';
 import theme from './theme';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -23,6 +24,7 @@ export default function App() {
         <CssBaseline />
         <BrowserRouter>
           <AuthProvider>
+            <LeagueProvider>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route element={<ProtectedRoute />}>
@@ -43,6 +45,7 @@ export default function App() {
               </Route>
               </Route>
             </Routes>
+            </LeagueProvider>
           </AuthProvider>
         </BrowserRouter>
       </ThemeProvider>

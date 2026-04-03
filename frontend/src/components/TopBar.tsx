@@ -1,10 +1,13 @@
 import { AppBar, Toolbar, Box, Button, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLeague } from '../context/LeagueContext';
 
 export default function TopBar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { activeLeague } = useLeague();
+  const leagueName = activeLeague?.name ?? 'RPL';
 
   const handleLogout = () => {
     logout();
@@ -58,7 +61,7 @@ export default function TopBar() {
               userSelect: 'none',
             }}
           >
-            RPL 2025
+            {leagueName}
           </Typography>
         </Box>
 

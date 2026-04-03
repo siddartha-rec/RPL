@@ -17,6 +17,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import SecurityIcon from '@mui/icons-material/Security';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLeague } from '../context/LeagueContext';
 
 const DRAWER_WIDTH = 248;
 
@@ -79,6 +80,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { hasPermission } = useAuth();
+  const { activeLeague } = useLeague();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -140,7 +142,7 @@ export default function Sidebar() {
           </Box>
           <Box>
             <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#f59e0b', lineHeight: 1.1 }}>
-              RPL 2025
+              {activeLeague?.name ?? 'RPL'}
             </Typography>
             <Typography sx={{ fontSize: '0.6rem', color: '#475569', letterSpacing: '0.06em' }}>
               CRICKET LEAGUE

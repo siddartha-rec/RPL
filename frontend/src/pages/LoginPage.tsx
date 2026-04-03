@@ -158,7 +158,7 @@ export default function LoginPage() {
                 mb: 0.75,
               }}
             >
-              RPL 2025
+              RPL
             </Typography>
 
             <Typography
@@ -257,7 +257,7 @@ export default function LoginPage() {
               letterSpacing: '0.04em',
             }}
           >
-            RPL 2025 · Powered by Cricket
+            RPL · Powered by Cricket
           </Typography>
         </Box>
       </Box>
