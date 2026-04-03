@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import {
   Box, Typography, Chip, CircularProgress, Alert, Card, CardContent,
   LinearProgress, Paper, List, ListItem, ListItemText, Button, Divider,

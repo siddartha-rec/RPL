@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import {
   Box, Card, CardContent, Typography, Chip, CircularProgress, Alert,
 } from '@mui/material';
