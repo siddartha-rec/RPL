@@ -1,10 +1,10 @@
 import { CircularProgress, Box } from '@mui/material';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import type { ReactNode } from 'react';
 
 interface ProtectedRouteProps {
-  children: ReactNode;
+  children?: ReactNode;
   permission?: string;
 }
 
@@ -27,5 +27,5 @@ export default function ProtectedRoute({ children, permission }: ProtectedRouteP
     return <Navigate to="/" replace />;
   }
 
-  return <>{children}</>;
+  return children ? <>{children}</> : <Outlet />;
 }

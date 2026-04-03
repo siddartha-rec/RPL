@@ -25,6 +25,7 @@ export default function App() {
           <AuthProvider>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/teams" element={<TeamsPage />} />
@@ -39,6 +40,7 @@ export default function App() {
                     </ProtectedRoute>
                   }
                 />
+              </Route>
               </Route>
             </Routes>
           </AuthProvider>
