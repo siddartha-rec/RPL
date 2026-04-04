@@ -112,34 +112,6 @@ export default function Sidebar() {
       {/* ── Spacer for TopBar ───────────────────────── */}
       <Box sx={{ height: 64 }} />
 
-      {/* ── Brand strip ────────────────────────────── */}
-      <Box
-        sx={{
-          px: 2.5,
-          py: 2,
-          mb: 0.5,
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box
-            component="img"
-            src="/recykal-logo.png"
-            alt="Recykal"
-            sx={{ height: 20, filter: 'invert(1) brightness(2)', flexShrink: 0 }}
-          />
-          <Box sx={{ width: '1px', height: 20, bgcolor: 'rgba(255,255,255,0.1)' }} />
-          <Box>
-            <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#f59e0b', lineHeight: 1.1 }}>
-              {activeLeague?.name ?? 'RPL'}
-            </Typography>
-            <Typography sx={{ fontSize: '0.55rem', color: '#475569', letterSpacing: '0.06em' }}>
-              CRICKET LEAGUE
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-
       {/* ── MAIN navigation ────────────────────────── */}
       <SectionLabel label="Main" />
       <List disablePadding>
