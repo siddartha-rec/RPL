@@ -413,43 +413,6 @@ export default function TeamsPage() {
 
           <Box sx={{ flex: 1 }} />
 
-          {/* Leagues & Teams counter */}
-          <Box sx={{ display: 'flex', gap: 1.5 }}>
-            <Box
-              sx={{
-                background: 'rgba(96,165,250,0.1)',
-                border: '1px solid rgba(96,165,250,0.25)',
-                borderRadius: '14px',
-                px: 2,
-                py: 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <CalendarTodayIcon sx={{ fontSize: 15, color: '#60a5fa' }} />
-              <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#60a5fa' }}>
-                {leagueList.length} {leagueList.length === 1 ? 'League' : 'Leagues'}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                background: 'rgba(245,158,11,0.1)',
-                border: '1px solid rgba(245,158,11,0.25)',
-                borderRadius: '14px',
-                px: 2,
-                py: 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <GroupsIcon sx={{ fontSize: 15, color: '#f59e0b' }} />
-              <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#f59e0b' }}>
-                {totalTeams} Teams
-              </Typography>
-            </Box>
-          </Box>
         </Box>
       </Box>
 
