@@ -5,11 +5,16 @@ import com.rpl.auction.common.exception.ResourceNotFoundException;
 import com.rpl.auction.league.entity.League;
 import com.rpl.auction.league.service.LeagueService;
 import com.rpl.auction.player.dto.PlayerImportRequest;
+import com.rpl.auction.player.dto.PlayerPageResponse;
 import com.rpl.auction.player.dto.PlayerRequest;
 import com.rpl.auction.player.dto.PlayerResponse;
 import com.rpl.auction.player.entity.Player;
 import com.rpl.auction.player.repository.PlayerRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,6 +61,28 @@ public class PlayerService {
             players = playerRepository.findByLeagueId(leagueId);
         }
         return players.stream().map(PlayerResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PlayerPageResponse findByLeaguePaginated(Long leagueId, String category, String status, Long teamId, String search, int page, int size) {
+        leagueService.getLeagueOrThrow(leagueId);
+
+        Player.PlayerCategory cat = (category != null && !category.isBlank()) ? parseCategory(category) : null;
+        Player.PlayerStatus st = (status != null && !status.isBlank()) ? parseStatus(status) : null;
+        String searchParam = (search != null && !search.isBlank()) ? search : null;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("playerNumber").ascending().and(Sort.by("name").ascending()));
+        Page<Player> playerPage = playerRepository.findFiltered(leagueId, cat, st, teamId, searchParam, pageable);
+
+        return PlayerPageResponse.builder()
+                .content(playerPage.getContent().stream().map(PlayerResponse::from).toList())
+                .page(playerPage.getNumber())
+                .size(playerPage.getSize())
+                .totalElements(playerPage.getTotalElements())
+                .totalPages(playerPage.getTotalPages())
+                .first(playerPage.isFirst())
+                .last(playerPage.isLast())
+                .build();
     }
 
     @Transactional(readOnly = true)

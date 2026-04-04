@@ -2,6 +2,7 @@ package com.rpl.auction.player.controller;
 
 import com.rpl.auction.common.dto.ApiResponse;
 import com.rpl.auction.player.dto.PlayerImportRequest;
+import com.rpl.auction.player.dto.PlayerPageResponse;
 import com.rpl.auction.player.dto.PlayerRequest;
 import com.rpl.auction.player.dto.PlayerResponse;
 import com.rpl.auction.player.service.PlayerService;
@@ -43,6 +44,19 @@ public class PlayerController {
             @RequestParam(required = false) Long teamId) {
         List<PlayerResponse> players = playerService.findByLeague(leagueId, category, status, teamId);
         return ResponseEntity.ok(ApiResponse.success(players));
+    }
+
+    @GetMapping("/api/leagues/{leagueId}/players/page")
+    public ResponseEntity<ApiResponse<PlayerPageResponse>> findByLeaguePaginated(
+            @PathVariable Long leagueId,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long teamId,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        PlayerPageResponse response = playerService.findByLeaguePaginated(leagueId, category, status, teamId, search, page, size);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/api/players/{id}")
