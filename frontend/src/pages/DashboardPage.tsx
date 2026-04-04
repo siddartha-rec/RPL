@@ -431,16 +431,16 @@ function LeagueTeamsSection({ league }: { league: League }) {
 
       {/* ── Season Stats Row ── */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 6, sm: 3 }}>
+        <Grid size={{ xs: 6, md: 3 }}>
           <SeasonStatCard icon={<GroupsIcon fontSize="inherit" />}           label="Total Teams"   value={(teams ?? []).length} color="#f59e0b" delay={0}    />
         </Grid>
-        <Grid size={{ xs: 6, sm: 3 }}>
+        <Grid size={{ xs: 6, md: 3 }}>
           <SeasonStatCard icon={<PersonIcon fontSize="inherit" />}           label="Players"       value={totalPlayers}         color="#60a5fa" delay={0.06} />
         </Grid>
-        <Grid size={{ xs: 6, sm: 3 }}>
+        <Grid size={{ xs: 6, md: 3 }}>
           <SeasonStatCard icon={<AccountBalanceWalletIcon fontSize="inherit" />} label="Budget Pool" value={budgetDisplay}     color="#4ade80" delay={0.12} />
         </Grid>
-        <Grid size={{ xs: 6, sm: 3 }}>
+        <Grid size={{ xs: 6, md: 3 }}>
           <SeasonStatCard icon={<SportsCricketIcon fontSize="inherit" />}    label="Season"        value={league.season}        color="#a78bfa" delay={0.18} />
         </Grid>
       </Grid>
