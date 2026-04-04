@@ -154,36 +154,46 @@ export default function LoginPage() {
               }}
             />
 
-            <Typography
-              variant="h3"
-              sx={{
-                fontWeight: 900,
-                fontSize: '2.4rem',
-                letterSpacing: '0.06em',
-                background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 40%, #f59e0b 80%, #d97706 100%)',
-                backgroundSize: '200% auto',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                animation: 'shimmer 3s linear infinite',
-                mb: 1,
-              }}
-            >
-              RPL
-            </Typography>
-
-            {/* Expanded name with styled letters */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.75, mb: 0.75 }}>
-              {[
-                { letter: 'R', word: 'ecykal', color: '#f59e0b' },
-                { letter: 'P', word: 'remier', color: '#60a5fa' },
-                { letter: 'L', word: 'eague', color: '#a78bfa' },
-              ].map(({ letter, word, color }) => (
-                <Typography key={letter} sx={{ fontSize: '0.7rem', fontWeight: 600, color: '#475569', letterSpacing: '0.05em' }}>
-                  <Box component="span" sx={{ color, fontWeight: 800, fontSize: '0.8rem' }}>{letter}</Box>
-                  {word}
-                </Typography>
-              ))}
+            {/* Stacked league name */}
+            <Box sx={{ mb: 1 }}>
+              <Typography
+                sx={{
+                  fontWeight: 900,
+                  fontSize: '2rem',
+                  letterSpacing: '0.04em',
+                  lineHeight: 1.1,
+                  background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 40%, #f59e0b 80%, #d97706 100%)',
+                  backgroundSize: '200% auto',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  animation: 'shimmer 3s linear infinite',
+                }}
+              >
+                Recykal
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  fontSize: '1.6rem',
+                  letterSpacing: '0.08em',
+                  lineHeight: 1.15,
+                  color: '#60a5fa',
+                }}
+              >
+                Premier
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  fontSize: '1.6rem',
+                  letterSpacing: '0.08em',
+                  lineHeight: 1.15,
+                  color: '#a78bfa',
+                }}
+              >
+                League
+              </Typography>
             </Box>
 
             <Typography
