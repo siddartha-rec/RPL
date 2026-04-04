@@ -225,7 +225,7 @@ function TeamFilter({
 }
 
 function PlayersTable({ players }: { players: Player[] }) {
-  const columns = ['#', 'Name', 'Category', 'Team', 'Status', 'Base Price'];
+  const columns = ['Name', 'Category', 'Team', 'Status', 'Base Price'];
 
   return (
     <Box
@@ -241,7 +241,7 @@ function PlayersTable({ players }: { players: Player[] }) {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: '56px 1fr 130px 180px 120px 100px',
+          gridTemplateColumns: '1fr 130px 180px 120px 100px',
           alignItems: 'center',
           px: 2.5,
           py: 1.4,
@@ -285,7 +285,7 @@ function PlayersTable({ players }: { players: Player[] }) {
               key={p.id}
               sx={{
                 display: 'grid',
-                gridTemplateColumns: '56px 1fr 130px 180px 120px 100px',
+                gridTemplateColumns: '1fr 130px 180px 120px 100px',
                 alignItems: 'center',
                 px: 2.5,
                 py: 1.4,
@@ -296,11 +296,6 @@ function PlayersTable({ players }: { players: Player[] }) {
                 '&:last-child': { borderBottom: 'none' },
               }}
             >
-              {/* # */}
-              <Typography sx={{ fontSize: '13px', color: '#475569', fontWeight: 700 }}>
-                {p.playerNumber ?? '—'}
-              </Typography>
-
               {/* Name + captain badge */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, overflow: 'hidden' }}>
                 <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#e2e8f0' }} noWrap>
