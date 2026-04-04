@@ -155,7 +155,7 @@ export default function LoginPage() {
             />
 
             {/* Stacked league name */}
-            <Box sx={{ mb: 1 }}>
+            <Box sx={{ mb: 1, textAlign: 'center' }}>
               <Typography
                 sx={{
                   fontWeight: 900,
