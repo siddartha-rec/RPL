@@ -49,6 +49,9 @@ public class Player {
     @Builder.Default
     private PlayerStatus status = PlayerStatus.AVAILABLE;
 
+    @Column(name = "sold_price", precision = 12, scale = 2)
+    private BigDecimal soldPrice;
+
     @Column(name = "is_captain")
     @Builder.Default
     private Boolean isCaptain = false;

@@ -40,6 +40,7 @@ export interface Team {
 export interface Player {
   id: number; name: string; playerNumber?: number;
   category: 'CRICKET' | 'OTHER'; role?: string; basePrice: number;
+  soldPrice?: number;
   teamId?: number; teamName?: string; teamColor?: string;
   leagueId: number; status: 'AVAILABLE' | 'RETAINED' | 'SOLD' | 'UNSOLD';
   isCaptain: boolean; createdAt: string;

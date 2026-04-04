@@ -225,7 +225,7 @@ function TeamFilter({
 }
 
 function PlayersTable({ players }: { players: Player[] }) {
-  const columns = ['Name', 'Category', 'Team', 'Status', 'Base Price'];
+  const columns = ['Name', 'Category', 'Team', 'Status', 'Base Price', 'Auction Price'];
 
   return (
     <Box
@@ -241,7 +241,7 @@ function PlayersTable({ players }: { players: Player[] }) {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: '1fr 130px 180px 120px 100px',
+          gridTemplateColumns: '1fr 130px 180px 120px 100px 110px',
           alignItems: 'center',
           px: 2.5,
           py: 1.4,
@@ -285,7 +285,7 @@ function PlayersTable({ players }: { players: Player[] }) {
               key={p.id}
               sx={{
                 display: 'grid',
-                gridTemplateColumns: '1fr 130px 180px 120px 100px',
+                gridTemplateColumns: '1fr 130px 180px 120px 100px 110px',
                 alignItems: 'center',
                 px: 2.5,
                 py: 1.4,
@@ -397,7 +397,12 @@ function PlayersTable({ players }: { players: Player[] }) {
 
               {/* Base price */}
               <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#94a3b8', textAlign: 'right' }}>
-                ₹{(p.basePrice / 100000).toFixed(1)}L
+                {p.basePrice > 0 ? `${p.basePrice} CR` : '—'}
+              </Typography>
+
+              {/* Auction price */}
+              <Typography sx={{ fontSize: '13px', fontWeight: 700, textAlign: 'right', color: p.soldPrice ? '#4ade80' : '#334155' }}>
+                {p.soldPrice ? `${p.soldPrice} CR` : '—'}
               </Typography>
             </Box>
           );
@@ -522,6 +527,7 @@ function AllPlayersContent() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [category, setCategory] = useState<'ALL' | 'CRICKET' | 'OTHER'>('ALL');
   const [teamId, setTeamId] = useState<number | null>(null);
+  const [selectedLeagueId, setSelectedLeagueId] = useState<number | null>(null);
 
   // Debounce search input 300ms
   useEffect(() => {
@@ -530,7 +536,7 @@ function AllPlayersContent() {
   }, [search]);
 
   // Reset page when any filter changes
-  useEffect(() => { setPage(0); }, [debouncedSearch, category, teamId]);
+  useEffect(() => { setPage(0); }, [debouncedSearch, category, teamId, selectedLeagueId]);
 
   const { data: leagues } = useQuery<League[]>({
     queryKey: ['leagues'],
@@ -539,8 +545,9 @@ function AllPlayersContent() {
 
   const league = useMemo(() => {
     if (!leagues || leagues.length === 0) return null;
+    if (selectedLeagueId) return leagues.find(l => l.id === selectedLeagueId) ?? leagues[0];
     return leagues.find(l => l.status !== 'COMPLETED') ?? leagues[0];
-  }, [leagues]);
+  }, [leagues, selectedLeagueId]);
 
   const { data: teams } = useQuery<Team[]>({
     queryKey: ['teams', league?.id],
@@ -619,6 +626,57 @@ function AllPlayersContent() {
 
         {/* Category filter pills */}
         <CategoryToggle value={category} onChange={v => setCategory(v)} />
+
+        {/* Season filter pills */}
+        {leagues && leagues.length > 1 && (
+          <Box
+            sx={{
+              display: 'flex',
+              background: 'rgba(15,15,35,0.8)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '14px',
+              p: 0.5,
+              gap: 0.4,
+            }}
+          >
+            {leagues.map(l => {
+              const active = league?.id === l.id;
+              return (
+                <Box
+                  key={l.id}
+                  onClick={() => { setSelectedLeagueId(l.id); setTeamId(null); }}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    px: 2,
+                    py: 0.9,
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    transition: 'all 0.2s ease',
+                    userSelect: 'none',
+                    ...(active
+                      ? {
+                          background: 'linear-gradient(135deg, rgba(167,139,250,0.25), rgba(139,92,246,0.12))',
+                          border: '1px solid rgba(167,139,250,0.45)',
+                          color: '#a78bfa',
+                          boxShadow: '0 2px 8px rgba(167,139,250,0.2)',
+                        }
+                      : {
+                          color: '#64748b',
+                          border: '1px solid transparent',
+                          '&:hover': { color: '#94a3b8', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' },
+                        }),
+                  }}
+                >
+                  {l.season}
+                </Box>
+              );
+            })}
+          </Box>
+        )}
 
         {/* Count badge */}
         <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>

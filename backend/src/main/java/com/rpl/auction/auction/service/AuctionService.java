@@ -246,6 +246,7 @@ public class AuctionService {
                     .orElseThrow(() -> new ResourceNotFoundException("Team", winningBid.getTeamId()));
 
             player.setStatus(Player.PlayerStatus.SOLD);
+            player.setSoldPrice(winningBid.getAmount());
             playerRepository.save(player);
 
             winningTeam.setBudgetSpent(winningTeam.getBudgetSpent().add(winningBid.getAmount()));
@@ -402,6 +403,7 @@ public class AuctionService {
 
         // Update player status
         player.setStatus(Player.PlayerStatus.RETAINED);
+        player.setSoldPrice(league.getRetentionCost());
         playerRepository.save(player);
 
         // Deduct budget
@@ -486,6 +488,7 @@ public class AuctionService {
         draftPickRepository.save(pick);
 
         player.setStatus(Player.PlayerStatus.SOLD);
+        player.setSoldPrice(draftCost);
         playerRepository.save(player);
 
         team.setBudgetSpent(team.getBudgetSpent().add(draftCost));
