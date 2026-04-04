@@ -166,22 +166,36 @@ export default function LoginPage() {
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
                 animation: 'shimmer 3s linear infinite',
-                mb: 0.5,
+                mb: 1,
               }}
             >
               RPL
             </Typography>
 
+            {/* Expanded name with styled letters */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.75, mb: 0.75 }}>
+              {[
+                { letter: 'R', word: 'ecykal', color: '#f59e0b' },
+                { letter: 'P', word: 'remier', color: '#60a5fa' },
+                { letter: 'L', word: 'eague', color: '#a78bfa' },
+              ].map(({ letter, word, color }) => (
+                <Typography key={letter} sx={{ fontSize: '0.7rem', fontWeight: 600, color: '#475569', letterSpacing: '0.05em' }}>
+                  <Box component="span" sx={{ color, fontWeight: 800, fontSize: '0.8rem' }}>{letter}</Box>
+                  {word}
+                </Typography>
+              ))}
+            </Box>
+
             <Typography
               sx={{
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                letterSpacing: '0.22em',
-                textTransform: 'uppercase',
-                color: '#475569',
+                fontSize: '0.65rem',
+                fontWeight: 500,
+                letterSpacing: '0.15em',
+                color: '#334155',
+                fontStyle: 'italic',
               }}
             >
-              Cricket Auction Platform
+              Where Every Bid Counts
             </Typography>
 
             <Box
