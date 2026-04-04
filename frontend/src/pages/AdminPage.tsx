@@ -181,8 +181,8 @@ function LeaguesTab() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Partial<League>>({
-    name: '', season: '', teamBudget: 8000000, maxPlayersPerTeam: 15,
-    maxRetentionsPerTeam: 3, retentionCost: 500000, bidIncrement: 100000, timerSeconds: 30,
+    name: '', season: '', teamBudget: 100, maxPlayersPerTeam: 35,
+    maxRetentionsPerTeam: 5, retentionCost: 10, bidIncrement: 0.5, timerSeconds: 30,
   });
 
   const { data: leagues, isLoading, error } = useQuery<League[]>({
@@ -212,7 +212,7 @@ function LeaguesTab() {
     <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#e2e8f0' }}>{l.name}</Typography>,
     <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{l.season}</Typography>,
     <StatusBadge status={l.status} />,
-    <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>₹{(l.teamBudget / 100000).toFixed(1)}L</Typography>,
+    <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{l.teamBudget} CR</Typography>,
     <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{l.maxPlayersPerTeam}</Typography>,
   ]);
 
@@ -369,9 +369,9 @@ function TeamsTab() {
       {t.shortName}
     </Box>,
     <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{t.ownerName ?? '—'}</Typography>,
-    <Typography sx={{ fontSize: '13px', color: '#60a5fa', fontWeight: 600 }}>₹{(t.budget / 100000).toFixed(1)}L</Typography>,
+    <Typography sx={{ fontSize: '13px', color: '#60a5fa', fontWeight: 600 }}>{t.budget} CR</Typography>,
     <Box>
-      <Typography sx={{ fontSize: '13px', color: '#f59e0b', fontWeight: 600 }}>₹{(t.budgetSpent / 100000).toFixed(1)}L</Typography>
+      <Typography sx={{ fontSize: '13px', color: '#f59e0b', fontWeight: 600 }}>{t.budgetSpent} CR</Typography>
       <LinearProgress
         variant="determinate"
         value={t.budget > 0 ? Math.min((t.budgetSpent / t.budget) * 100, 100) : 0}
@@ -446,7 +446,7 @@ function PlayersTab() {
         <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{p.teamName}</Typography>
       </Box>
     ) : <Typography sx={{ fontSize: '13px', color: '#475569' }}>—</Typography>,
-    <Typography sx={{ fontSize: '13px', color: '#94a3b8', fontWeight: 600 }}>₹{(p.basePrice / 100000).toFixed(1)}L</Typography>,
+    <Typography sx={{ fontSize: '13px', color: '#94a3b8', fontWeight: 600 }}>{p.basePrice} CR</Typography>,
   ]);
 
   return (

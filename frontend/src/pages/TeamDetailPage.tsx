@@ -140,7 +140,7 @@ function PlayerRow({ player, index, teamColor }: { player: Player; index: number
 
       {/* Base price */}
       <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#94a3b8', minWidth: 64, textAlign: 'right', flexShrink: 0 }}>
-        ₹{(player.basePrice / 100000).toFixed(1)}L
+        {player.basePrice} CR
       </Typography>
     </Box>
   );
@@ -428,7 +428,7 @@ export default function TeamDetailPage() {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <AccountBalanceWalletIcon sx={{ fontSize: 15, color: 'rgba(255,255,255,0.55)' }} />
                 <Typography sx={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', fontWeight: 500 }}>
-                  Spent ₹{(team.budgetSpent / 100000).toFixed(1)}L of ₹{(team.budget / 100000).toFixed(1)}L
+                  Spent {team.budgetSpent} CR of {team.budget} CR
                 </Typography>
               </Box>
               <Typography
@@ -438,7 +438,7 @@ export default function TeamDetailPage() {
                   color: remaining < 0 ? '#fca5a5' : '#86efac',
                 }}
               >
-                ₹{(remaining / 100000).toFixed(1)}L remaining
+                {remaining} CR remaining
               </Typography>
             </Box>
             <LinearProgress
@@ -468,9 +468,9 @@ export default function TeamDetailPage() {
       {/* ─── Stats Summary Row ─── */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
         {[
-          { label: 'Total Budget', value: `₹${(team.budget / 100000).toFixed(1)}L`, accent: '#60a5fa', icon: <AccountBalanceWalletIcon sx={{ fontSize: 16 }} /> },
-          { label: 'Spent', value: `₹${(team.budgetSpent / 100000).toFixed(1)}L`, accent: '#f59e0b', icon: <AccountBalanceWalletIcon sx={{ fontSize: 16 }} /> },
-          { label: 'Remaining', value: `₹${(remaining / 100000).toFixed(1)}L`, accent: remaining < 0 ? '#ef4444' : '#4ade80', icon: <AccountBalanceWalletIcon sx={{ fontSize: 16 }} /> },
+          { label: 'Total Budget', value: `${team.budget} CR`, accent: '#60a5fa', icon: <AccountBalanceWalletIcon sx={{ fontSize: 16 }} /> },
+          { label: 'Spent', value: `${team.budgetSpent} CR`, accent: '#f59e0b', icon: <AccountBalanceWalletIcon sx={{ fontSize: 16 }} /> },
+          { label: 'Remaining', value: `${remaining} CR`, accent: remaining < 0 ? '#ef4444' : '#4ade80', icon: <AccountBalanceWalletIcon sx={{ fontSize: 16 }} /> },
           { label: 'Total Players', value: String(totalPlayers), accent: '#a78bfa', icon: <GroupsIcon sx={{ fontSize: 16 }} /> },
         ].map(stat => (
           <Grid key={stat.label} size={{ xs: 6, sm: 3 }}>

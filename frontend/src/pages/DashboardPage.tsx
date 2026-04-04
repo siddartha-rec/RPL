@@ -352,9 +352,9 @@ function TeamCard({ team, onClick, index }: { team: Team; onClick: () => void; i
         {/* ── Stat blocks ── */}
         <Grid container spacing={1} sx={{ mb: 2 }}>
           {[
-            { label: 'Budget',    value: `₹${(team.budget / 100000).toFixed(0)}L`,        col: '#94a3b8' },
-            { label: 'Spent',     value: `₹${(team.budgetSpent / 100000).toFixed(1)}L`,   col: '#fbbf24' },
-            { label: 'Left',      value: `₹${(remaining / 100000).toFixed(1)}L`,          col: remaining < 0 ? '#ef4444' : '#4ade80' },
+            { label: 'Budget',    value: `${team.budget} CR`,        col: '#94a3b8' },
+            { label: 'Spent',     value: `${team.budgetSpent} CR`,   col: '#fbbf24' },
+            { label: 'Left',      value: `${remaining} CR`,          col: remaining < 0 ? '#ef4444' : '#4ade80' },
             { label: 'Players',   value: playerCount,                                       col: color },
           ].map(({ label, value, col }) => (
             <Grid key={label} size={{ xs: 6 }}>
@@ -424,7 +424,7 @@ function LeagueTeamsSection({ league }: { league: League }) {
 
   const totalPlayers  = (teams ?? []).reduce((s, t) => s + (t.playerCount ?? 0), 0);
   const totalBudget   = (teams ?? []).reduce((s, t) => s + t.budget, 0);
-  const budgetDisplay = totalBudget > 0 ? `₹${(totalBudget / 100000).toFixed(0)}L` : '—';
+  const budgetDisplay = totalBudget > 0 ? `${totalBudget} CR` : '—';
 
   return (
     <Box sx={{ mb: 6 }}>

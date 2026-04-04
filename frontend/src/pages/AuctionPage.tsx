@@ -24,9 +24,8 @@ function timerColor(seconds: number): string {
   return '#ef4444';
 }
 
-function formatLakh(paise: number): string {
-  const val = paise / 100000;
-  return val >= 100 ? `₹${(val / 100).toFixed(2)}Cr` : `₹${val.toFixed(1)}L`;
+function formatCR(value: number): string {
+  return `${value} CR`;
 }
 
 /* ─────────────────────────── types ───────────────────────────── */
@@ -500,7 +499,7 @@ function PlayerStage({
               >
                 <SportsIcon sx={{ fontSize: 13, color: '#94a3b8' }} />
                 <Typography sx={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.8px' }}>
-                  BASE: {formatLakh(auction.currentBasePrice ?? 0)}
+                  BASE: {formatCR(auction.currentBasePrice ?? 0)}
                 </Typography>
               </Box>
             </Box>
@@ -546,7 +545,7 @@ function PlayerStage({
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
-              {formatLakh(highestBid)}
+              {formatCR(highestBid)}
             </Typography>
             {auction.currentHighestBidTeam ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -826,11 +825,11 @@ function TeamPurseBar({ teamPurses, lastBidTeamId }: { teamPurses: TeamPurse[]; 
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25 }}>
                     <AccountBalanceWalletIcon sx={{ fontSize: 11, color: tc }} />
                     <Typography sx={{ fontSize: '13px', fontWeight: 900, color: '#e2e8f0' }}>
-                      {formatLakh(remaining)}
+                      {formatCR(remaining)}
                     </Typography>
                   </Box>
                   <Typography sx={{ fontSize: '9px', color: '#475569', mb: 0.75 }}>
-                    Spent {formatLakh(tp.budgetSpent)}
+                    Spent {formatCR(tp.budgetSpent)}
                   </Typography>
                   <LinearProgress
                     variant="determinate"
@@ -934,7 +933,7 @@ export default function AuctionPage() {
           timerSeconds: d.timerSeconds as number ?? prev.timerSeconds,
         } : prev);
         setTimer(d.timerSeconds as number ?? 30);
-        addLog(`Player up: ${playerName} @ ${formatLakh(basePrice)}`, 'event');
+        addLog(`Player up: ${playerName} @ ${formatCR(basePrice)}`, 'event');
         break;
       }
       case 'BID_PLACED': {
@@ -949,13 +948,13 @@ export default function AuctionPage() {
         } : prev);
         setTimer(d.timerSeconds as number ?? timer);
         setLastBidTeamId(bidTeam?.id);
-        addLog(`${formatLakh(bid)} — ${teamName}`, 'bid', bidTeam?.color);
+        addLog(`${formatCR(bid)} — ${teamName}`, 'bid', bidTeam?.color);
         break;
       }
       case 'PLAYER_SOLD': {
         const soldTo = d.teamName as string ?? 'Unknown';
         const soldPrice = d.soldPrice as number ?? 0;
-        addLog(`SOLD: ${d.playerName as string ?? ''} → ${soldTo} @ ${formatLakh(soldPrice)}`, 'sold');
+        addLog(`SOLD: ${d.playerName as string ?? ''} → ${soldTo} @ ${formatCR(soldPrice)}`, 'sold');
         setFlashState('SOLD');
         setTimeout(() => setFlashState(null), 3500);
         setAuction(prev => prev ? { ...prev, currentPlayerId: undefined, currentPlayerName: undefined } : prev);
