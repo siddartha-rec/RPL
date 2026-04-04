@@ -122,7 +122,7 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
       {/* Card body */}
       <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         {/* Stats grid */}
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
           {[
             { label: 'Budget', value: `${team.budget} CR`, accent: '#60a5fa' },
             { label: 'Spent', value: `${team.budgetSpent} CR`, accent: '#f59e0b' },
@@ -132,8 +132,6 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
             <Box
               key={stat.label}
               sx={{
-                flex: 1,
-                minWidth: 70,
                 background: 'rgba(255,255,255,0.03)',
                 border: '1px solid rgba(255,255,255,0.05)',
                 borderRadius: '8px',
