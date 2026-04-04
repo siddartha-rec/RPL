@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Button, Dialog, DialogTitle, DialogContent,
@@ -466,8 +466,8 @@ function PlayersTab() {
 // ---- Auction Control Tab ----
 function AuctionControlTab() {
   const qc = useQueryClient();
-  const [auctionId, setAuctionId] = useState(1);
-  const [playerIdInput, setPlayerIdInput] = useState('');
+  const [auctionId, setAuctionId] = useState<number | null>(null);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
   const [actionError, setActionError] = useState('');
   const [actionSuccess, setActionSuccess] = useState('');
 
@@ -478,11 +478,26 @@ function AuctionControlTab() {
 
   const activeLeague = leagues?.find(l => l.status !== 'COMPLETED') ?? leagues?.[0];
 
+  // Auto-detect auction for active league
   const { data: auction, isLoading, refetch } = useQuery<Auction>({
-    queryKey: ['auction', auctionId],
-    queryFn: () => getAuction(auctionId),
+    queryKey: ['auction', auctionId ?? 'latest'],
+    queryFn: () => getAuction(auctionId ?? 1),
     retry: false,
-    enabled: !!auctionId,
+    enabled: auctionId !== null,
+  });
+
+  // Try to find existing auction on mount
+  useEffect(() => {
+    if (auctionId === null) {
+      getAuction(1).then(a => setAuctionId(a.id)).catch(() => {});
+    }
+  }, [auctionId]);
+
+  // Fetch available players for the select dropdown
+  const { data: availablePlayers } = useQuery<Player[]>({
+    queryKey: ['players', activeLeague?.id],
+    queryFn: () => getPlayers(activeLeague!.id),
+    enabled: !!activeLeague,
   });
 
   const doMutation = (fn: () => Promise<unknown>, successMsg: string) => {
@@ -493,6 +508,7 @@ function AuctionControlTab() {
         setActionSuccess(successMsg);
         refetch();
         qc.invalidateQueries({ queryKey: ['auction'] });
+        qc.invalidateQueries({ queryKey: ['players'] });
       })
       .catch((e: unknown) => {
         const msg = e instanceof Error ? e.message : 'Action failed';
@@ -504,7 +520,7 @@ function AuctionControlTab() {
     mutationFn: () => createAuction(activeLeague!.id),
     onSuccess: (data: Auction) => {
       setAuctionId(data.id);
-      setActionSuccess(`Auction created with id ${data.id}`);
+      setActionSuccess('Auction created successfully');
       qc.invalidateQueries({ queryKey: ['auction'] });
     },
     onError: () => setActionError('Failed to create auction'),
@@ -614,26 +630,10 @@ function AuctionControlTab() {
       {/* Status indicator */}
       <SectionCard title="Auction Status">
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Typography sx={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Auction ID:</Typography>
-            <TextField
-              type="number"
-              size="small"
-              value={auctionId}
-              onChange={e => setAuctionId(Number(e.target.value))}
-              sx={{
-                width: 90,
-                '& .MuiOutlinedInput-root': {
-                  background: 'rgba(255,255,255,0.04)',
-                  borderRadius: '10px',
-                  fontSize: '14px',
-                  '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
-                  '&.Mui-focused fieldset': { borderColor: '#f59e0b' },
-                },
-              }}
-            />
-            {isLoading && <CircularProgress size={16} sx={{ color: '#f59e0b' }} />}
-          </Box>
+          {isLoading && <CircularProgress size={16} sx={{ color: '#f59e0b' }} />}
+          {!auction && !isLoading && (
+            <Typography sx={{ fontSize: '13px', color: '#64748b' }}>No auction found. Create one below.</Typography>
+          )}
           {auction && (
             <Box
               sx={{
@@ -660,18 +660,18 @@ function AuctionControlTab() {
       <SectionCard title="Lifecycle Controls">
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
           <ActionButton label="Create Auction" icon={<AddIcon sx={{ fontSize: 16 }} />} onClick={() => createMutation.mutate()} disabled={createMutation.isPending} color="#6366f1" />
-          <ActionButton label="Start (Retention)" icon={<PlayArrowIcon sx={{ fontSize: 16 }} />} onClick={() => doMutation(() => startAuction(auctionId), 'Auction started')} disabled={!auction} color="#60a5fa" variant="outlined" />
-          <ActionButton label="Advance to Live" icon={<SkipNextIcon sx={{ fontSize: 16 }} />} onClick={() => doMutation(() => advanceToLive(auctionId), 'Advanced to live')} disabled={!auction} color="#4ade80" />
-          <ActionButton label="Switch to Draft" onClick={() => doMutation(() => switchToDraft(auctionId), 'Switched to draft')} disabled={!auction} color="#a78bfa" variant="outlined" />
-          <ActionButton label="Complete" icon={<StopIcon sx={{ fontSize: 16 }} />} onClick={() => doMutation(() => completeAuction(auctionId), 'Completed')} disabled={!auction} color="#ef4444" />
+          <ActionButton label="Start (Retention)" icon={<PlayArrowIcon sx={{ fontSize: 16 }} />} onClick={() => doMutation(() => startAuction(auctionId!), 'Auction started')} disabled={!auction} color="#60a5fa" variant="outlined" />
+          <ActionButton label="Advance to Live" icon={<SkipNextIcon sx={{ fontSize: 16 }} />} onClick={() => doMutation(() => advanceToLive(auctionId!), 'Advanced to live')} disabled={!auction} color="#4ade80" />
+          <ActionButton label="Switch to Draft" onClick={() => doMutation(() => switchToDraft(auctionId!), 'Switched to draft')} disabled={!auction} color="#a78bfa" variant="outlined" />
+          <ActionButton label="Complete" icon={<StopIcon sx={{ fontSize: 16 }} />} onClick={() => doMutation(() => completeAuction(auctionId!), 'Completed')} disabled={!auction} color="#ef4444" />
         </Stack>
       </SectionCard>
 
       {/* Pause / Resume */}
       <SectionCard title="Pause / Resume">
         <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-          <ActionButton label="Pause" icon={<PauseIcon sx={{ fontSize: 16 }} />} onClick={() => doMutation(() => pauseAuction(auctionId), 'Paused')} disabled={!auction} color="#f59e0b" />
-          <ActionButton label="Resume" icon={<PlayArrowIcon sx={{ fontSize: 16 }} />} onClick={() => doMutation(() => resumeAuction(auctionId), 'Resumed')} disabled={!auction} color="#4ade80" />
+          <ActionButton label="Pause" icon={<PauseIcon sx={{ fontSize: 16 }} />} onClick={() => doMutation(() => pauseAuction(auctionId!), 'Paused')} disabled={!auction} color="#f59e0b" />
+          <ActionButton label="Resume" icon={<PlayArrowIcon sx={{ fontSize: 16 }} />} onClick={() => doMutation(() => resumeAuction(auctionId!), 'Resumed')} disabled={!auction} color="#4ade80" />
         </Stack>
       </SectionCard>
 
@@ -679,13 +679,14 @@ function AuctionControlTab() {
       <SectionCard title="Player Control">
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
           <TextField
-            label="Player ID"
-            type="number"
+            select
+            label="Select Player"
             size="small"
-            value={playerIdInput}
-            onChange={e => setPlayerIdInput(e.target.value)}
+            value={selectedPlayerId ?? ''}
+            onChange={e => setSelectedPlayerId(e.target.value ? Number(e.target.value) : null)}
+            SelectProps={{ native: true }}
             sx={{
-              width: 120,
+              minWidth: 250,
               '& .MuiOutlinedInput-root': {
                 background: 'rgba(255,255,255,0.04)',
                 borderRadius: '10px',
@@ -694,18 +695,27 @@ function AuctionControlTab() {
               },
               '& .MuiInputLabel-root.Mui-focused': { color: '#f59e0b' },
             }}
-          />
+          >
+            <option value="">-- Choose a player --</option>
+            {(availablePlayers ?? [])
+              .filter(p => p.status === 'AVAILABLE' || p.status === 'UNSOLD')
+              .map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.playerNumber ? `#${p.playerNumber} ` : ''}{p.name} ({p.category})
+                </option>
+              ))}
+          </TextField>
           <ActionButton
             label="Put Up Player"
             icon={<PersonIcon sx={{ fontSize: 16 }} />}
-            onClick={() => doMutation(() => putUpPlayer(auctionId, Number(playerIdInput)), `Player ${playerIdInput} put up`)}
-            disabled={!auction || !playerIdInput}
+            onClick={() => doMutation(() => putUpPlayer(auctionId!, selectedPlayerId!), `Player put up for auction`)}
+            disabled={!auction || !selectedPlayerId}
             color="#60a5fa"
           />
           <ActionButton
             label="Mark Sold"
             icon={<CheckCircleIcon sx={{ fontSize: 16 }} />}
-            onClick={() => doMutation(() => soldPlayer(auctionId), 'Marked sold')}
+            onClick={() => doMutation(() => soldPlayer(auctionId!), 'Marked sold/unsold')}
             disabled={!auction}
             color="#4ade80"
           />
