@@ -71,20 +71,18 @@ function PlayerRow({ player, index, teamColor }: { player: Player; index: number
           width: 36,
           height: 36,
           borderRadius: '50%',
-          background: player.playerNumber
-            ? `linear-gradient(135deg, ${teamColor}50, ${teamColor}28)`
-            : 'rgba(255,255,255,0.05)',
-          border: `1.5px solid ${player.playerNumber ? teamColor + '55' : 'rgba(255,255,255,0.08)'}`,
+          background: `linear-gradient(135deg, ${teamColor}50, ${teamColor}28)`,
+          border: `1.5px solid ${teamColor}55`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: '13px',
           fontWeight: 800,
-          color: player.playerNumber ? teamColor : '#475569',
+          color: teamColor,
           flexShrink: 0,
         }}
       >
-        {player.playerNumber ?? '—'}
+        {index + 1}
       </Box>
 
       {/* Name + badges */}
