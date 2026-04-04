@@ -27,8 +27,8 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
         background: 'rgba(15,15,35,0.8)',
         backdropFilter: 'blur(10px)',
         border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: '20px',
-        transition: 'all 0.35s cubic-bezier(0.4,0,0.2,1)',
+        borderRadius: '14px',
+        transition: 'all 0.3s ease',
         overflow: 'hidden',
         height: '100%',
         display: 'flex',
@@ -42,24 +42,24 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
           to: { opacity: 1, transform: 'translateY(0)' },
         },
         '&:hover': {
-          transform: 'translateY(-8px) scale(1.015)',
-          boxShadow: `0 24px 64px ${color}50, 0 8px 24px rgba(0,0,0,0.4)`,
-          border: `1px solid ${color}60`,
+          transform: 'translateY(-4px)',
+          boxShadow: `0 12px 40px ${color}40`,
+          border: `1px solid ${color}50`,
         },
       }}
     >
       {/* Gradient header — tall, dramatic */}
       <Box
         sx={{
-          minHeight: 130,
+          minHeight: 80,
           background: `linear-gradient(140deg, ${color} 0%, ${color}bb 45%, ${color}33 80%, rgba(15,15,35,0) 100%)`,
           position: 'relative',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-end',
-          px: 3,
-          pb: 2,
-          pt: 2,
+          px: 2.5,
+          pb: 1.5,
+          pt: 1.5,
         }}
       >
         {/* Short name watermark */}
@@ -69,7 +69,7 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
             right: 10,
             top: '50%',
             transform: 'translateY(-50%)',
-            fontSize: '80px',
+            fontSize: '56px',
             fontWeight: 900,
             color: 'rgba(255,255,255,0.09)',
             letterSpacing: '-3px',
@@ -120,37 +120,36 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
       </Box>
 
       {/* Card body */}
-      <Box sx={{ p: 2.5, flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         {/* Stats grid */}
-        <Grid container spacing={1.5}>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           {[
-            { icon: <AccountBalanceWalletIcon sx={{ fontSize: 14 }} />, label: 'Budget', value: `₹${(team.budget / 100000).toFixed(1)}L`, accent: '#60a5fa' },
-            { icon: <AccountBalanceWalletIcon sx={{ fontSize: 14 }} />, label: 'Spent', value: `₹${(team.budgetSpent / 100000).toFixed(1)}L`, accent: '#f59e0b' },
-            { icon: <PersonIcon sx={{ fontSize: 14 }} />, label: 'Players', value: String(playerCount), accent: '#4ade80' },
-            { icon: <AccountBalanceWalletIcon sx={{ fontSize: 14 }} />, label: 'Remaining', value: `₹${(remaining / 100000).toFixed(1)}L`, accent: remaining < 0 ? '#ef4444' : '#a78bfa' },
+            { label: 'Budget', value: `${team.budget} CR`, accent: '#60a5fa' },
+            { label: 'Spent', value: `${team.budgetSpent} CR`, accent: '#f59e0b' },
+            { label: 'Left', value: `${remaining} CR`, accent: remaining < 0 ? '#ef4444' : '#4ade80' },
+            { label: 'Players', value: String(playerCount), accent: '#a78bfa' },
           ].map(stat => (
-            <Grid key={stat.label} size={6}>
-              <Box
-                sx={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  borderRadius: '12px',
-                  p: 1.4,
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.4, color: '#475569' }}>
-                  {stat.icon}
-                  <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-                    {stat.label}
-                  </Typography>
-                </Box>
-                <Typography sx={{ fontSize: '15px', fontWeight: 800, color: stat.accent, letterSpacing: '-0.3px' }}>
-                  {stat.value}
-                </Typography>
-              </Box>
-            </Grid>
+            <Box
+              key={stat.label}
+              sx={{
+                flex: 1,
+                minWidth: 70,
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.05)',
+                borderRadius: '8px',
+                px: 1,
+                py: 0.8,
+              }}
+            >
+              <Typography sx={{ fontSize: '9px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', mb: 0.2 }}>
+                {stat.label}
+              </Typography>
+              <Typography sx={{ fontSize: '13px', fontWeight: 800, color: stat.accent }}>
+                {stat.value}
+              </Typography>
+            </Box>
           ))}
-        </Grid>
+        </Box>
 
         {/* Captain row */}
         {team.captainName && (
@@ -158,17 +157,17 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: 1.2,
-              px: 1.5,
-              py: 1,
-              background: 'rgba(245,158,11,0.07)',
-              border: '1px solid rgba(245,158,11,0.22)',
-              borderRadius: '12px',
+              gap: 0.8,
+              px: 1.2,
+              py: 0.5,
+              background: 'rgba(245,158,11,0.06)',
+              border: '1px solid rgba(245,158,11,0.18)',
+              borderRadius: '8px',
             }}
           >
-            <EmojiEventsIcon sx={{ fontSize: 17, color: '#f59e0b', flexShrink: 0 }} />
-            <Typography sx={{ fontSize: '11px', color: '#64748b', fontWeight: 600, flexShrink: 0 }}>CAPTAIN</Typography>
-            <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#f59e0b', ml: 'auto' }}>
+            <EmojiEventsIcon sx={{ fontSize: 14, color: '#f59e0b', flexShrink: 0 }} />
+            <Typography sx={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>Captain:</Typography>
+            <Typography sx={{ fontSize: '12px', fontWeight: 700, color: '#f59e0b' }}>
               {team.captainName}
             </Typography>
           </Box>
@@ -176,7 +175,7 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
 
         {/* Budget utilization bar */}
         <Box sx={{ mt: 'auto' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.4 }}>
             <Typography sx={{ fontSize: '10px', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
               Budget Used
             </Typography>
@@ -188,7 +187,7 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
             variant="determinate"
             value={budgetPct}
             sx={{
-              height: 6,
+              height: 4,
               borderRadius: 4,
               bgcolor: 'rgba(255,255,255,0.06)',
               '& .MuiLinearProgress-bar': {
