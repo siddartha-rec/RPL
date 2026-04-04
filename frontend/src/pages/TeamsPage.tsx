@@ -6,7 +6,7 @@ import {
 import GroupsIcon from '@mui/icons-material/Groups';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import PersonIcon from '@mui/icons-material/Person';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { useNavigate } from 'react-router-dom';
 import { getLeagues } from '../api/leagues';
@@ -48,154 +48,152 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
         },
       }}
     >
-      {/* Gradient header — tall, dramatic */}
+      {/* Header band — compact, inline like dashboard */}
       <Box
         sx={{
-          minHeight: 80,
-          background: `linear-gradient(140deg, ${color} 0%, ${color}bb 45%, ${color}33 80%, rgba(15,15,35,0) 100%)`,
+          height: 72,
+          background: `linear-gradient(135deg, ${color} 0%, ${color}aa 60%, ${color}55 100%)`,
           position: 'relative',
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-end',
+          alignItems: 'center',
           px: 2.5,
-          pb: 1.5,
-          pt: 1.5,
+          gap: 1.5,
         }}
       >
-        {/* Short name watermark */}
         <Typography
           sx={{
-            position: 'absolute',
-            right: 10,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            fontSize: '56px',
             fontWeight: 900,
-            color: 'rgba(255,255,255,0.09)',
-            letterSpacing: '-3px',
-            lineHeight: 1,
-            userSelect: 'none',
-            pointerEvents: 'none',
-          }}
-        >
-          {team.shortName}
-        </Typography>
-
-        {/* Short name badge */}
-        <Box
-          sx={{
-            display: 'inline-flex',
-            alignSelf: 'flex-start',
-            mb: 1,
-            px: 1.2,
-            py: 0.3,
-            borderRadius: '8px',
-            background: 'rgba(255,255,255,0.18)',
-            backdropFilter: 'blur(6px)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            fontSize: '11px',
-            fontWeight: 800,
+            fontSize: '18px',
             color: '#fff',
-            letterSpacing: '1.5px',
-            textTransform: 'uppercase',
-          }}
-        >
-          {team.shortName}
-        </Box>
-
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 900,
-            color: '#fff',
-            lineHeight: 1.15,
-            textShadow: '0 2px 12px rgba(0,0,0,0.6)',
+            flex: 1,
+            textShadow: '0 2px 8px rgba(0,0,0,0.5)',
             letterSpacing: '-0.3px',
-            position: 'relative',
-            zIndex: 1,
           }}
         >
           {team.name}
         </Typography>
+
+        <Box
+          sx={{
+            px: 1.5,
+            py: 0.5,
+            borderRadius: '8px',
+            background: 'rgba(0,0,0,0.35)',
+            border: '1px solid rgba(255,255,255,0.25)',
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          <Typography sx={{ fontSize: '11px', fontWeight: 800, color: '#fff', letterSpacing: '1px' }}>
+            {team.shortName}
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            background: 'rgba(0,0,0,0.4)',
+            border: '1px solid rgba(255,255,255,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#fff', lineHeight: 1 }}>
+            {playerCount}
+          </Typography>
+        </Box>
       </Box>
 
       {/* Card body */}
-      <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        {/* Stats grid */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-          {[
-            { label: 'Budget', value: `${team.budget} CR`, accent: '#60a5fa' },
-            { label: 'Spent', value: `${team.budgetSpent} CR`, accent: '#f59e0b' },
-            { label: 'Left', value: `${remaining} CR`, accent: remaining < 0 ? '#ef4444' : '#4ade80' },
-            { label: 'Players', value: String(playerCount), accent: '#a78bfa' },
-          ].map(stat => (
-            <Box
-              key={stat.label}
-              sx={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.05)',
-                borderRadius: '8px',
-                px: 1,
-                py: 0.8,
-              }}
-            >
-              <Typography sx={{ fontSize: '9px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', mb: 0.2 }}>
-                {stat.label}
-              </Typography>
-              <Typography sx={{ fontSize: '13px', fontWeight: 800, color: stat.accent }}>
-                {stat.value}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-
+      <Box sx={{ p: 2.5, pt: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
         {/* Captain row */}
         {team.captainName && (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.8,
-              px: 1.2,
-              py: 0.5,
-              background: 'rgba(245,158,11,0.06)',
-              border: '1px solid rgba(245,158,11,0.18)',
-              borderRadius: '8px',
-            }}
-          >
-            <EmojiEventsIcon sx={{ fontSize: 14, color: '#f59e0b', flexShrink: 0 }} />
-            <Typography sx={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>Captain:</Typography>
-            <Typography sx={{ fontSize: '12px', fontWeight: 700, color: '#f59e0b' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <Box
+              sx={{
+                width: 22,
+                height: 22,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '10px',
+                fontWeight: 900,
+                color: '#fff',
+                flexShrink: 0,
+                boxShadow: '0 0 8px rgba(245,158,11,0.5)',
+              }}
+            >
+              C
+            </Box>
+            <Typography sx={{ fontSize: '13px', color: '#cbd5e1', fontWeight: 600 }}>
               {team.captainName}
             </Typography>
           </Box>
         )}
 
-        {/* Budget utilization bar */}
+        {/* Stats 2x2 grid — centered like dashboard */}
+        <Grid container spacing={1} sx={{ mb: 2 }}>
+          {[
+            { label: 'Budget', value: `${team.budget} CR`, col: '#94a3b8' },
+            { label: 'Spent', value: `${team.budgetSpent} CR`, col: '#fbbf24' },
+            { label: 'Left', value: `${remaining} CR`, col: remaining < 0 ? '#ef4444' : '#4ade80' },
+            { label: 'Players', value: String(playerCount), col: color },
+          ].map(({ label, value, col }) => (
+            <Grid key={label} size={{ xs: 6 }}>
+              <Box
+                sx={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: '10px',
+                  p: 1,
+                  textAlign: 'center',
+                }}
+              >
+                <Typography sx={{ fontSize: '10px', color: '#475569', fontWeight: 700, letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+                  {label}
+                </Typography>
+                <Typography sx={{ fontSize: '14px', fontWeight: 800, color: col, mt: 0.25, lineHeight: 1 }}>
+                  {value}
+                </Typography>
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+
+        {/* Budget bar */}
         <Box sx={{ mt: 'auto' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.4 }}>
-            <Typography sx={{ fontSize: '10px', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+            <Typography sx={{ fontSize: '10px', color: '#475569', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>
               Budget Used
             </Typography>
-            <Typography sx={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700 }}>
+            <Typography sx={{ fontSize: '12px', fontWeight: 800, color: budgetPct > 85 ? '#ef4444' : '#94a3b8' }}>
               {budgetPct.toFixed(0)}%
             </Typography>
           </Box>
-          <LinearProgress
-            variant="determinate"
-            value={budgetPct}
-            sx={{
-              height: 4,
-              borderRadius: 4,
-              bgcolor: 'rgba(255,255,255,0.06)',
-              '& .MuiLinearProgress-bar': {
-                background: budgetPct > 85
-                  ? 'linear-gradient(90deg, #ef4444, #dc2626)'
-                  : `linear-gradient(90deg, ${color}, ${color}bb)`,
-                borderRadius: 4,
-              },
-            }}
-          />
+          <Box sx={{ position: 'relative', height: 6, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+            <LinearProgress
+              variant="determinate"
+              value={budgetPct}
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                height: '100%',
+                bgcolor: 'transparent',
+                '& .MuiLinearProgress-bar': {
+                  background: budgetPct > 85
+                    ? 'linear-gradient(90deg, #ef4444, #dc2626)'
+                    : `linear-gradient(90deg, ${color}, ${color}bb)`,
+                  borderRadius: 4,
+                  boxShadow: `0 0 8px ${color}40`,
+                },
+              }}
+            />
+          </Box>
         </Box>
       </Box>
     </Box>
