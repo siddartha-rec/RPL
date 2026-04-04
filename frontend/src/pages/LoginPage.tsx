@@ -154,14 +154,21 @@ export default function LoginPage() {
               }}
             />
 
-            {/* Stacked league name */}
-            <Box sx={{ mb: 1, textAlign: 'center' }}>
-              <Typography
+            {/* League name — inline styled */}
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 900,
+                fontSize: '1.75rem',
+                letterSpacing: '0.02em',
+                lineHeight: 1.3,
+                textAlign: 'center',
+                mb: 0.75,
+              }}
+            >
+              <Box
+                component="span"
                 sx={{
-                  fontWeight: 900,
-                  fontSize: '2rem',
-                  letterSpacing: '0.04em',
-                  lineHeight: 1.1,
                   background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 40%, #f59e0b 80%, #d97706 100%)',
                   backgroundSize: '200% auto',
                   WebkitBackgroundClip: 'text',
@@ -171,30 +178,10 @@ export default function LoginPage() {
                 }}
               >
                 Recykal
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: 800,
-                  fontSize: '1.6rem',
-                  letterSpacing: '0.08em',
-                  lineHeight: 1.15,
-                  color: '#60a5fa',
-                }}
-              >
-                Premier
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: 800,
-                  fontSize: '1.6rem',
-                  letterSpacing: '0.08em',
-                  lineHeight: 1.15,
-                  color: '#a78bfa',
-                }}
-              >
-                League
-              </Typography>
-            </Box>
+              </Box>{' '}
+              <Box component="span" sx={{ color: '#60a5fa' }}>Premier</Box>{' '}
+              <Box component="span" sx={{ color: '#a78bfa' }}>League</Box>
+            </Typography>
 
             <Typography
               sx={{
@@ -203,6 +190,7 @@ export default function LoginPage() {
                 letterSpacing: '0.15em',
                 color: '#334155',
                 fontStyle: 'italic',
+                textAlign: 'center',
               }}
             >
               Where Every Bid Counts
