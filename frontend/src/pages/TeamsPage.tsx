@@ -58,8 +58,27 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
           alignItems: 'center',
           px: 2.5,
           gap: 1.5,
+          overflow: 'hidden',
         }}
       >
+        {/* Watermark */}
+        <Typography
+          sx={{
+            position: 'absolute',
+            right: -5,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            fontSize: '70px',
+            fontWeight: 900,
+            color: 'rgba(255,255,255,0.08)',
+            letterSpacing: '-3px',
+            lineHeight: 1,
+            userSelect: 'none',
+            pointerEvents: 'none',
+          }}
+        >
+          {team.shortName}
+        </Typography>
         <Typography
           sx={{
             fontWeight: 900,

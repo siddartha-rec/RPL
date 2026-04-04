@@ -49,7 +49,7 @@ const TEAM_COLORS: Record<string, string> = {
   SOS: '#2196F3',
   COC: '#4CAF50',
   GOG: '#9C27B0',
-  FOF: '#F44336',
+  FOF: '#00BCD4',
 };
 
 function resolveColor(team: Team): string {

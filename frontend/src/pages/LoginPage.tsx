@@ -306,7 +306,7 @@ export default function LoginPage() {
 
           {/* ── Team color dots ──────────────────────── */}
           <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', mt: 3.5 }}>
-            {['#FF5722', '#2196F3', '#4CAF50', '#9C27B0', '#F44336'].map((color) => (
+            {['#FF5722', '#2196F3', '#4CAF50', '#9C27B0', '#00BCD4'].map((color) => (
               <Box
                 key={color}
                 sx={{

@@ -132,7 +132,7 @@ public class DataSeeder implements ApplicationRunner {
                 {"Squad of Samurais",   "SOS", "#2196F3"},
                 {"Clan of Champions",   "COC", "#4CAF50"},
                 {"Gang of Gladiators",  "GOG", "#9C27B0"},
-                {"Force of Fighters",   "FOF", "#F44336"}
+                {"Force of Fighters",   "FOF", "#00BCD4"}
         };
 
         // Cricket players per team (player numbers 1-85)
