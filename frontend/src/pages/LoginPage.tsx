@@ -68,7 +68,7 @@ export default function LoginPage() {
       <Box
         sx={{
           display: { xs: 'none', md: 'flex' },
-          flex: 1,
+          width: '50%',
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
@@ -226,8 +226,7 @@ export default function LoginPage() {
          ══════════════════════════════════════════════════════ */}
       <Box
         sx={{
-          width: { xs: '100%', md: 480 },
-          minWidth: { md: 480 },
+          width: { xs: '100%', md: '50%' },
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
