@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Grid from '@mui/material/Grid';
 import {
@@ -675,6 +676,8 @@ function HeroBanner({ league }: { league: League | undefined }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
+  const [selectedLeagueId, setSelectedLeagueId] = useState<number | null>(null);
+
   const { data: leagues, isLoading, error } = useQuery<League[]>({
     queryKey: ['leagues'],
     queryFn: getLeagues,
@@ -699,17 +702,74 @@ export default function DashboardPage() {
     );
   }
 
-  const activeLeagues = leagues?.filter(l => l.status !== 'COMPLETED') ?? [];
-  const displayLeagues = activeLeagues.length > 0 ? activeLeagues : (leagues ?? []).slice(0, 1);
-  const primaryLeague = displayLeagues[0];
+  const allLeagues = leagues ?? [];
+  const selectedLeague = selectedLeagueId
+    ? allLeagues.find(l => l.id === selectedLeagueId)
+    : allLeagues.find(l => l.status !== 'COMPLETED') ?? allLeagues[0];
 
   return (
     <Box sx={{ animation: 'fadeInUp 0.4s ease' }}>
       {/* Inject keyframes */}
       <style>{keyframes}</style>
 
-      {/* League sections */}
-      {displayLeagues.length === 0 && (
+      {/* Season filter */}
+      {allLeagues.length > 0 && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+          <Typography sx={{ fontSize: '11px', fontWeight: 700, color: '#475569', letterSpacing: '1px', textTransform: 'uppercase' }}>
+            Season
+          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              background: 'rgba(15,15,35,0.8)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '14px',
+              p: 0.5,
+              gap: 0.4,
+            }}
+          >
+            {allLeagues.map(l => {
+              const active = selectedLeague?.id === l.id;
+              return (
+                <Box
+                  key={l.id}
+                  onClick={() => setSelectedLeagueId(l.id)}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    px: 2,
+                    py: 0.9,
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    transition: 'all 0.2s ease',
+                    userSelect: 'none',
+                    ...(active
+                      ? {
+                          background: 'linear-gradient(135deg, rgba(167,139,250,0.25), rgba(139,92,246,0.12))',
+                          border: '1px solid rgba(167,139,250,0.45)',
+                          color: '#a78bfa',
+                          boxShadow: '0 2px 8px rgba(167,139,250,0.2)',
+                        }
+                      : {
+                          color: '#64748b',
+                          border: '1px solid transparent',
+                          '&:hover': { color: '#94a3b8', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' },
+                        }),
+                  }}
+                >
+                  {l.season}
+                </Box>
+              );
+            })}
+          </Box>
+        </Box>
+      )}
+
+      {/* League section */}
+      {!selectedLeague && (
         <Alert
           severity="info"
           sx={{
@@ -723,9 +783,9 @@ export default function DashboardPage() {
         </Alert>
       )}
 
-      {displayLeagues.map(league => (
-        <LeagueTeamsSection key={league.id} league={league} />
-      ))}
+      {selectedLeague && (
+        <LeagueTeamsSection key={selectedLeague.id} league={selectedLeague} />
+      )}
     </Box>
   );
 }
