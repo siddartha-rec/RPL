@@ -708,9 +708,6 @@ export default function DashboardPage() {
       {/* Inject keyframes */}
       <style>{keyframes}</style>
 
-      {/* Hero */}
-      <HeroBanner league={primaryLeague} />
-
       {/* League sections */}
       {displayLeagues.length === 0 && (
         <Alert
