@@ -473,7 +473,7 @@ function LeagueTeamsSection({ league }: { league: League }) {
 
           <Grid container spacing={2.5}>
             {teams.map((team, i) => (
-              <Grid key={team.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+              <Grid key={team.id} size={{ xs: 12, sm: 6, md: 4 }}>
                 <TeamCard team={team} index={i} onClick={() => navigate(`/teams/${team.id}`)} />
               </Grid>
             ))}
