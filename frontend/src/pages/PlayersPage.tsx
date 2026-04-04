@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Box, Typography, TextField, CircularProgress, Alert, InputAdornment,
@@ -7,9 +7,15 @@ import SearchIcon from '@mui/icons-material/Search';
 import PersonIcon from '@mui/icons-material/Person';
 import SportsCricketIcon from '@mui/icons-material/SportsCricket';
 import StarIcon from '@mui/icons-material/Star';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import GroupsIcon from '@mui/icons-material/Groups';
 import { getLeagues } from '../api/leagues';
-import { getPlayers } from '../api/players';
-import type { League, Player } from '../types';
+import { getPlayersPaginated } from '../api/players';
+import { getTeams } from '../api/teams';
+import type { League, Player, Team, PageResponse } from '../types';
+
+const PAGE_SIZE = 20;
 
 function statusStyle(status: string): { gradient: string; color: string; label: string } {
   switch (status) {
@@ -98,6 +104,119 @@ function CategoryToggle({
           >
             {opt.icon}
             {opt.label}
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
+
+function TeamFilter({
+  teams,
+  value,
+  onChange,
+}: {
+  teams: Team[];
+  value: number | null;
+  onChange: (id: number | null) => void;
+}) {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        background: 'rgba(15,15,35,0.8)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: '14px',
+        p: 0.5,
+        gap: 0.4,
+        flexWrap: 'wrap',
+      }}
+    >
+      {/* All Teams pill */}
+      <Box
+        onClick={() => onChange(null)}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.7,
+          px: 2,
+          py: 0.9,
+          borderRadius: '10px',
+          cursor: 'pointer',
+          fontSize: '13px',
+          fontWeight: 700,
+          transition: 'all 0.2s ease',
+          userSelect: 'none',
+          ...(value === null
+            ? {
+                background: 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(251,191,36,0.12))',
+                border: '1px solid rgba(245,158,11,0.45)',
+                color: '#f59e0b',
+                boxShadow: '0 2px 8px rgba(245,158,11,0.2)',
+              }
+            : {
+                color: '#64748b',
+                border: '1px solid transparent',
+                '&:hover': {
+                  color: '#94a3b8',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                },
+              }),
+        }}
+      >
+        <GroupsIcon sx={{ fontSize: 14 }} />
+        All Teams
+      </Box>
+
+      {teams.map(team => {
+        const active = value === team.id;
+        const teamColor = team.color || '#888';
+        return (
+          <Box
+            key={team.id}
+            onClick={() => onChange(team.id)}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.7,
+              px: 2,
+              py: 0.9,
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 700,
+              transition: 'all 0.2s ease',
+              userSelect: 'none',
+              ...(active
+                ? {
+                    background: `linear-gradient(135deg, ${teamColor}30, ${teamColor}18)`,
+                    border: `1px solid ${teamColor}70`,
+                    color: teamColor,
+                    boxShadow: `0 2px 8px ${teamColor}30`,
+                  }
+                : {
+                    color: '#64748b',
+                    border: '1px solid transparent',
+                    '&:hover': {
+                      color: '#94a3b8',
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                    },
+                  }),
+            }}
+          >
+            <Box
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                bgcolor: teamColor,
+                flexShrink: 0,
+                boxShadow: active ? `0 0 6px ${teamColor}80` : 'none',
+              }}
+            />
+            {team.shortName || team.name}
           </Box>
         );
       })}
@@ -293,9 +412,130 @@ function PlayersTable({ players }: { players: Player[] }) {
   );
 }
 
+function PaginationControls({
+  page,
+  totalPages,
+  totalElements,
+  onPrev,
+  onNext,
+}: {
+  page: number;
+  totalPages: number;
+  totalElements: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  const start = totalElements === 0 ? 0 : page * PAGE_SIZE + 1;
+  const end = Math.min((page + 1) * PAGE_SIZE, totalElements);
+
+  const btnBase = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 0.5,
+    px: 2,
+    py: 1,
+    borderRadius: '10px',
+    fontSize: '13px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    userSelect: 'none' as const,
+    transition: 'all 0.2s ease',
+    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'rgba(15,15,35,0.8)',
+    backdropFilter: 'blur(10px)',
+  };
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        mt: 2.5,
+        flexWrap: 'wrap',
+        gap: 2,
+      }}
+    >
+      {/* Showing X-Y of Z */}
+      <Typography sx={{ fontSize: '13px', color: '#475569', fontWeight: 500 }}>
+        {totalElements === 0
+          ? 'No players found'
+          : `Showing ${start}–${end} of ${totalElements} players`}
+      </Typography>
+
+      {/* Prev / page indicator / Next */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box
+          onClick={page === 0 ? undefined : onPrev}
+          sx={{
+            ...btnBase,
+            color: page === 0 ? '#334155' : '#94a3b8',
+            cursor: page === 0 ? 'not-allowed' : 'pointer',
+            opacity: page === 0 ? 0.45 : 1,
+            '&:hover': page === 0 ? {} : {
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              color: '#e2e8f0',
+            },
+          }}
+        >
+          <ChevronLeftIcon sx={{ fontSize: 16 }} />
+          Prev
+        </Box>
+
+        <Box
+          sx={{
+            px: 2,
+            py: 1,
+            borderRadius: '10px',
+            background: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(251,191,36,0.1))',
+            border: '1px solid rgba(245,158,11,0.4)',
+            fontSize: '13px',
+            fontWeight: 800,
+            color: '#f59e0b',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Page {page + 1} of {Math.max(totalPages, 1)}
+        </Box>
+
+        <Box
+          onClick={page >= totalPages - 1 ? undefined : onNext}
+          sx={{
+            ...btnBase,
+            color: page >= totalPages - 1 ? '#334155' : '#94a3b8',
+            cursor: page >= totalPages - 1 ? 'not-allowed' : 'pointer',
+            opacity: page >= totalPages - 1 ? 0.45 : 1,
+            '&:hover': page >= totalPages - 1 ? {} : {
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              color: '#e2e8f0',
+            },
+          }}
+        >
+          Next
+          <ChevronRightIcon sx={{ fontSize: 16 }} />
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
 function AllPlayersContent() {
+  const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [category, setCategory] = useState<'ALL' | 'CRICKET' | 'OTHER'>('ALL');
+  const [teamId, setTeamId] = useState<number | null>(null);
+
+  // Debounce search input 300ms
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset page when any filter changes
+  useEffect(() => { setPage(0); }, [debouncedSearch, category, teamId]);
 
   const { data: leagues } = useQuery<League[]>({
     queryKey: ['leagues'],
@@ -307,23 +547,31 @@ function AllPlayersContent() {
     return leagues.find(l => l.status !== 'COMPLETED') ?? leagues[0];
   }, [leagues]);
 
-  const { data: players, isLoading, error } = useQuery<Player[]>({
-    queryKey: ['players', league?.id],
-    queryFn: () => getPlayers(league!.id),
+  const { data: teams } = useQuery<Team[]>({
+    queryKey: ['teams', league?.id],
+    queryFn: () => getTeams(league!.id),
     enabled: !!league,
   });
 
-  const filtered = useMemo(() => {
-    let list = players ?? [];
-    if (category !== 'ALL') list = list.filter(p => p.category === category);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(p => p.name.toLowerCase().includes(q));
-    }
-    return list;
-  }, [players, category, search]);
+  const { data: pageData, isLoading, error } = useQuery<PageResponse<Player>>({
+    queryKey: ['players', league?.id, page, PAGE_SIZE, debouncedSearch, category, teamId],
+    queryFn: () =>
+      getPlayersPaginated(league!.id, {
+        page,
+        size: PAGE_SIZE,
+        ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
+        ...(category !== 'ALL' ? { category } : {}),
+        ...(teamId !== null ? { teamId } : {}),
+      }),
+    enabled: !!league,
+    placeholderData: prev => prev,
+  });
 
-  if (isLoading) {
+  const players = pageData?.content ?? [];
+  const totalElements = pageData?.totalElements ?? 0;
+  const totalPages = pageData?.totalPages ?? 0;
+
+  if (isLoading && !pageData) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
         <CircularProgress sx={{ color: '#f59e0b' }} size={36} />
@@ -342,8 +590,8 @@ function AllPlayersContent() {
   return (
     <Box>
       {/* Filter bar */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 3.5, flexWrap: 'wrap', alignItems: 'center' }}>
-        {/* Search bar — prominent */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 2.5, flexWrap: 'wrap', alignItems: 'center' }}>
+        {/* Search bar */}
         <TextField
           placeholder="Search players by name..."
           value={search}
@@ -375,7 +623,7 @@ function AllPlayersContent() {
         />
 
         {/* Category filter pills */}
-        <CategoryToggle value={category} onChange={setCategory} />
+        <CategoryToggle value={category} onChange={v => setCategory(v)} />
 
         {/* Count badge */}
         <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
@@ -393,13 +641,49 @@ function AllPlayersContent() {
           >
             <PersonIcon sx={{ fontSize: 14, color: '#f59e0b' }} />
             <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#f59e0b' }}>
-              {filtered.length} {filtered.length === 1 ? 'player' : 'players'}
+              {totalElements} {totalElements === 1 ? 'player' : 'players'}
             </Typography>
           </Box>
         </Box>
       </Box>
 
-      <PlayersTable players={filtered} />
+      {/* Team filter row */}
+      {teams && teams.length > 0 && (
+        <Box sx={{ mb: 3.5 }}>
+          <TeamFilter teams={teams} value={teamId} onChange={id => setTeamId(id)} />
+        </Box>
+      )}
+
+      {/* Loading overlay while paginating */}
+      <Box sx={{ position: 'relative' }}>
+        {isLoading && (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '18px',
+              background: 'rgba(5,5,20,0.55)',
+              backdropFilter: 'blur(3px)',
+            }}
+          >
+            <CircularProgress sx={{ color: '#f59e0b' }} size={32} />
+          </Box>
+        )}
+        <PlayersTable players={players} />
+      </Box>
+
+      {/* Pagination controls */}
+      <PaginationControls
+        page={page}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        onPrev={() => setPage(p => Math.max(0, p - 1))}
+        onNext={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+      />
     </Box>
   );
 }

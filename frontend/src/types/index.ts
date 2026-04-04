@@ -65,3 +65,13 @@ export interface TeamStanding {
   id: number; teamId: number; teamName: string; leagueId: number;
   rank: number; points?: number; notes?: string;
 }
+
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
