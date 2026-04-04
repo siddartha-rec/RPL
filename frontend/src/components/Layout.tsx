@@ -24,18 +24,18 @@ export default function Layout() {
         sx={{
           flexGrow: 1,
           minHeight: '100vh',
-          ml: `${DRAWER_WIDTH}px`,
           mt: `${TOPBAR_HEIGHT}px`,
-          p: { xs: 2.5, md: 3.5 },
-          maxWidth: `calc(100vw - ${DRAWER_WIDTH}px)`,
+          py: { xs: 2, md: 2.5 },
+          px: { xs: 2, md: 3 },
+          overflow: 'auto',
           animation: 'fadeIn 0.35s ease forwards',
 
           /* subtle inner radial glow at top */
           '&::before': {
             content: '""',
-            position: 'fixed',
-            top: TOPBAR_HEIGHT,
-            left: DRAWER_WIDTH,
+            position: 'absolute',
+            top: 0,
+            left: 0,
             right: 0,
             height: 300,
             background:
