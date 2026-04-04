@@ -1,97 +1,199 @@
 import { useQuery } from '@tanstack/react-query';
 import Grid from '@mui/material/Grid';
 import {
-  Box, Card, CardContent, Typography, Chip, CircularProgress, Alert, LinearProgress,
+  Box, Card, CardContent, Typography, CircularProgress, Alert, LinearProgress, Button,
 } from '@mui/material';
 import GroupsIcon from '@mui/icons-material/Groups';
 import PersonIcon from '@mui/icons-material/Person';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import SportsCricketIcon from '@mui/icons-material/SportsCricket';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import { useNavigate } from 'react-router-dom';
 import { getLeagues } from '../api/leagues';
 import { getTeams } from '../api/teams';
 import type { League, Team } from '../types';
 
-function StatusChip({ status }: { status: string }) {
-  const styleMap: Record<string, { bg: string; color: string; pulse?: boolean }> = {
-    SETUP: { bg: 'rgba(100,116,139,0.2)', color: '#94a3b8' },
-    RETENTION: { bg: 'rgba(96,165,250,0.2)', color: '#60a5fa' },
-    DRAFT: { bg: 'rgba(96,165,250,0.2)', color: '#60a5fa' },
-    LIVE: { bg: 'rgba(239,68,68,0.2)', color: '#ef4444', pulse: true },
-    PAUSED: { bg: 'rgba(245,158,11,0.2)', color: '#f59e0b' },
-    COMPLETED: { bg: 'rgba(74,222,128,0.2)', color: '#4ade80' },
-  };
-  const style = styleMap[status] ?? { bg: 'rgba(100,116,139,0.2)', color: '#94a3b8' };
+// ─── Animations ────────────────────────────────────────────────────────────
+const keyframes = `
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(0.75); }
+  }
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(245,158,11,0.3); }
+    50%       { box-shadow: 0 0 40px rgba(245,158,11,0.7); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-6px); }
+  }
+  @keyframes particle {
+    0%   { opacity: 0; transform: translateY(0) scale(0); }
+    50%  { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-60px) scale(1.5); }
+  }
+`;
+
+// ─── Team colour map ────────────────────────────────────────────────────────
+const TEAM_COLORS: Record<string, string> = {
+  TOT: '#FF5722',
+  SOS: '#2196F3',
+  COC: '#4CAF50',
+  GOG: '#9C27B0',
+  FOF: '#F44336',
+};
+
+function resolveColor(team: Team): string {
+  if (team.color) return team.color;
+  return TEAM_COLORS[team.shortName] ?? '#888';
+}
+
+// ─── Live Status Bar ────────────────────────────────────────────────────────
+function LiveStatusBar({ league }: { league: League }) {
+  const navigate = useNavigate();
+  const isLive = league.status === 'LIVE';
+  const statusLabel =
+    league.status === 'LIVE'      ? 'Auction Live Now!'    :
+    league.status === 'SETUP'     ? 'Auction in Setup'     :
+    league.status === 'COMPLETED' ? 'Auction Completed'    :
+    league.status === 'PAUSED'    ? 'Auction Paused'       :
+    league.status === 'RETENTION' ? 'Retention Phase'      :
+    league.status === 'DRAFT'     ? 'Draft Phase'          : league.status;
+
   return (
     <Box
-      component="span"
       sx={{
-        px: 1.5,
-        py: 0.5,
-        borderRadius: '20px',
-        fontSize: '11px',
-        fontWeight: 700,
-        letterSpacing: '0.5px',
-        textTransform: 'uppercase',
-        background: style.bg,
-        color: style.color,
-        border: `1px solid ${style.color}40`,
-        display: 'inline-flex',
+        background: isLive
+          ? 'linear-gradient(90deg, rgba(239,68,68,0.15) 0%, rgba(245,158,11,0.1) 50%, rgba(239,68,68,0.15) 100%)'
+          : 'rgba(15,15,30,0.8)',
+        border: isLive ? '1px solid rgba(239,68,68,0.4)' : '1px solid rgba(255,255,255,0.07)',
+        borderRadius: '12px',
+        px: 3,
+        py: 1.5,
+        mb: 4,
+        display: 'flex',
         alignItems: 'center',
-        gap: 0.5,
-        ...(style.pulse && { animation: 'pulse 2s infinite' }),
+        gap: 2,
+        flexWrap: 'wrap',
+        backdropFilter: 'blur(10px)',
       }}
     >
-      {status === 'LIVE' && (
+      {/* Animated dot */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Box
           sx={{
-            width: 6,
-            height: 6,
+            width: 10,
+            height: 10,
             borderRadius: '50%',
-            bgcolor: '#ef4444',
-            animation: 'pulse 1s infinite',
+            bgcolor: isLive ? '#ef4444' : '#64748b',
+            animation: isLive ? 'pulseDot 1.2s ease-in-out infinite' : 'none',
           }}
         />
-      )}
-      {status}
+        <Typography
+          sx={{
+            fontSize: '12px',
+            fontWeight: 700,
+            letterSpacing: '2px',
+            textTransform: 'uppercase',
+            color: isLive ? '#ef4444' : '#64748b',
+          }}
+        >
+          {isLive ? 'LIVE' : league.status}
+        </Typography>
+      </Box>
+
+      <Box sx={{ width: '1px', height: 20, bgcolor: 'rgba(255,255,255,0.1)' }} />
+
+      <Typography sx={{ flex: 1, color: '#e2e8f0', fontSize: '14px', fontWeight: 600 }}>
+        {statusLabel}
+      </Typography>
+
+      <Button
+        onClick={() => navigate('/auction')}
+        variant="contained"
+        size="small"
+        startIcon={<PlayCircleOutlineIcon />}
+        sx={{
+          background: isLive
+            ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+            : 'linear-gradient(135deg, #f59e0b, #d97706)',
+          color: '#fff',
+          fontWeight: 700,
+          fontSize: '12px',
+          letterSpacing: '0.5px',
+          borderRadius: '8px',
+          textTransform: 'none',
+          px: 2,
+          py: 0.75,
+          '&:hover': { filter: 'brightness(1.15)' },
+        }}
+      >
+        {isLive ? 'Watch Live' : 'Enter Auction'}
+      </Button>
     </Box>
   );
 }
 
-function QuickStatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string | number; color: string }) {
+// ─── Season Stats Row ────────────────────────────────────────────────────────
+function SeasonStatCard({
+  icon, label, value, color, delay = 0,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  color: string;
+  delay?: number;
+}) {
   return (
     <Card
       sx={{
-        background: 'rgba(26,26,46,0.8)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255,255,255,0.05)',
+        background: 'rgba(20,20,40,0.6)',
+        backdropFilter: 'blur(16px)',
+        border: `1px solid ${color}25`,
         borderRadius: '16px',
+        height: '100%',
+        animation: `fadeInUp 0.5s ease ${delay}s both`,
         transition: 'all 0.3s ease',
-        '&:hover': { transform: 'translateY(-4px)', boxShadow: `0 8px 32px ${color}30` },
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          background: 'rgba(26,26,50,0.8)',
+          border: `1px solid ${color}60`,
+          boxShadow: `0 8px 32px ${color}25`,
+        },
       }}
     >
-      <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2.5, '&:last-child': { pb: 2.5 } }}>
+      <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 }, display: 'flex', alignItems: 'center', gap: 2 }}>
         <Box
           sx={{
-            width: 48,
-            height: 48,
-            borderRadius: '12px',
-            background: `${color}20`,
+            width: 52,
+            height: 52,
+            borderRadius: '14px',
+            background: `linear-gradient(135deg, ${color}30, ${color}15)`,
             border: `1px solid ${color}40`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color,
             flexShrink: 0,
+            fontSize: 24,
           }}
         >
           {icon}
         </Box>
         <Box>
-          <Typography sx={{ fontSize: '11px', fontWeight: 600, color: '#64748b', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          <Typography sx={{ fontSize: '11px', fontWeight: 700, color: '#475569', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
             {label}
           </Typography>
-          <Typography variant="h5" sx={{ fontWeight: 700, color: '#e2e8f0', lineHeight: 1.2 }}>
+          <Typography sx={{ fontSize: '22px', fontWeight: 800, color: '#e2e8f0', lineHeight: 1.2, mt: 0.25 }}>
             {value}
           </Typography>
         </Box>
@@ -100,8 +202,9 @@ function QuickStatCard({ icon, label, value, color }: { icon: React.ReactNode; l
   );
 }
 
-function TeamCard({ team, onClick }: { team: Team; onClick: () => void }) {
-  const color = team.color || '#888';
+// ─── IPL-style Team Card ────────────────────────────────────────────────────
+function TeamCard({ team, onClick, index }: { team: Team; onClick: () => void; index: number }) {
+  const color = resolveColor(team);
   const budgetPct = team.budget > 0 ? Math.min((team.budgetSpent / team.budget) * 100, 100) : 0;
   const remaining = team.budget - team.budgetSpent;
   const playerCount = team.playerCount ?? 0;
@@ -111,45 +214,101 @@ function TeamCard({ team, onClick }: { team: Team; onClick: () => void }) {
       onClick={onClick}
       sx={{
         cursor: 'pointer',
-        background: 'rgba(26,26,46,0.8)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255,255,255,0.05)',
-        borderRadius: '16px',
-        borderLeft: `4px solid ${color}`,
-        transition: 'all 0.3s ease',
+        background: 'rgba(15,15,30,0.9)',
+        backdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.06)',
+        borderRadius: '20px',
         overflow: 'hidden',
         position: 'relative',
         height: '100%',
+        animation: `fadeInUp 0.5s ease ${index * 0.07}s both`,
+        transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: `0 12px 40px ${color}40`,
-          borderColor: `${color}80`,
+          transform: 'translateY(-8px) scale(1.01)',
+          boxShadow: `0 20px 60px ${color}45`,
+          border: `1px solid ${color}50`,
+        },
+        '&:hover .team-header-bg': {
+          opacity: 0.9,
         },
       }}
     >
-      {/* Top gradient overlay */}
+      {/* ── Coloured header band ── */}
       <Box
+        className="team-header-bg"
         sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 80,
-          background: `linear-gradient(135deg, ${color}15 0%, transparent 100%)`,
-          pointerEvents: 'none',
+          height: 72,
+          background: `linear-gradient(135deg, ${color} 0%, ${color}aa 60%, ${color}55 100%)`,
+          position: 'relative',
+          opacity: 0.85,
+          transition: 'opacity 0.3s ease',
+          display: 'flex',
+          alignItems: 'center',
+          px: 2.5,
+          gap: 1.5,
         }}
-      />
-      {/* Watermark short name */}
+      >
+        {/* Team name in white on the header */}
+        <Typography
+          sx={{
+            fontWeight: 900,
+            fontSize: '18px',
+            color: '#fff',
+            flex: 1,
+            textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+            letterSpacing: '-0.3px',
+          }}
+        >
+          {team.name}
+        </Typography>
+
+        {/* Short name badge */}
+        <Box
+          sx={{
+            px: 1.5,
+            py: 0.5,
+            borderRadius: '8px',
+            background: 'rgba(0,0,0,0.35)',
+            border: '1px solid rgba(255,255,255,0.25)',
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          <Typography sx={{ fontSize: '11px', fontWeight: 800, color: '#fff', letterSpacing: '1px' }}>
+            {team.shortName}
+          </Typography>
+        </Box>
+
+        {/* Player count bubble */}
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            background: 'rgba(0,0,0,0.4)',
+            border: '1px solid rgba(255,255,255,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#fff', lineHeight: 1 }}>
+            {playerCount}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* ── Watermark short name ── */}
       <Typography
         sx={{
           position: 'absolute',
-          bottom: -10,
-          right: -10,
-          fontSize: '80px',
+          bottom: -12,
+          right: -8,
+          fontSize: '90px',
           fontWeight: 900,
-          color: `${color}08`,
+          color: `${color}09`,
           lineHeight: 1,
-          letterSpacing: '-2px',
+          letterSpacing: '-4px',
           pointerEvents: 'none',
           userSelect: 'none',
           zIndex: 0,
@@ -158,105 +317,103 @@ function TeamCard({ team, onClick }: { team: Team; onClick: () => void }) {
         {team.shortName}
       </Typography>
 
-      <CardContent sx={{ position: 'relative', zIndex: 1, p: 2.5, '&:last-child': { pb: 2.5 } }}>
-        {/* Header row */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#e2e8f0', lineHeight: 1.2, mb: 0.5 }}>
-              {team.name}
-            </Typography>
-            <Box
-              sx={{
-                display: 'inline-block',
-                px: 1,
-                py: 0.25,
-                borderRadius: '8px',
-                background: `${color}25`,
-                border: `1px solid ${color}50`,
-                color,
-                fontSize: '11px',
-                fontWeight: 700,
-                letterSpacing: '0.5px',
-              }}
-            >
-              {team.shortName}
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              background: `${color}20`,
-              border: `1px solid ${color}40`,
-              borderRadius: '10px',
-              px: 1.5,
-              py: 0.5,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-            }}
-          >
-            <PersonIcon sx={{ fontSize: 14, color }} />
-            <Typography sx={{ fontSize: '13px', fontWeight: 700, color }}>{playerCount}</Typography>
-          </Box>
-        </Box>
+      <CardContent sx={{ position: 'relative', zIndex: 1, p: 2.5, pt: 2, '&:last-child': { pb: 2.5 } }}>
 
-        {/* Captain */}
-        {team.captainName && (
+        {/* Captain row */}
+        {team.captainName ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <Box
               sx={{
-                width: 18,
-                height: 18,
+                width: 22,
+                height: 22,
                 borderRadius: '50%',
                 background: 'linear-gradient(135deg, #f59e0b, #d97706)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '9px',
+                fontSize: '10px',
                 fontWeight: 900,
                 color: '#fff',
                 flexShrink: 0,
+                boxShadow: '0 0 8px rgba(245,158,11,0.5)',
               }}
             >
               C
             </Box>
-            <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>
+            <Typography sx={{ fontSize: '13px', color: '#cbd5e1', fontWeight: 600 }}>
               {team.captainName}
             </Typography>
           </Box>
+        ) : (
+          <Box sx={{ mb: 2, height: 22 }} />
         )}
 
-        {/* Budget bar */}
+        {/* ── Stat blocks ── */}
+        <Grid container spacing={1} sx={{ mb: 2 }}>
+          {[
+            { label: 'Budget',    value: `₹${(team.budget / 100000).toFixed(0)}L`,        col: '#94a3b8' },
+            { label: 'Spent',     value: `₹${(team.budgetSpent / 100000).toFixed(1)}L`,   col: '#fbbf24' },
+            { label: 'Left',      value: `₹${(remaining / 100000).toFixed(1)}L`,          col: remaining < 0 ? '#ef4444' : '#4ade80' },
+            { label: 'Players',   value: playerCount,                                       col: color },
+          ].map(({ label, value, col }) => (
+            <Grid key={label} size={{ xs: 6 }}>
+              <Box
+                sx={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: '10px',
+                  p: 1,
+                  textAlign: 'center',
+                }}
+              >
+                <Typography sx={{ fontSize: '10px', color: '#475569', fontWeight: 700, letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+                  {label}
+                </Typography>
+                <Typography sx={{ fontSize: '14px', fontWeight: 800, color: col, mt: 0.25, lineHeight: 1 }}>
+                  {value}
+                </Typography>
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+
+        {/* ── Budget utilisation bar ── */}
         <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-            <Typography sx={{ fontSize: '11px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Budget
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
+            <Typography sx={{ fontSize: '10px', color: '#475569', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>
+              Budget Used
             </Typography>
-            <Typography sx={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>
-              ₹{(team.budgetSpent / 100000).toFixed(1)}L / ₹{(team.budget / 100000).toFixed(1)}L
+            <Typography sx={{ fontSize: '12px', fontWeight: 800, color: budgetPct > 85 ? '#ef4444' : '#94a3b8' }}>
+              {budgetPct.toFixed(0)}%
             </Typography>
           </Box>
-          <LinearProgress
-            variant="determinate"
-            value={budgetPct}
-            sx={{
-              height: 6,
-              borderRadius: 3,
-              bgcolor: 'rgba(255,255,255,0.08)',
-              '& .MuiLinearProgress-bar': {
-                background: budgetPct > 85 ? 'linear-gradient(90deg, #ef4444, #dc2626)' : `linear-gradient(90deg, ${color}, ${color}cc)`,
-                borderRadius: 3,
-              },
-            }}
-          />
-          <Typography sx={{ fontSize: '11px', color: remaining < 0 ? '#ef4444' : '#4ade80', fontWeight: 600, mt: 0.5 }}>
-            ₹{(remaining / 100000).toFixed(1)}L remaining
-          </Typography>
+          <Box sx={{ position: 'relative', height: 8, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+            <LinearProgress
+              variant="determinate"
+              value={budgetPct}
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                height: '100%',
+                borderRadius: 4,
+                bgcolor: 'transparent',
+                '& .MuiLinearProgress-bar': {
+                  background: budgetPct > 85
+                    ? 'linear-gradient(90deg, #ef4444, #fbbf24)'
+                    : `linear-gradient(90deg, ${color}cc, ${color})`,
+                  borderRadius: 4,
+                  boxShadow: `0 0 8px ${color}60`,
+                },
+              }}
+            />
+          </Box>
         </Box>
       </CardContent>
     </Card>
   );
 }
 
+// ─── League + Teams section ──────────────────────────────────────────────────
 function LeagueTeamsSection({ league }: { league: League }) {
   const navigate = useNavigate();
   const { data: teams, isLoading, error } = useQuery<Team[]>({
@@ -264,98 +421,75 @@ function LeagueTeamsSection({ league }: { league: League }) {
     queryFn: () => getTeams(league.id),
   });
 
-  const totalPlayers = (teams ?? []).reduce((s, t) => s + (t.playerCount ?? 0), 0);
-  const budgetPerTeam = (league.teamBudget / 100000).toFixed(1);
+  const totalPlayers  = (teams ?? []).reduce((s, t) => s + (t.playerCount ?? 0), 0);
+  const totalBudget   = (teams ?? []).reduce((s, t) => s + t.budget, 0);
+  const budgetDisplay = totalBudget > 0 ? `₹${(totalBudget / 100000).toFixed(0)}L` : '—';
 
   return (
-    <Box sx={{ mb: 5 }}>
-      {/* League status card */}
-      <Card
-        sx={{
-          background: 'rgba(26,26,46,0.9)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255,255,255,0.07)',
-          borderRadius: '16px',
-          mb: 3,
-          overflow: 'hidden',
-          position: 'relative',
-        }}
-      >
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '100%',
-            background: 'linear-gradient(135deg, rgba(245,158,11,0.05) 0%, rgba(96,165,250,0.05) 100%)',
-            pointerEvents: 'none',
-          }}
-        />
-        <CardContent sx={{ position: 'relative', p: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-            <SportsCricketIcon sx={{ color: '#f59e0b', fontSize: 28 }} />
-            <Typography variant="h5" sx={{ fontWeight: 700, color: '#e2e8f0', flex: 1 }}>
-              {league.name}
-            </Typography>
-            <StatusChip status={league.status} />
-            <Typography sx={{ fontSize: '13px', color: '#64748b', background: 'rgba(255,255,255,0.05)', px: 1.5, py: 0.5, borderRadius: '8px' }}>
-              Season {league.season}
-            </Typography>
-          </Box>
-        </CardContent>
-      </Card>
+    <Box sx={{ mb: 6 }}>
+      <LiveStatusBar league={league} />
 
-      {/* Quick stats */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      {/* ── Season Stats Row ── */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
         <Grid size={{ xs: 6, sm: 3 }}>
-          <QuickStatCard icon={<GroupsIcon />} label="Total Teams" value={(teams ?? []).length} color="#f59e0b" />
+          <SeasonStatCard icon={<GroupsIcon fontSize="inherit" />}           label="Total Teams"   value={(teams ?? []).length} color="#f59e0b" delay={0}    />
         </Grid>
         <Grid size={{ xs: 6, sm: 3 }}>
-          <QuickStatCard icon={<PersonIcon />} label="Total Players" value={totalPlayers} color="#60a5fa" />
+          <SeasonStatCard icon={<PersonIcon fontSize="inherit" />}           label="Players"       value={totalPlayers}         color="#60a5fa" delay={0.06} />
         </Grid>
         <Grid size={{ xs: 6, sm: 3 }}>
-          <QuickStatCard icon={<AccountBalanceWalletIcon />} label="Budget / Team" value={`₹${budgetPerTeam}L`} color="#4ade80" />
+          <SeasonStatCard icon={<AccountBalanceWalletIcon fontSize="inherit" />} label="Budget Pool" value={budgetDisplay}     color="#4ade80" delay={0.12} />
         </Grid>
         <Grid size={{ xs: 6, sm: 3 }}>
-          <QuickStatCard icon={<SportsCricketIcon />} label="Auction Status" value={league.status} color="#a78bfa" />
+          <SeasonStatCard icon={<SportsCricketIcon fontSize="inherit" />}    label="Season"        value={league.season}        color="#a78bfa" delay={0.18} />
         </Grid>
       </Grid>
 
       {isLoading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress sx={{ color: '#f59e0b' }} />
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+          <CircularProgress sx={{ color: '#f59e0b' }} size={40} />
         </Box>
       )}
-      {error && <Alert severity="error" sx={{ borderRadius: '12px' }}>Failed to load teams</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ borderRadius: '12px' }}>Failed to load teams</Alert>
+      )}
+
       {teams && (
         <>
-          <Typography
-            sx={{
-              fontSize: '11px',
-              fontWeight: 700,
-              color: '#64748b',
-              letterSpacing: '2px',
-              textTransform: 'uppercase',
-              mb: 2,
-            }}
-          >
-            Teams — {teams.length}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+            <Box sx={{ width: 3, height: 20, background: 'linear-gradient(180deg, #f59e0b, #d97706)', borderRadius: 2 }} />
+            <Typography
+              sx={{
+                fontSize: '12px',
+                fontWeight: 700,
+                color: '#475569',
+                letterSpacing: '2.5px',
+                textTransform: 'uppercase',
+              }}
+            >
+              Teams — {teams.length}
+            </Typography>
+          </Box>
+
           <Grid container spacing={2.5}>
             {teams.map((team, i) => (
-              <Grid
-                key={team.id}
-                size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
-                sx={{ animation: 'fadeIn 0.5s ease', animationDelay: `${i * 0.05}s`, animationFillMode: 'both' }}
-              >
-                <TeamCard team={team} onClick={() => navigate(`/teams/${team.id}`)} />
+              <Grid key={team.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+                <TeamCard team={team} index={i} onClick={() => navigate(`/teams/${team.id}`)} />
               </Grid>
             ))}
             {teams.length === 0 && (
               <Grid size={12}>
-                <Box sx={{ textAlign: 'center', py: 6, color: '#64748b' }}>
-                  <Typography>No teams yet. Add teams in the Admin panel.</Typography>
+                <Box
+                  sx={{
+                    textAlign: 'center',
+                    py: 8,
+                    color: '#334155',
+                    border: '1px dashed rgba(255,255,255,0.07)',
+                    borderRadius: '16px',
+                  }}
+                >
+                  <GroupsIcon sx={{ fontSize: 48, mb: 1, opacity: 0.3 }} />
+                  <Typography sx={{ color: '#475569' }}>No teams yet. Add teams in the Admin panel.</Typography>
                 </Box>
               </Grid>
             )}
@@ -366,6 +500,180 @@ function LeagueTeamsSection({ league }: { league: League }) {
   );
 }
 
+// ─── Hero Banner ─────────────────────────────────────────────────────────────
+function HeroBanner({ league }: { league: League | undefined }) {
+  return (
+    <Box
+      sx={{
+        position: 'relative',
+        borderRadius: '24px',
+        overflow: 'hidden',
+        mb: 4,
+        background: 'linear-gradient(135deg, #0a0a1a 0%, #0f0f25 40%, #1a0a30 70%, #0a1020 100%)',
+        border: '1px solid rgba(245,158,11,0.2)',
+        animation: 'glowPulse 4s ease-in-out infinite',
+        minHeight: 220,
+      }}
+    >
+      {/* Background mesh gradient */}
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          background: `
+            radial-gradient(ellipse 60% 80% at 20% 50%, rgba(245,158,11,0.12) 0%, transparent 60%),
+            radial-gradient(ellipse 50% 70% at 80% 30%, rgba(96,165,250,0.08) 0%, transparent 60%),
+            radial-gradient(ellipse 40% 60% at 50% 90%, rgba(167,139,250,0.06) 0%, transparent 50%)
+          `,
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Shimmer sweep */}
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(105deg, transparent 40%, rgba(245,158,11,0.06) 50%, transparent 60%)',
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 3.5s linear infinite',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Floating particles */}
+      {[...Array(8)].map((_, i) => (
+        <Box
+          key={i}
+          sx={{
+            position: 'absolute',
+            width: 4,
+            height: 4,
+            borderRadius: '50%',
+            background: i % 2 === 0 ? '#f59e0b' : '#60a5fa',
+            opacity: 0.6,
+            left: `${10 + i * 11}%`,
+            top: `${20 + (i % 3) * 25}%`,
+            animation: `particle ${2.5 + i * 0.4}s ease-in-out ${i * 0.5}s infinite`,
+          }}
+        />
+      ))}
+
+      {/* Content */}
+      <Box
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          px: { xs: 3, md: 5 },
+          py: { xs: 3.5, md: 4.5 },
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: { xs: 'flex-start', md: 'center' },
+          gap: 3,
+        }}
+      >
+        {/* Trophy */}
+        <Box
+          sx={{
+            width: { xs: 60, md: 80 },
+            height: { xs: 60, md: 80 },
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(245,158,11,0.1))',
+            border: '2px solid rgba(245,158,11,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            animation: 'float 3s ease-in-out infinite',
+            boxShadow: '0 0 30px rgba(245,158,11,0.3)',
+          }}
+        >
+          <EmojiEventsIcon sx={{ fontSize: { xs: 32, md: 40 }, color: '#f59e0b' }} />
+        </Box>
+
+        {/* Titles */}
+        <Box sx={{ flex: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, flexWrap: 'wrap' }}>
+            <Typography
+              component="h1"
+              sx={{
+                fontWeight: 900,
+                fontSize: { xs: '26px', md: '38px', lg: '44px' },
+                background: 'linear-gradient(135deg, #f59e0b 0%, #fde68a 40%, #f59e0b 70%, #d97706 100%)',
+                backgroundSize: '200% auto',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                animation: 'shimmer 4s linear infinite',
+                lineHeight: 1.1,
+                letterSpacing: '-1px',
+              }}
+            >
+              Recykal Premier League
+            </Typography>
+            {league && (
+              <Box
+                sx={{
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: '8px',
+                  background: 'rgba(245,158,11,0.15)',
+                  border: '1px solid rgba(245,158,11,0.4)',
+                  flexShrink: 0,
+                }}
+              >
+                <Typography sx={{ fontSize: '12px', fontWeight: 800, color: '#f59e0b', letterSpacing: '1px' }}>
+                  SEASON {league.season}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+          <Typography
+            sx={{
+              fontSize: { xs: '14px', md: '16px' },
+              color: '#64748b',
+              fontWeight: 500,
+              letterSpacing: '0.5px',
+            }}
+          >
+            Where Every Bid Counts
+          </Typography>
+        </Box>
+
+        {/* League badge */}
+        {league && (
+          <Box
+            sx={{
+              textAlign: { xs: 'left', md: 'right' },
+              flexShrink: 0,
+            }}
+          >
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 1,
+                px: 2,
+                py: 1,
+                borderRadius: '12px',
+                background: 'rgba(15,15,30,0.7)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                backdropFilter: 'blur(10px)',
+              }}
+            >
+              <SportsCricketIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
+              <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#94a3b8' }}>
+                {league.name}
+              </Typography>
+            </Box>
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const { data: leagues, isLoading, error } = useQuery<League[]>({
     queryKey: ['leagues'],
@@ -374,54 +682,50 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-        <CircularProgress sx={{ color: '#f59e0b' }} />
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 2 }}>
+        <CircularProgress sx={{ color: '#f59e0b' }} size={48} />
+        <Typography sx={{ color: '#475569', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase' }}>
+          Loading Dashboard…
+        </Typography>
       </Box>
     );
   }
 
   if (error) {
-    return <Alert severity="error" sx={{ borderRadius: '12px' }}>Failed to load leagues</Alert>;
+    return (
+      <Alert severity="error" sx={{ borderRadius: '12px' }}>
+        Failed to load leagues
+      </Alert>
+    );
   }
 
   const activeLeagues = leagues?.filter(l => l.status !== 'COMPLETED') ?? [];
   const displayLeagues = activeLeagues.length > 0 ? activeLeagues : (leagues ?? []).slice(0, 1);
+  const primaryLeague = displayLeagues[0];
 
   return (
-    <Box sx={{ animation: 'fadeIn 0.5s ease' }}>
-      {/* Welcome header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 800,
-            background: 'linear-gradient(135deg, #f59e0b 0%, #60a5fa 60%, #a78bfa 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            mb: 0.5,
-          }}
-        >
-          RPL Dashboard
-        </Typography>
-        <Typography sx={{ color: '#64748b', fontSize: '15px' }}>
-          Welcome back — here's the latest from your auction league
-        </Typography>
-      </Box>
+    <Box sx={{ animation: 'fadeInUp 0.4s ease' }}>
+      {/* Inject keyframes */}
+      <style>{keyframes}</style>
 
+      {/* Hero */}
+      <HeroBanner league={primaryLeague} />
+
+      {/* League sections */}
       {displayLeagues.length === 0 && (
         <Alert
           severity="info"
           sx={{
             borderRadius: '12px',
-            background: 'rgba(96,165,250,0.1)',
-            border: '1px solid rgba(96,165,250,0.3)',
+            background: 'rgba(96,165,250,0.08)',
+            border: '1px solid rgba(96,165,250,0.25)',
             color: '#60a5fa',
           }}
         >
           No leagues found. Create a league in the Admin panel.
         </Alert>
       )}
+
       {displayLeagues.map(league => (
         <LeagueTeamsSection key={league.id} league={league} />
       ))}
