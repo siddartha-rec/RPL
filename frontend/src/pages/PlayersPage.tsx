@@ -628,7 +628,7 @@ function AllPlayersContent() {
         <CategoryToggle value={category} onChange={v => setCategory(v)} />
 
         {/* Season filter pills */}
-        {leagues && leagues.length > 1 && (
+        {leagues && leagues.length > 0 && (
           <Box
             sx={{
               display: 'flex',
