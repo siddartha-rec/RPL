@@ -120,28 +120,19 @@ export default function LoginPage() {
         >
           {/* ── Logo / Title ─────────────────────────── */}
           <Box sx={{ textAlign: 'center', mb: 4 }}>
-            {/* Cricket ball icon */}
+            {/* Recykal logo */}
             <Box
+              component="img"
+              src="/recykal-logo.png"
+              alt="Recykal"
               sx={{
-                width: 64,
-                height: 64,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                height: 40,
+                filter: 'invert(1) brightness(2)',
                 mx: 'auto',
                 mb: 2.5,
-                boxShadow: '0 0 30px rgba(245,158,11,0.4)',
-                animation: 'glow 3s ease-in-out infinite',
+                display: 'block',
               }}
-            >
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="#0a0a1a" strokeWidth="1.5" fill="none" />
-                <path d="M5 12 Q8 8 12 12 Q16 16 19 12" stroke="#0a0a1a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                <path d="M5 12 Q8 16 12 12 Q16 8 19 12" stroke="#0a0a1a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              </svg>
-            </Box>
+            />
 
             <Typography
               variant="h3"
@@ -257,7 +248,7 @@ export default function LoginPage() {
               letterSpacing: '0.04em',
             }}
           >
-            RPL · Powered by Cricket
+            RPL - Powered by Recykal
           </Typography>
         </Box>
       </Box>

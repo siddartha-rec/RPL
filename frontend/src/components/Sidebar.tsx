@@ -121,30 +121,19 @@ export default function Sidebar() {
           borderBottom: '1px solid rgba(255,255,255,0.05)',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box
-            sx={{
-              width: 28,
-              height: 28,
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, rgba(245,158,11,0.3) 0%, rgba(245,158,11,0.1) 100%)',
-              border: '1px solid rgba(245,158,11,0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="#f59e0b" strokeWidth="1.5" fill="none" />
-              <path d="M5 12 Q8 8 12 12 Q16 16 19 12" stroke="#f59e0b" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              <path d="M5 12 Q8 16 12 12 Q16 8 19 12" stroke="#f59e0b" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-            </svg>
-          </Box>
+            component="img"
+            src="/recykal-logo.png"
+            alt="Recykal"
+            sx={{ height: 20, filter: 'invert(1) brightness(2)', flexShrink: 0 }}
+          />
+          <Box sx={{ width: '1px', height: 20, bgcolor: 'rgba(255,255,255,0.1)' }} />
           <Box>
-            <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#f59e0b', lineHeight: 1.1 }}>
+            <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#f59e0b', lineHeight: 1.1 }}>
               {activeLeague?.name ?? 'RPL'}
             </Typography>
-            <Typography sx={{ fontSize: '0.6rem', color: '#475569', letterSpacing: '0.06em' }}>
+            <Typography sx={{ fontSize: '0.55rem', color: '#475569', letterSpacing: '0.06em' }}>
               CRICKET LEAGUE
             </Typography>
           </Box>

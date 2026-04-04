@@ -22,35 +22,24 @@ export default function TopBar() {
     <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}>
       <Toolbar sx={{ minHeight: 64, px: 3, gap: 2 }}>
         {/* ── Logo ─────────────────────────────────────────────── */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mr: 2 }}>
-          {/* Cricket ball icon */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mr: 2 }}>
           <Box
+            component="img"
+            src="/recykal-logo.png"
+            alt="Recykal"
             sx={{
-              width: 36,
-              height: 36,
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 0 12px rgba(245,158,11,0.5)',
+              height: 28,
+              filter: 'invert(1) brightness(2)',
               flexShrink: 0,
-              animation: 'glow 3s ease-in-out infinite',
             }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="#0a0a1a" strokeWidth="1.5" fill="none" />
-              <path d="M5 12 Q8 8 12 12 Q16 16 19 12" stroke="#0a0a1a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              <path d="M5 12 Q8 16 12 12 Q16 8 19 12" stroke="#0a0a1a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-            </svg>
-          </Box>
-
+          />
+          <Box sx={{ width: '1px', height: 24, bgcolor: 'rgba(255,255,255,0.12)' }} />
           <Typography
             variant="h6"
             component="div"
             sx={{
               fontWeight: 800,
-              fontSize: '1.25rem',
+              fontSize: '1.1rem',
               letterSpacing: '0.02em',
               background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%)',
               backgroundSize: '200% auto',
