@@ -97,6 +97,7 @@ public class PlayerService {
         player.setPlayerNumber(request.getPlayerNumber());
         player.setCategory(parseCategory(request.getCategory()));
         player.setRole(request.getRole());
+        player.setGender(parseGender(request.getGender()));
         if (request.getBasePrice() != null) {
             player.setBasePrice(request.getBasePrice());
         }
@@ -123,10 +124,20 @@ public class PlayerService {
                 .playerNumber(request.getPlayerNumber())
                 .category(parseCategory(request.getCategory()))
                 .role(request.getRole())
+                .gender(parseGender(request.getGender()))
                 .basePrice(request.getBasePrice() != null ? request.getBasePrice() : java.math.BigDecimal.ZERO)
                 .isCaptain(request.getIsCaptain() != null ? request.getIsCaptain() : false)
                 .league(league)
                 .build();
+    }
+
+    private Player.Gender parseGender(String gender) {
+        if (gender == null || gender.isBlank()) return null;
+        try {
+            return Player.Gender.valueOf(gender.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid gender: " + gender + " (allowed: MALE, FEMALE, OTHER)");
+        }
     }
 
     private Player.PlayerCategory parseCategory(String category) {

@@ -1,186 +1,35 @@
-import { AppBar, Toolbar, Box, Button, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useLeague } from '../context/LeagueContext';
+import { AppBar, Toolbar, Box } from '@mui/material';
+
+const DRAWER_WIDTH = 240;
 
 export default function TopBar() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const { activeLeague } = useLeague();
-  const leagueName = activeLeague?.name ?? 'RPL';
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  const initials = user?.displayName
-    ? user.displayName.charAt(0).toUpperCase()
-    : '?';
-
   return (
-    <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}>
-      <Toolbar sx={{ minHeight: 64, px: 3, gap: 2 }}>
-        {/* ── Logo ─────────────────────────────────────────────── */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mr: 2 }}>
-          <Box
-            component="img"
-            src="/recykal-logo.png"
-            alt="Recykal"
-            sx={{
-              height: 28,
-              filter: 'invert(1) brightness(2)',
-              flexShrink: 0,
-            }}
-          />
-          <Box sx={{ width: '1px', height: 24, bgcolor: 'rgba(255,255,255,0.12)' }} />
-          <Typography
-            variant="h6"
-            component="div"
-            sx={{
-              fontWeight: 800,
-              fontSize: '1.1rem',
-              letterSpacing: '0.02em',
-              background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%)',
-              backgroundSize: '200% auto',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              animation: 'shimmer 3s linear infinite',
-              userSelect: 'none',
-            }}
-          >
-            {leagueName}
-          </Typography>
-        </Box>
-
-        {/* ── LIVE Badge ───────────────────────────────────────── */}
+    <AppBar
+      position="fixed"
+      elevation={0}
+      sx={{
+        zIndex: (t) => t.zIndex.drawer + 1,
+        width: DRAWER_WIDTH,
+        left: 0,
+        right: 'auto',
+        background: 'rgba(255,255,255,0.9)',
+        backdropFilter: 'saturate(160%) blur(18px)',
+        WebkitBackdropFilter: 'saturate(160%) blur(18px)',
+        borderBottom: '1px solid #e2e8f0',
+        borderRight: '1px solid #eef2f7',
+        boxShadow: 'none',
+      }}
+    >
+      <Toolbar sx={{ minHeight: 60, px: 2.25, gap: 1.5 }}>
         <Box
+          component="img"
+          src="/recykal-logo.png"
+          alt="Recykal"
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.75,
-            px: 1.25,
-            py: 0.4,
-            borderRadius: 20,
-            background: 'rgba(239,68,68,0.12)',
-            border: '1px solid rgba(239,68,68,0.3)',
+            height: 22,
+            opacity: 0.95,
           }}
-        >
-          <Box
-            sx={{
-              width: 7,
-              height: 7,
-              borderRadius: '50%',
-              background: '#ef4444',
-              animation: 'pulseDot 1.5s ease-in-out infinite',
-            }}
-          />
-          <Typography
-            sx={{
-              fontSize: '0.65rem',
-              fontWeight: 700,
-              letterSpacing: '0.12em',
-              color: '#ef4444',
-              lineHeight: 1,
-            }}
-          >
-            LIVE AUCTION
-          </Typography>
-        </Box>
-
-        <Box sx={{ flexGrow: 1 }} />
-
-        {/* ── User Section ─────────────────────────────────────── */}
-        {user ? (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            {/* Name + role */}
-            <Box sx={{ textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
-              <Typography
-                sx={{
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  color: '#f1f5f9',
-                  lineHeight: 1.2,
-                }}
-              >
-                {user.displayName}
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: '0.68rem',
-                  color: '#64748b',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Member
-              </Typography>
-            </Box>
-
-            {/* Avatar circle */}
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(245,158,11,0.25) 0%, rgba(245,158,11,0.1) 100%)',
-                border: '1.5px solid rgba(245,158,11,0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  border: '1.5px solid rgba(245,158,11,0.8)',
-                  boxShadow: '0 0 12px rgba(245,158,11,0.3)',
-                },
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: '0.85rem',
-                  fontWeight: 700,
-                  color: '#f59e0b',
-                  lineHeight: 1,
-                }}
-              >
-                {initials}
-              </Typography>
-            </Box>
-
-            {/* Logout */}
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleLogout}
-              sx={{
-                borderColor: 'rgba(255,255,255,0.12)',
-                color: '#94a3b8',
-                fontSize: '0.78rem',
-                px: 1.5,
-                py: 0.5,
-                minWidth: 0,
-                '&:hover': {
-                  borderColor: 'rgba(239,68,68,0.5)',
-                  color: '#ef4444',
-                  background: 'rgba(239,68,68,0.06)',
-                  transform: 'none',
-                },
-              }}
-            >
-              Sign out
-            </Button>
-          </Box>
-        ) : (
-          <Button
-            variant="contained"
-            size="small"
-            onClick={() => navigate('/login')}
-          >
-            Login
-          </Button>
-        )}
+        />
       </Toolbar>
     </AppBar>
   );

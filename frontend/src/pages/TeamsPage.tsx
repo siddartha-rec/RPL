@@ -7,8 +7,6 @@ import {
 import GroupsIcon from '@mui/icons-material/Groups';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import PersonIcon from '@mui/icons-material/Person';
-
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { useNavigate } from 'react-router-dom';
 import { getLeagues } from '../api/leagues';
 import { getTeams } from '../api/teams';
@@ -25,9 +23,9 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
       onClick={onClick}
       sx={{
         cursor: 'pointer',
-        background: 'rgba(15,15,35,0.8)',
+        background: 'rgba(255,255,255,0.92)',
         backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        border: '1px solid #eef2f7',
         borderRadius: '14px',
         transition: 'all 0.3s ease',
         overflow: 'hidden',
@@ -71,7 +69,7 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
             transform: 'translateY(-50%)',
             fontSize: '70px',
             fontWeight: 900,
-            color: 'rgba(255,255,255,0.08)',
+            color: 'rgba(255,255,255,0.22)',
             letterSpacing: '-3px',
             lineHeight: 1,
             userSelect: 'none',
@@ -93,38 +91,6 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
           {team.name}
         </Typography>
 
-        <Box
-          sx={{
-            px: 1.5,
-            py: 0.5,
-            borderRadius: '8px',
-            background: 'rgba(0,0,0,0.35)',
-            border: '1px solid rgba(255,255,255,0.25)',
-            backdropFilter: 'blur(4px)',
-          }}
-        >
-          <Typography sx={{ fontSize: '11px', fontWeight: 800, color: '#fff', letterSpacing: '1px' }}>
-            {team.shortName}
-          </Typography>
-        </Box>
-
-        <Box
-          sx={{
-            width: 32,
-            height: 32,
-            borderRadius: '50%',
-            background: 'rgba(0,0,0,0.4)',
-            border: '1px solid rgba(255,255,255,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#fff', lineHeight: 1 }}>
-            {playerCount}
-          </Typography>
-        </Box>
       </Box>
 
       {/* Card body */}
@@ -150,7 +116,7 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
             >
               C
             </Box>
-            <Typography sx={{ fontSize: '13px', color: '#cbd5e1', fontWeight: 600 }}>
+            <Typography sx={{ fontSize: '13px', color: '#475569', fontWeight: 600 }}>
               {team.captainName}
             </Typography>
           </Box>
@@ -167,8 +133,8 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
             <Grid key={label} size={{ xs: 6 }}>
               <Box
                 sx={{
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  background: '#f8fafc',
+                  border: '1px solid #eef2f7',
                   borderRadius: '10px',
                   p: 1,
                   textAlign: 'center',
@@ -195,7 +161,7 @@ function TeamCard({ team, index, onClick }: { team: Team; index: number; onClick
               {budgetPct.toFixed(0)}%
             </Typography>
           </Box>
-          <Box sx={{ position: 'relative', height: 6, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+          <Box sx={{ position: 'relative', height: 6, borderRadius: 4, bgcolor: '#e2e8f0', overflow: 'hidden' }}>
             <LinearProgress
               variant="determinate"
               value={budgetPct}
@@ -229,80 +195,13 @@ function LeagueTeams({ league }: { league: League }) {
 
   return (
     <Box sx={{ mb: 6 }}>
-      {/* League section header */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          mb: 3.5,
-          pb: 2,
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-        }}
-      >
-        <Box>
-          <Typography
-            sx={{
-              fontSize: '11px',
-              fontWeight: 700,
-              color: '#475569',
-              letterSpacing: '2.5px',
-              textTransform: 'uppercase',
-              mb: 0.25,
-            }}
-          >
-            {league.name}
-          </Typography>
-        </Box>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 1 }}>
-          <CalendarTodayIcon sx={{ fontSize: 12, color: '#64748b' }} />
-          <Box
-            sx={{
-              px: 1.5,
-              py: 0.3,
-              borderRadius: '8px',
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#94a3b8',
-            }}
-          >
-            Season {league.season}
-          </Box>
-        </Box>
-
-        {teams && (
-          <Box
-            sx={{
-              background: 'rgba(245,158,11,0.12)',
-              border: '1px solid rgba(245,158,11,0.28)',
-              borderRadius: '20px',
-              px: 1.5,
-              py: 0.4,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.6,
-            }}
-          >
-            <GroupsIcon sx={{ fontSize: 13, color: '#f59e0b' }} />
-            <Typography sx={{ fontSize: '12px', fontWeight: 800, color: '#f59e0b' }}>
-              {teams.length} {teams.length === 1 ? 'Team' : 'Teams'}
-            </Typography>
-          </Box>
-        )}
-
-        <Box sx={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.05)' }} />
-      </Box>
-
       {isLoading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-          <CircularProgress sx={{ color: '#f59e0b' }} size={32} />
+          <CircularProgress sx={{ color: '#b45309' }} size={32} />
         </Box>
       )}
       {error && (
-        <Alert severity="error" sx={{ borderRadius: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5' }}>
+        <Alert severity="error" sx={{ borderRadius: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#b91c1c' }}>
           Failed to load teams
         </Alert>
       )}
@@ -320,9 +219,9 @@ function LeagueTeams({ league }: { league: League }) {
                   textAlign: 'center',
                   py: 10,
                   color: '#475569',
-                  background: 'rgba(15,15,35,0.5)',
+                  background: '#ffffff',
                   borderRadius: '20px',
-                  border: '1px dashed rgba(255,255,255,0.07)',
+                  border: '1px dashed #e2e8f0',
                 }}
               >
                 <GroupsIcon sx={{ fontSize: 44, mb: 1.5, opacity: 0.25 }} />
@@ -347,14 +246,14 @@ export default function TeamsPage() {
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
-        <CircularProgress sx={{ color: '#f59e0b' }} size={40} />
+        <CircularProgress sx={{ color: '#b45309' }} size={40} />
       </Box>
     );
   }
 
   if (error) {
     return (
-      <Alert severity="error" sx={{ borderRadius: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5' }}>
+      <Alert severity="error" sx={{ borderRadius: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#b91c1c' }}>
         Failed to load leagues
       </Alert>
     );
@@ -372,7 +271,7 @@ export default function TeamsPage() {
         sx={{
           mb: 5,
           pb: 4,
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid #eef2f7',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 2, flexWrap: 'wrap' }}>
@@ -402,7 +301,7 @@ export default function TeamsPage() {
                   border: '1px solid rgba(245,158,11,0.35)',
                   fontSize: '11px',
                   fontWeight: 800,
-                  color: '#f59e0b',
+                  color: '#b45309',
                   letterSpacing: '1px',
                   textTransform: 'uppercase',
                   alignSelf: 'center',
@@ -423,8 +322,8 @@ export default function TeamsPage() {
             <Box
               sx={{
                 display: 'flex',
-                background: 'rgba(15,15,35,0.8)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'rgba(255,255,255,0.92)',
+                border: '1px solid #e2e8f0',
                 borderRadius: '14px',
                 p: 0.5,
                 gap: 0.4,
@@ -449,13 +348,13 @@ export default function TeamsPage() {
                         ? {
                             background: 'linear-gradient(135deg, rgba(167,139,250,0.25), rgba(139,92,246,0.12))',
                             border: '1px solid rgba(167,139,250,0.45)',
-                            color: '#a78bfa',
+                            color: '#6d28d9',
                             boxShadow: '0 2px 8px rgba(167,139,250,0.2)',
                           }
                         : {
                             color: '#64748b',
                             border: '1px solid transparent',
-                            '&:hover': { color: '#94a3b8', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' },
+                            '&:hover': { color: '#94a3b8', background: '#eef2f7', border: '1px solid #eef2f7' },
                           }),
                     }}
                   >
@@ -474,9 +373,9 @@ export default function TeamsPage() {
             textAlign: 'center',
             py: 12,
             color: '#475569',
-            background: 'rgba(15,15,35,0.5)',
+            background: '#ffffff',
             borderRadius: '20px',
-            border: '1px dashed rgba(255,255,255,0.07)',
+            border: '1px dashed #e2e8f0',
           }}
         >
           <GroupsIcon sx={{ fontSize: 52, mb: 2, opacity: 0.2 }} />

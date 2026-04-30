@@ -32,6 +32,10 @@ public class Player {
     @Column(length = 50)
     private String role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    private Gender gender;
+
     @Column(name = "base_price", precision = 12, scale = 2)
     @Builder.Default
     private BigDecimal basePrice = BigDecimal.ZERO;
@@ -66,4 +70,5 @@ public class Player {
 
     public enum PlayerCategory { CRICKET, OTHER }
     public enum PlayerStatus { AVAILABLE, RETAINED, SOLD, UNSOLD }
+    public enum Gender { MALE, FEMALE, OTHER }
 }

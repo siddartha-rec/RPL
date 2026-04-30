@@ -7,8 +7,10 @@ import com.rpl.auction.auction.entity.DraftPick;
 import com.rpl.auction.auction.repository.AuctionRepository;
 import com.rpl.auction.auction.repository.BidRepository;
 import com.rpl.auction.auction.repository.DraftPickRepository;
+import com.rpl.auction.audit.service.AuditService;
 import com.rpl.auction.common.exception.BadRequestException;
 import com.rpl.auction.common.exception.ResourceNotFoundException;
+import com.rpl.auction.common.util.SecurityUtil;
 import com.rpl.auction.history.entity.PlayerHistory;
 import com.rpl.auction.history.repository.PlayerHistoryRepository;
 import com.rpl.auction.league.entity.League;
@@ -42,6 +44,7 @@ public class AuctionService {
     private final PlayerRepository playerRepository;
     private final PlayerHistoryRepository playerHistoryRepository;
     private final SseService sseService;
+    private final AuditService auditService;
 
     @Transactional
     public AuctionResponse create(Long leagueId) {
@@ -67,6 +70,12 @@ public class AuctionService {
         return enrichAuctionResponse(AuctionResponse.from(auction), auction);
     }
 
+    public AuctionResponse getAuctionByLeague(Long leagueId) {
+        Auction auction = auctionRepository.findFirstByLeagueId(leagueId)
+                .orElseThrow(() -> new ResourceNotFoundException("Auction for league", leagueId));
+        return enrichAuctionResponse(AuctionResponse.from(auction), auction);
+    }
+
     @Transactional
     public AuctionResponse start(Long id) {
         Auction auction = getAuctionOrThrow(id);
@@ -87,6 +96,7 @@ public class AuctionService {
                 "auctionId", auction.getId(),
                 "status", auction.getStatus().name()
         ));
+        audit("AUCTION_STARTED", auction.getId(), Map.of("status", auction.getStatus().name()));
 
         return enrichAuctionResponse(AuctionResponse.from(auction), auction);
     }
@@ -106,6 +116,7 @@ public class AuctionService {
                 "auctionId", auction.getId(),
                 "status", auction.getStatus().name()
         ));
+        audit("AUCTION_ADVANCED_TO_LIVE", auction.getId(), Map.of());
 
         return enrichAuctionResponse(AuctionResponse.from(auction), auction);
     }
@@ -143,6 +154,10 @@ public class AuctionService {
                 "playerName", player.getName(),
                 "basePrice", player.getBasePrice()
         ));
+        audit("PLAYER_PUT_UP", auction.getId(), Map.of(
+                "playerId", playerId,
+                "playerName", player.getName(),
+                "basePrice", player.getBasePrice()));
 
         return enrichAuctionResponse(AuctionResponse.from(auction), auction);
     }
@@ -217,6 +232,12 @@ public class AuctionService {
                 "amount", bidAmount,
                 "playerId", auction.getCurrentPlayerId()
         ));
+        audit("BID_PLACED", auctionId, Map.of(
+                "bidId", bid.getId(),
+                "teamId", team.getId(),
+                "teamName", team.getName(),
+                "amount", bidAmount,
+                "playerId", auction.getCurrentPlayerId()));
 
         return BidResponse.from(bid, team.getName());
     }
@@ -247,6 +268,7 @@ public class AuctionService {
 
             player.setStatus(Player.PlayerStatus.SOLD);
             player.setSoldPrice(winningBid.getAmount());
+            player.setTeam(winningTeam);
             playerRepository.save(player);
 
             winningTeam.setBudgetSpent(winningTeam.getBudgetSpent().add(winningBid.getAmount()));
@@ -268,6 +290,12 @@ public class AuctionService {
                     "teamName", winningTeam.getName(),
                     "amount", winningBid.getAmount()
             ));
+            audit("PLAYER_SOLD", auctionId, Map.of(
+                    "playerId", playerId,
+                    "playerName", player.getName(),
+                    "teamId", winningTeam.getId(),
+                    "teamName", winningTeam.getName(),
+                    "amount", winningBid.getAmount()));
 
             broadcastBudgetUpdate(auctionId, winningTeam);
         } else {
@@ -279,12 +307,112 @@ public class AuctionService {
                     "playerId", playerId,
                     "playerName", player.getName()
             ));
+            audit("PLAYER_UNSOLD", auctionId, Map.of(
+                    "playerId", playerId,
+                    "playerName", player.getName()));
         }
 
         auction.setCurrentPlayerId(null);
         auction.setCurrentBasePrice(null);
         auction.setCurrentHighestBidId(null);
         auction = auctionRepository.save(auction);
+
+        return enrichAuctionResponse(AuctionResponse.from(auction), auction);
+    }
+
+    @Transactional
+    public AuctionResponse markUnsold(Long auctionId) {
+        Auction auction = getAuctionOrThrow(auctionId);
+        if (auction.getStatus() != Auction.AuctionStatus.LIVE) {
+            throw new BadRequestException("Auction must be LIVE to mark unsold. Current: " + auction.getStatus());
+        }
+        if (auction.getCurrentPlayerId() == null) {
+            throw new BadRequestException("No player is currently up for sale");
+        }
+
+        Long playerId = auction.getCurrentPlayerId();
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+
+        // Mark any in-flight bids as not winning (player is being withdrawn — no team wins)
+        if (auction.getCurrentHighestBidId() != null) {
+            bidRepository.findById(auction.getCurrentHighestBidId()).ifPresent(b -> {
+                b.setIsWinning(false);
+                bidRepository.save(b);
+            });
+        }
+
+        player.setStatus(Player.PlayerStatus.UNSOLD);
+        playerRepository.save(player);
+
+        broadcastEvent(auctionId, "PLAYER_UNSOLD", Map.of(
+                "playerId", playerId,
+                "playerName", player.getName()
+        ));
+        audit("PLAYER_FORCE_UNSOLD", auctionId, Map.of(
+                "playerId", playerId,
+                "playerName", player.getName()));
+
+        auction.setCurrentPlayerId(null);
+        auction.setCurrentBasePrice(null);
+        auction.setCurrentHighestBidId(null);
+        auction = auctionRepository.save(auction);
+
+        return enrichAuctionResponse(AuctionResponse.from(auction), auction);
+    }
+
+    @Transactional
+    public AuctionResponse undoLastBid(Long auctionId) {
+        Auction auction = getAuctionOrThrow(auctionId);
+        if (auction.getStatus() != Auction.AuctionStatus.LIVE) {
+            throw new BadRequestException("Auction must be LIVE to undo a bid. Current: " + auction.getStatus());
+        }
+        if (auction.getCurrentPlayerId() == null) {
+            throw new BadRequestException("No player is currently up for sale");
+        }
+
+        Long playerId = auction.getCurrentPlayerId();
+        Bid lastBid = bidRepository
+                .findTopByAuctionIdAndPlayerIdOrderByBidOrderDesc(auctionId, playerId)
+                .orElseThrow(() -> new BadRequestException("No bids to undo for current player"));
+
+        Long undoneTeamId = lastBid.getTeamId();
+        BigDecimal undoneAmount = lastBid.getAmount();
+        String undoneTeamName = teamRepository.findById(undoneTeamId)
+                .map(Team::getName)
+                .orElse("Unknown");
+
+        bidRepository.delete(lastBid);
+
+        // Find the next highest remaining bid (if any) and reinstate it as winning.
+        List<Bid> remaining = bidRepository.findByAuctionIdAndPlayerIdOrderByBidOrderDesc(auctionId, playerId);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("undoneBidId", lastBid.getId());
+        payload.put("undoneTeamId", undoneTeamId);
+        payload.put("undoneTeamName", undoneTeamName);
+        payload.put("undoneAmount", undoneAmount);
+        payload.put("playerId", playerId);
+
+        if (remaining.isEmpty()) {
+            auction.setCurrentHighestBidId(null);
+        } else {
+            Bid newHighest = remaining.get(0);
+            newHighest.setIsWinning(true);
+            bidRepository.save(newHighest);
+            auction.setCurrentHighestBidId(newHighest.getId());
+
+            String newHighestTeamName = teamRepository.findById(newHighest.getTeamId())
+                    .map(Team::getName)
+                    .orElse("Unknown");
+            payload.put("newHighestBidId", newHighest.getId());
+            payload.put("newHighestTeamId", newHighest.getTeamId());
+            payload.put("newHighestTeamName", newHighestTeamName);
+            payload.put("newHighestAmount", newHighest.getAmount());
+        }
+
+        auction = auctionRepository.save(auction);
+        broadcastEvent(auctionId, "BID_UNDONE", payload);
+        audit("BID_UNDONE", auctionId, payload);
 
         return enrichAuctionResponse(AuctionResponse.from(auction), auction);
     }
@@ -300,6 +428,7 @@ public class AuctionService {
         auction = auctionRepository.save(auction);
 
         broadcastEvent(id, "AUCTION_PAUSED", Map.of("auctionId", id));
+        audit("AUCTION_PAUSED", id, Map.of());
 
         return enrichAuctionResponse(AuctionResponse.from(auction), auction);
     }
@@ -315,6 +444,7 @@ public class AuctionService {
         auction = auctionRepository.save(auction);
 
         broadcastEvent(id, "AUCTION_RESUMED", Map.of("auctionId", id));
+        audit("AUCTION_RESUMED", id, Map.of());
 
         return enrichAuctionResponse(AuctionResponse.from(auction), auction);
     }
@@ -404,6 +534,7 @@ public class AuctionService {
         // Update player status
         player.setStatus(Player.PlayerStatus.RETAINED);
         player.setSoldPrice(league.getRetentionCost());
+        player.setTeam(team);
         playerRepository.save(player);
 
         // Deduct budget
@@ -489,6 +620,7 @@ public class AuctionService {
 
         player.setStatus(Player.PlayerStatus.SOLD);
         player.setSoldPrice(draftCost);
+        player.setTeam(team);
         playerRepository.save(player);
 
         team.setBudgetSpent(team.getBudgetSpent().add(draftCost));
@@ -519,14 +651,85 @@ public class AuctionService {
     }
 
     @Transactional
-    public AuctionResponse complete(Long id) {
+    public AuctionResponse complete(Long id, boolean force) {
         Auction auction = getAuctionOrThrow(id);
+
+        if (!force) {
+            CompletionCheckResponse check = buildCompletionCheck(auction);
+            if (!check.getShortPlayers().isEmpty()) {
+                Integer minPlayers = check.getMinPlayersPerTeam();
+                String shorts = check.getShortPlayers().stream()
+                        .map(s -> s.getTeamName() + " (" + s.getCurrent() + ")")
+                        .reduce((a, b) -> a + ", " + b)
+                        .orElse("");
+                throw new BadRequestException(
+                        "Cannot complete auction. Min " + minPlayers + " players required per team. Short: " + shorts);
+            }
+            if (!check.getShortWomen().isEmpty()) {
+                Integer minWomen = check.getMinWomenPerTeam();
+                String shorts = check.getShortWomen().stream()
+                        .map(s -> s.getTeamName() + " (" + s.getCurrent() + ")")
+                        .reduce((a, b) -> a + ", " + b)
+                        .orElse("");
+                throw new BadRequestException(
+                        "Cannot complete auction. Min " + minWomen + " women players required per team. Short: " + shorts);
+            }
+        }
+
         auction.setStatus(Auction.AuctionStatus.COMPLETED);
         auction = auctionRepository.save(auction);
 
-        broadcastEvent(id, "AUCTION_COMPLETED", Map.of("auctionId", id));
+        broadcastEvent(id, "AUCTION_COMPLETED", Map.of("auctionId", id, "forced", force));
+        audit("AUCTION_COMPLETED", id, Map.of("forced", force));
 
         return enrichAuctionResponse(AuctionResponse.from(auction), auction);
+    }
+
+    public CompletionCheckResponse getCompletionCheck(Long id) {
+        Auction auction = getAuctionOrThrow(id);
+        return buildCompletionCheck(auction);
+    }
+
+    private CompletionCheckResponse buildCompletionCheck(Auction auction) {
+        final Long leagueId = auction.getLeagueId();
+        League league = leagueRepository.findById(leagueId)
+                .orElseThrow(() -> new ResourceNotFoundException("League", leagueId));
+        Integer minPlayers = league.getMinPlayersPerTeam();
+        Integer minWomen = league.getMinWomenPerTeam();
+        List<Team> teams = teamRepository.findByLeagueId(leagueId);
+        List<CompletionCheckResponse.TeamShortfall> shortPlayers = new java.util.ArrayList<>();
+        List<CompletionCheckResponse.TeamShortfall> shortWomen = new java.util.ArrayList<>();
+        for (Team t : teams) {
+            long count = playerRepository.countByTeamId(t.getId());
+            if (minPlayers != null && minPlayers > 0 && count < minPlayers) {
+                shortPlayers.add(CompletionCheckResponse.TeamShortfall.builder()
+                        .teamId(t.getId()).teamName(t.getName())
+                        .current(count).required(minPlayers).missing(minPlayers - count)
+                        .build());
+            }
+            if (minWomen != null && minWomen > 0) {
+                long women = playerRepository.countByTeamIdAndGender(t.getId(), com.rpl.auction.player.entity.Player.Gender.FEMALE);
+                if (women < minWomen) {
+                    shortWomen.add(CompletionCheckResponse.TeamShortfall.builder()
+                            .teamId(t.getId()).teamName(t.getName())
+                            .current(women).required(minWomen).missing(minWomen - women)
+                            .build());
+                }
+            }
+        }
+        return CompletionCheckResponse.builder()
+                .auctionId(auction.getId())
+                .canComplete(shortPlayers.isEmpty() && shortWomen.isEmpty())
+                .minPlayersPerTeam(minPlayers)
+                .minWomenPerTeam(minWomen)
+                .shortPlayers(shortPlayers)
+                .shortWomen(shortWomen)
+                .hasPlayerOnBlock(auction.getCurrentPlayerId() != null)
+                .currentPlayerName(auction.getCurrentPlayerId() != null
+                        ? playerRepository.findById(auction.getCurrentPlayerId())
+                            .map(Player::getName).orElse(null)
+                        : null)
+                .build();
     }
 
     public SseEmitter subscribe(Long auctionId) {
@@ -589,6 +792,10 @@ public class AuctionService {
         }
 
         return response;
+    }
+
+    private void audit(String action, Long auctionId, Map<String, Object> details) {
+        auditService.log(SecurityUtil.getCurrentUserId(), action, "AUCTION", auctionId, details, null);
     }
 
     private void broadcastEvent(Long auctionId, String type, Map<String, Object> data) {

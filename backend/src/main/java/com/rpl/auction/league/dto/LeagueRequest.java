@@ -16,6 +16,10 @@ public class LeagueRequest {
     @NotNull @Min(1)
     private Integer maxPlayersPerTeam;
     @Min(0)
+    private Integer minPlayersPerTeam = 15;
+    @Min(0)
+    private Integer minWomenPerTeam = 2;
+    @Min(0)
     private Integer maxRetentionsPerTeam = 0;
     @DecimalMin("0.0")
     private BigDecimal retentionCost = BigDecimal.ZERO;

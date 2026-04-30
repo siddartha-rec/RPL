@@ -10,26 +10,10 @@ import {
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import GavelIcon from '@mui/icons-material/Gavel';
-import GroupsIcon from '@mui/icons-material/Groups';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import SportsCricketIcon from '@mui/icons-material/SportsCricket';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-
-/* ── Floating auction icons scattered across the full background ── */
-const floatingIcons = [
-  { Icon: GavelIcon, top: '8%', left: '6%', size: 48, delay: 0, color: '#f59e0b' },
-  { Icon: SportsCricketIcon, top: '15%', right: '12%', size: 40, delay: 1.2, color: '#60a5fa' },
-  { Icon: EmojiEventsIcon, bottom: '12%', left: '10%', size: 44, delay: 0.6, color: '#fbbf24' },
-  { Icon: GroupsIcon, bottom: '20%', right: '7%', size: 38, delay: 1.8, color: '#a78bfa' },
-  { Icon: GavelIcon, top: '50%', left: '3%', size: 32, delay: 2.4, color: '#34d399' },
-  { Icon: SportsCricketIcon, top: '35%', right: '4%', size: 36, delay: 0.3, color: '#f59e0b' },
-  { Icon: EmojiEventsIcon, top: '5%', right: '35%', size: 30, delay: 1.5, color: '#60a5fa' },
-  { Icon: GroupsIcon, bottom: '8%', left: '35%', size: 34, delay: 2.0, color: '#fbbf24' },
-  { Icon: GavelIcon, top: '70%', right: '18%', size: 28, delay: 0.9, color: '#a78bfa' },
-  { Icon: SportsCricketIcon, bottom: '35%', left: '18%', size: 26, delay: 1.6, color: '#34d399' },
-];
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -57,195 +41,366 @@ export default function LoginPage() {
   return (
     <Box
       sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
         position: 'relative',
+        minHeight: '100vh',
         overflow: 'hidden',
-        background: `
-          radial-gradient(ellipse at 20% 20%, rgba(245,158,11,0.08) 0%, transparent 50%),
-          radial-gradient(ellipse at 80% 80%, rgba(59,130,246,0.06) 0%, transparent 50%),
-          radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.04) 0%, transparent 60%),
-          linear-gradient(160deg, #0a0a1a 0%, #0f0f23 40%, #111128 70%, #0a0a1a 100%)
-        `,
+        backgroundImage: 'url(/login-hero.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        px: { xs: 2, sm: 3, md: 4 },
+        pt: { xs: 8, md: 16 },
+        pb: { xs: 4, md: 6 },
       }}
     >
-      {/* ── Background grid pattern ─────────────────────── */}
+      {/* Soft dim overlay so the banner card has good contrast */}
       <Box
         aria-hidden="true"
         sx={{
           position: 'absolute',
           inset: 0,
-          backgroundImage: `
-            linear-gradient(rgba(245,158,11,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(245,158,11,0.03) 1px, transparent 1px)
-          `,
-          backgroundSize: '60px 60px',
-          maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)',
-          WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)',
+          background:
+            'linear-gradient(135deg, rgba(15,23,42,0.55) 0%, rgba(30,41,59,0.42) 50%, rgba(15,23,42,0.55) 100%)',
           pointerEvents: 'none',
         }}
       />
 
-      {/* ── Floating auction icons across full page ──────── */}
-      {floatingIcons.map(({ Icon, top, left, right, bottom, size, delay, color }, i) => (
-        <Box
-          key={i}
-          aria-hidden="true"
-          sx={{
-            position: 'absolute',
-            top, left, right, bottom,
-            animation: `float${i} ${5 + (i % 3)}s ease-in-out ${delay}s infinite`,
-            [`@keyframes float${i}`]: {
-              '0%, 100%': { transform: 'translateY(0px) rotate(0deg)', opacity: 0.12 },
-              '50%': { transform: `translateY(-${15 + (i % 5) * 4}px) rotate(${(i % 2 === 0 ? 1 : -1) * (8 + i * 2)}deg)`, opacity: 0.25 },
-            },
-            pointerEvents: 'none',
-          }}
-        >
-          <Icon sx={{ fontSize: size, color }} />
-        </Box>
-      ))}
-
-      {/* ── Ambient glow orbs ───────────────────────────── */}
-      <Box aria-hidden="true" sx={{ position: 'absolute', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(245,158,11,0.05) 0%, transparent 70%)', top: '-15%', left: '-10%', pointerEvents: 'none' }} />
-      <Box aria-hidden="true" sx={{ position: 'absolute', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%)', bottom: '-10%', right: '-5%', pointerEvents: 'none' }} />
-      <Box aria-hidden="true" sx={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.04) 0%, transparent 70%)', top: '40%', right: '15%', pointerEvents: 'none' }} />
-
-      {/* ══════════════════════════════════════════════════════
-          CENTER — Login Card
-         ══════════════════════════════════════════════════════ */}
+      {/* ── Banner Card ───────────────────────────────────── */}
       <Box
         sx={{
-          width: { xs: '92%', sm: 440 },
-          animation: 'slideUp 0.6s ease forwards',
           position: 'relative',
           zIndex: 1,
+          width: '100%',
+          maxWidth: 960,
+          minHeight: { md: 540 },
+          borderRadius: '24px',
+          overflow: 'hidden',
+          background: '#ffffff',
+          boxShadow:
+            '0 32px 80px rgba(15,23,42,0.45), 0 0 0 1px rgba(255,255,255,0.5)',
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1.1fr 1fr' },
+          animation: 'fadeIn 0.5s ease',
+          '@keyframes fadeIn': {
+            from: { opacity: 0, transform: 'translateY(12px)' },
+            to: { opacity: 1, transform: 'translateY(0)' },
+          },
         }}
       >
-        {/* Glass card */}
+        {/* ─── Left: Photo brand panel ─── */}
         <Box
           sx={{
-            background: 'rgba(15,15,35,0.75)',
-            backdropFilter: 'blur(24px)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 4,
-            p: { xs: 4, sm: 5 },
-            boxShadow: `
-              0 32px 100px rgba(0,0,0,0.5),
-              0 0 0 1px rgba(245,158,11,0.06),
-              inset 0 1px 0 rgba(255,255,255,0.04)
-            `,
+            position: 'relative',
+            display: { xs: 'none', md: 'flex' },
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            p: 5,
+            color: '#ffffff',
+            backgroundImage: 'url(/login-card.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            overflow: 'hidden',
           }}
         >
-          {/* ── Recykal Logo (gold) ───────────────────── */}
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
+          {/* Tinted gradient overlay for legibility */}
+          <Box
+            aria-hidden="true"
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              background:
+                'linear-gradient(135deg, rgba(8,145,178,0.78) 0%, rgba(14,116,144,0.55) 45%, rgba(12,74,110,0.85) 100%)',
+              pointerEvents: 'none',
+            }}
+          />
+          {/* Soft glow blob top-right */}
+          <Box
+            aria-hidden="true"
+            sx={{
+              position: 'absolute',
+              top: -80,
+              right: -80,
+              width: 280,
+              height: 280,
+              borderRadius: '50%',
+              background:
+                'radial-gradient(circle, rgba(253,224,71,0.28) 0%, rgba(253,224,71,0) 70%)',
+              pointerEvents: 'none',
+            }}
+          />
+          {/* Decorative dots grid */}
+          <Box
+            aria-hidden="true"
+            sx={{
+              position: 'absolute',
+              top: 40,
+              right: 32,
+              width: 80,
+              height: 80,
+              backgroundImage:
+                'radial-gradient(circle, rgba(255,255,255,0.4) 1.5px, transparent 1.5px)',
+              backgroundSize: '14px 14px',
+              opacity: 0.7,
+              pointerEvents: 'none',
+            }}
+          />
+
+          {/* Top: brand */}
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 1.25,
+                px: 1.6,
+                py: 0.85,
+                borderRadius: '12px',
+                background: 'rgba(255,255,255,0.16)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255,255,255,0.28)',
+                mb: 4,
+              }}
+            >
+              <Box
+                component="img"
+                src="/recykal-logo.png"
+                alt="Recykal"
+                sx={{ height: 18, filter: 'invert(1) brightness(2)' }}
+              />
+              <Typography
+                sx={{
+                  fontSize: '0.66rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.2em',
+                  color: '#ffffff',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Premier League
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Middle: hero copy */}
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.75,
+                px: 1.4,
+                py: 0.55,
+                borderRadius: '999px',
+                background: 'rgba(255,255,255,0.18)',
+                border: '1px solid rgba(255,255,255,0.32)',
+                mb: 2.5,
+              }}
+            >
+              <EmojiEventsIcon sx={{ fontSize: 14, color: '#fde68a' }} />
+              <Typography
+                sx={{
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.18em',
+                  color: '#fef3c7',
+                  textTransform: 'uppercase',
+                  lineHeight: 1,
+                }}
+              >
+                RPL 2025 · Champions
+              </Typography>
+            </Box>
+            <Typography
+              sx={{
+                fontSize: { md: '2.4rem', lg: '2.7rem' },
+                fontWeight: 900,
+                lineHeight: 1.05,
+                letterSpacing: '-0.025em',
+                mb: 1.5,
+              }}
+            >
+              Where every
+              <br />
+              bid counts.
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: '0.95rem',
+                fontWeight: 500,
+                color: 'rgba(255,255,255,0.88)',
+                lineHeight: 1.55,
+                maxWidth: 360,
+              }}
+            >
+              The Recykal Premier League — built for fierce auctions,
+              unforgettable wins, and the stories teams tell next season.
+            </Typography>
+          </Box>
+
+          {/* Bottom: feature row */}
+          <Box
+            sx={{
+              position: 'relative',
+              zIndex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2.5,
+              pt: 4,
+              borderTop: '1px solid rgba(255,255,255,0.18)',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <SportsCricketIcon sx={{ fontSize: 18, color: '#fde68a' }} />
+              <Typography
+                sx={{
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(255,255,255,0.92)',
+                }}
+              >
+                Live Auctions
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                width: 4,
+                height: 4,
+                borderRadius: '50%',
+                bgcolor: 'rgba(255,255,255,0.4)',
+              }}
+            />
+            <Box sx={{ display: 'flex', gap: 0.75 }}>
+              {['#FF5722', '#2196F3', '#4CAF50', '#9C27B0', '#00BCD4'].map(
+                (c) => (
+                  <Box
+                    key={c}
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      bgcolor: c,
+                      boxShadow: `0 0 8px ${c}aa`,
+                    }}
+                  />
+                )
+              )}
+            </Box>
+            <Typography
+              sx={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'rgba(255,255,255,0.92)',
+              }}
+            >
+              5 Teams
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* ─── Right: Form panel ─── */}
+        <Box
+          sx={{
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            p: { xs: 4, sm: 5, md: 5.5 },
+            background: '#ffffff',
+          }}
+        >
+          {/* Mobile-only mini brand pill */}
+          <Box
+            sx={{
+              display: { xs: 'inline-flex', md: 'none' },
+              alignSelf: 'flex-start',
+              alignItems: 'center',
+              gap: 1,
+              px: 1.4,
+              py: 0.7,
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)',
+              mb: 2.5,
+            }}
+          >
             <Box
               component="img"
               src="/recykal-logo.png"
               alt="Recykal"
-              sx={{
-                height: 32,
-                mx: 'auto',
-                mb: 2.5,
-                display: 'block',
-                filter: 'brightness(0) saturate(100%) invert(70%) sepia(60%) saturate(500%) hue-rotate(5deg) brightness(100%)',
-              }}
+              sx={{ height: 14, filter: 'invert(1) brightness(2)' }}
             />
-
-            {/* League name — inline styled */}
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 900,
-                fontSize: '1.75rem',
-                letterSpacing: '0.02em',
-                lineHeight: 1.3,
-                textAlign: 'center',
-                mb: 0.75,
-              }}
-            >
-              <Box
-                component="span"
-                sx={{
-                  background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 40%, #f59e0b 80%, #d97706 100%)',
-                  backgroundSize: '200% auto',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  animation: 'shimmer 3s linear infinite',
-                }}
-              >
-                Recykal
-              </Box>{' '}
-              <Box component="span" sx={{ color: '#60a5fa' }}>Premier</Box>{' '}
-              <Box component="span" sx={{ color: '#a78bfa' }}>League</Box>
-            </Typography>
-
             <Typography
               sx={{
-                fontSize: '0.65rem',
-                fontWeight: 500,
-                letterSpacing: '0.15em',
-                color: '#334155',
-                fontStyle: 'italic',
-                textAlign: 'center',
+                fontSize: '0.6rem',
+                fontWeight: 800,
+                letterSpacing: '0.2em',
+                color: '#ffffff',
+                textTransform: 'uppercase',
               }}
             >
-              Where Every Bid Counts
+              Premier League
             </Typography>
-
-            <Box
-              sx={{
-                mt: 2.5,
-                mx: 'auto',
-                width: 50,
-                height: 2,
-                borderRadius: 1,
-                background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.5), transparent)',
-              }}
-            />
           </Box>
 
-          {/* ── Quick stats row ──────────────────────── */}
-          <Box
+          <Typography
             sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: 3,
-              mb: 4,
-              py: 2,
-              borderTop: '1px solid rgba(255,255,255,0.04)',
-              borderBottom: '1px solid rgba(255,255,255,0.04)',
+              fontSize: '0.62rem',
+              fontWeight: 800,
+              letterSpacing: '0.22em',
+              color: '#0891b2',
+              textTransform: 'uppercase',
+              mb: 1,
             }}
           >
-            {[
-              { value: '5', label: 'Teams', Icon: GroupsIcon, color: '#f59e0b' },
-              { value: '85+', label: 'Players', Icon: SportsCricketIcon, color: '#60a5fa' },
-              { value: 'LIVE', label: 'Auction', Icon: GavelIcon, color: '#ef4444' },
-            ].map(({ value, label, Icon, color }) => (
-              <Box key={label} sx={{ textAlign: 'center' }}>
-                <Icon sx={{ fontSize: 18, color, mb: 0.3 }} />
-                <Typography sx={{ fontSize: '1rem', fontWeight: 800, color: '#e2e8f0', lineHeight: 1.2 }}>
-                  {value}
-                </Typography>
-                <Typography sx={{ fontSize: '0.6rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-                  {label}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
+            Welcome back
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: { xs: '1.55rem', md: '1.85rem' },
+              fontWeight: 900,
+              color: '#0f172a',
+              letterSpacing: '-0.02em',
+              lineHeight: 1.15,
+              mb: 0.75,
+            }}
+          >
+            Sign in to{' '}
+            <Box
+              component="span"
+              sx={{
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              RPL
+            </Box>
+          </Typography>
+          <Typography
+            sx={{ fontSize: '0.9rem', color: '#64748b', mb: 3.5 }}
+          >
+            Enter your credentials to access the auction.
+          </Typography>
 
-          {/* ── Error Alert ──────────────────────────── */}
           {error && (
-            <Alert severity="error" sx={{ mb: 2.5, animation: 'fadeIn 0.3s ease' }}>
+            <Alert severity="error" sx={{ mb: 2, borderRadius: '10px' }}>
               {error}
             </Alert>
           )}
 
-          {/* ── Form ─────────────────────────────────── */}
-          <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            sx={{ display: 'flex', flexDirection: 'column', gap: 1.75 }}
+          >
             <TextField
               fullWidth
               label="Username"
@@ -254,8 +409,16 @@ export default function LoginPage() {
               onChange={(e) => setUsername(e.target.value)}
               required
               autoFocus
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  background: '#f8fafc',
+                  '& fieldset': { borderColor: '#e2e8f0' },
+                  '&:hover fieldset': { borderColor: '#cbd5e1' },
+                  '&.Mui-focused fieldset': { borderColor: '#0891b2' },
+                },
+              }}
             />
-
             <TextField
               fullWidth
               label="Password"
@@ -271,12 +434,28 @@ export default function LoginPage() {
                       onClick={() => setShowPass(!showPass)}
                       edge="end"
                       size="small"
-                      sx={{ color: '#475569', '&:hover': { color: '#f59e0b' } }}
+                      sx={{
+                        color: '#94a3b8',
+                        '&:hover': { color: '#0891b2' },
+                      }}
                     >
-                      {showPass ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                      {showPass ? (
+                        <VisibilityOffIcon fontSize="small" />
+                      ) : (
+                        <VisibilityIcon fontSize="small" />
+                      )}
                     </IconButton>
                   </InputAdornment>
                 ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  background: '#f8fafc',
+                  '& fieldset': { borderColor: '#e2e8f0' },
+                  '&:hover fieldset': { borderColor: '#cbd5e1' },
+                  '&.Mui-focused fieldset': { borderColor: '#0891b2' },
+                },
               }}
             />
 
@@ -287,16 +466,20 @@ export default function LoginPage() {
               size="large"
               disabled={loading}
               sx={{
-                mt: 1,
+                mt: 1.5,
                 py: 1.5,
                 fontSize: '0.95rem',
-                fontWeight: 700,
-                letterSpacing: '0.04em',
-                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                boxShadow: '0 4px 24px rgba(245,158,11,0.3)',
+                fontWeight: 800,
+                letterSpacing: '0.02em',
+                textTransform: 'none',
+                borderRadius: '12px',
+                background:
+                  'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)',
+                boxShadow: '0 6px 18px rgba(8,145,178,0.32)',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                  boxShadow: '0 8px 32px rgba(245,158,11,0.5)',
+                  background:
+                    'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
+                  boxShadow: '0 8px 24px rgba(8,145,178,0.45)',
                 },
               }}
             >
@@ -304,33 +487,16 @@ export default function LoginPage() {
             </Button>
           </Box>
 
-          {/* ── Team color dots ──────────────────────── */}
-          <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', mt: 3.5 }}>
-            {['#FF5722', '#2196F3', '#4CAF50', '#9C27B0', '#00BCD4'].map((color) => (
-              <Box
-                key={color}
-                sx={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  bgcolor: color,
-                  boxShadow: `0 0 8px ${color}50`,
-                }}
-              />
-            ))}
-          </Box>
-
-          {/* ── Footer ───────────────────────────────── */}
           <Typography
             sx={{
               textAlign: 'center',
-              mt: 2.5,
-              fontSize: '0.68rem',
-              color: '#334155',
-              letterSpacing: '0.06em',
+              mt: 4,
+              fontSize: '0.7rem',
+              color: '#94a3b8',
+              letterSpacing: '0.08em',
             }}
           >
-            RPL - Powered by Recykal
+            RPL · Powered by Recykal
           </Typography>
         </Box>
       </Box>

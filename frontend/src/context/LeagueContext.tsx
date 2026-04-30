@@ -18,9 +18,11 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
   });
 
   const sorted = leagues?.slice().sort((a, b) => {
-    // Prefer ACTIVE > SETUP > COMPLETED
+    // Prefer ACTIVE > SETUP > COMPLETED, then newer (higher id) first
     const order: Record<string, number> = { ACTIVE: 0, SETUP: 1, COMPLETED: 2 };
-    return (order[a.status] ?? 9) - (order[b.status] ?? 9);
+    const byStatus = (order[a.status] ?? 9) - (order[b.status] ?? 9);
+    if (byStatus !== 0) return byStatus;
+    return b.id - a.id;
   }) ?? [];
 
   const activeLeague = sorted[0] ?? null;

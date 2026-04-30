@@ -29,6 +29,11 @@ public class AuctionController {
         return ResponseEntity.ok(ApiResponse.success(auctionService.getAuction(id)));
     }
 
+    @GetMapping("/api/leagues/{leagueId}/auction")
+    public ResponseEntity<ApiResponse<AuctionResponse>> getByLeague(@PathVariable Long leagueId) {
+        return ResponseEntity.ok(ApiResponse.success(auctionService.getAuctionByLeague(leagueId)));
+    }
+
     @PutMapping("/api/auctions/{id}/start")
     public ResponseEntity<ApiResponse<AuctionResponse>> start(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(auctionService.start(id), "Auction started"));
@@ -56,6 +61,16 @@ public class AuctionController {
     @PutMapping("/api/auctions/{id}/sold")
     public ResponseEntity<ApiResponse<AuctionResponse>> soldPlayer(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(auctionService.soldPlayer(id), "Player sold"));
+    }
+
+    @PutMapping("/api/auctions/{id}/unsold")
+    public ResponseEntity<ApiResponse<AuctionResponse>> markUnsold(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(auctionService.markUnsold(id), "Player marked unsold"));
+    }
+
+    @PutMapping("/api/auctions/{id}/undo-bid")
+    public ResponseEntity<ApiResponse<AuctionResponse>> undoBid(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(auctionService.undoLastBid(id), "Last bid undone"));
     }
 
     @PutMapping("/api/auctions/{id}/pause")
@@ -88,8 +103,16 @@ public class AuctionController {
     }
 
     @PutMapping("/api/auctions/{id}/complete")
-    public ResponseEntity<ApiResponse<AuctionResponse>> complete(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(auctionService.complete(id), "Auction completed"));
+    public ResponseEntity<ApiResponse<AuctionResponse>> complete(
+            @PathVariable Long id,
+            @RequestParam(name = "force", defaultValue = "false") boolean force) {
+        String message = force ? "Auction force-completed" : "Auction completed";
+        return ResponseEntity.ok(ApiResponse.success(auctionService.complete(id, force), message));
+    }
+
+    @GetMapping("/api/auctions/{id}/completion-check")
+    public ResponseEntity<ApiResponse<CompletionCheckResponse>> completionCheck(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(auctionService.getCompletionCheck(id)));
     }
 
     @GetMapping(value = "/api/auctions/{id}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

@@ -28,6 +28,8 @@ public class LeagueService {
                 .season(request.getSeason())
                 .teamBudget(request.getTeamBudget())
                 .maxPlayersPerTeam(request.getMaxPlayersPerTeam())
+                .minPlayersPerTeam(request.getMinPlayersPerTeam() != null ? request.getMinPlayersPerTeam() : 15)
+                .minWomenPerTeam(request.getMinWomenPerTeam() != null ? request.getMinWomenPerTeam() : 2)
                 .maxRetentionsPerTeam(request.getMaxRetentionsPerTeam())
                 .retentionCost(request.getRetentionCost())
                 .bidIncrement(request.getBidIncrement())
@@ -58,6 +60,12 @@ public class LeagueService {
         league.setSeason(request.getSeason());
         league.setTeamBudget(request.getTeamBudget());
         league.setMaxPlayersPerTeam(request.getMaxPlayersPerTeam());
+        if (request.getMinPlayersPerTeam() != null) {
+            league.setMinPlayersPerTeam(request.getMinPlayersPerTeam());
+        }
+        if (request.getMinWomenPerTeam() != null) {
+            league.setMinWomenPerTeam(request.getMinWomenPerTeam());
+        }
         league.setMaxRetentionsPerTeam(request.getMaxRetentionsPerTeam());
         league.setRetentionCost(request.getRetentionCost());
         league.setBidIncrement(request.getBidIncrement());

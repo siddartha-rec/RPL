@@ -19,19 +19,19 @@ function statusStyle(status: string): { bg: string; gradient: string; color: str
     case 'RETAINED': return {
       bg: 'rgba(96,165,250,0.12)',
       gradient: 'linear-gradient(135deg, rgba(96,165,250,0.25), rgba(59,130,246,0.12))',
-      color: '#60a5fa',
+      color: '#1d4ed8',
       label: 'Retained',
     };
     case 'SOLD': return {
       bg: 'rgba(74,222,128,0.12)',
       gradient: 'linear-gradient(135deg, rgba(74,222,128,0.25), rgba(34,197,94,0.12))',
-      color: '#4ade80',
+      color: '#047857',
       label: 'Sold',
     };
     case 'UNSOLD': return {
       bg: 'rgba(239,68,68,0.12)',
       gradient: 'linear-gradient(135deg, rgba(239,68,68,0.25), rgba(220,38,38,0.12))',
-      color: '#ef4444',
+      color: '#b91c1c',
       label: 'Unsold',
     };
     default: return {
@@ -55,7 +55,7 @@ function PlayerRow({ player, index, teamColor }: { player: Player; index: number
         px: 2.5,
         py: 1.6,
         background: index % 2 === 0 ? 'rgba(255,255,255,0.025)' : 'transparent',
-        borderBottom: '1px solid rgba(255,255,255,0.04)',
+        borderBottom: '1px solid #f1f5f9',
         borderLeft: '3px solid transparent',
         transition: 'all 0.2s ease',
         '&:hover': {
@@ -88,7 +88,7 @@ function PlayerRow({ player, index, teamColor }: { player: Player; index: number
       {/* Name + badges */}
       <Box sx={{ flex: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#e2e8f0' }}>
+          <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>
             {player.name}
           </Typography>
           {player.isCaptain && (
@@ -187,15 +187,15 @@ function PlayerSection({
         >
           {players.length}
         </Box>
-        <Box sx={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.06)' }} />
+        <Box sx={{ flex: 1, height: '1px', background: '#eef2f7' }} />
       </Box>
 
       {/* Table */}
       <Box
         sx={{
-          background: 'rgba(15,15,35,0.8)',
+          background: 'rgba(255,255,255,0.92)',
           backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255,255,255,0.06)',
+          border: '1px solid #eef2f7',
           borderRadius: '18px',
           overflow: 'hidden',
         }}
@@ -208,20 +208,20 @@ function PlayerSection({
             gap: 2,
             px: 2.5,
             py: 1.1,
-            borderBottom: '1px solid rgba(255,255,255,0.07)',
+            borderBottom: '1px solid #e2e8f0',
             background: 'rgba(255,255,255,0.025)',
           }}
         >
-          <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.6px', width: 36 }}>
+          <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.6px', width: 36 }}>
             #
           </Typography>
-          <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.6px', flex: 1 }}>
+          <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.6px', flex: 1 }}>
             Player
           </Typography>
-          <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+          <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
             Status
           </Typography>
-          <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.6px', minWidth: 64, textAlign: 'right' }}>
+          <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.6px', minWidth: 64, textAlign: 'right' }}>
             Base Price
           </Typography>
         </Box>
@@ -261,14 +261,14 @@ export default function TeamDetailPage() {
   if (teamLoading || playersLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
-        <CircularProgress sx={{ color: '#f59e0b' }} size={40} />
+        <CircularProgress sx={{ color: '#b45309' }} size={40} />
       </Box>
     );
   }
 
   if (teamError || !team) {
     return (
-      <Alert severity="error" sx={{ borderRadius: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5' }}>
+      <Alert severity="error" sx={{ borderRadius: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#b91c1c' }}>
         Failed to load team
       </Alert>
     );
@@ -292,7 +292,7 @@ export default function TeamDetailPage() {
           overflow: 'hidden',
           mb: 3.5,
           position: 'relative',
-          background: `linear-gradient(140deg, ${color} 0%, ${color}cc 30%, ${color}55 60%, rgba(15,15,35,0.95) 100%)`,
+          background: `linear-gradient(140deg, ${color} 0%, ${color}cc 30%, ${color}55 60%, rgba(255,255,255,0.98) 100%)`,
           border: `1px solid ${color}50`,
           boxShadow: `0 20px 60px ${color}30`,
           minHeight: 220,
@@ -370,9 +370,9 @@ export default function TeamDetailPage() {
               {/* Captain */}
               {team.captainName && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
-                  <EmojiEventsIcon sx={{ fontSize: 18, color: '#fbbf24' }} />
+                  <EmojiEventsIcon sx={{ fontSize: 18, color: '#b45309' }} />
                   <Typography sx={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Captain</Typography>
-                  <Typography sx={{ fontSize: '15px', fontWeight: 800, color: '#fbbf24' }}>
+                  <Typography sx={{ fontSize: '15px', fontWeight: 800, color: '#b45309' }}>
                     {team.captainName}
                   </Typography>
                 </Box>
@@ -419,7 +419,7 @@ export default function TeamDetailPage() {
               background: 'rgba(0,0,0,0.28)',
               backdropFilter: 'blur(6px)',
               borderRadius: '16px',
-              border: '1px solid rgba(255,255,255,0.08)',
+              border: '1px solid #e2e8f0',
             }}
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 0.75 }}>
@@ -474,9 +474,9 @@ export default function TeamDetailPage() {
           <Grid key={stat.label} size={{ xs: 6, sm: 3 }}>
             <Box
               sx={{
-                background: 'rgba(15,15,35,0.8)',
+                background: 'rgba(255,255,255,0.92)',
                 backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                border: '1px solid #eef2f7',
                 borderRadius: '16px',
                 p: 2,
                 textAlign: 'center',
@@ -518,9 +518,9 @@ export default function TeamDetailPage() {
             textAlign: 'center',
             py: 10,
             color: '#475569',
-            background: 'rgba(15,15,35,0.5)',
+            background: '#ffffff',
             borderRadius: '20px',
-            border: '1px dashed rgba(255,255,255,0.07)',
+            border: '1px dashed #e2e8f0',
           }}
         >
           <PersonIcon sx={{ fontSize: 44, mb: 1.5, opacity: 0.25 }} />

@@ -13,6 +13,7 @@ public class PlayerRequest {
     @NotNull
     private String category;
     private String role;
+    private String gender;
     private BigDecimal basePrice = BigDecimal.ZERO;
     private Boolean isCaptain = false;
 }

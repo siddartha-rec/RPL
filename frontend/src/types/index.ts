@@ -56,6 +56,22 @@ export interface Auction {
 
 export interface AuctionEvent { type: string; data: Record<string, unknown>; }
 
+export interface TeamShortfall {
+  teamId: number; teamName: string;
+  current: number; required: number; missing: number;
+}
+
+export interface CompletionCheck {
+  auctionId: number;
+  canComplete: boolean;
+  minPlayersPerTeam: number | null;
+  minWomenPerTeam: number | null;
+  shortPlayers: TeamShortfall[];
+  shortWomen: TeamShortfall[];
+  hasPlayerOnBlock: boolean;
+  currentPlayerName: string | null;
+}
+
 export interface PlayerHistory {
   id: number; playerId: number; leagueId: number; leagueName: string;
   teamId: number; teamName: string; acquisitionType: string;

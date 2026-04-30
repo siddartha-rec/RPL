@@ -3,9 +3,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Button, Dialog, DialogTitle, DialogContent,
   DialogActions, TextField, CircularProgress, Alert, Card, CardContent,
-  Stack, LinearProgress,
+  Stack, LinearProgress, InputAdornment,
 } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import SportsCricketIcon from '@mui/icons-material/SportsCricket';
 import GroupsIcon from '@mui/icons-material/Groups';
 import PersonIcon from '@mui/icons-material/Person';
@@ -19,7 +25,8 @@ import {
   getLeagues, createLeague,
 } from '../api/leagues';
 import { getTeams } from '../api/teams';
-import { getPlayers } from '../api/players';
+import { getPlayers, createPlayer, updatePlayer, deletePlayer, importPlayers, getPlayersPaginated } from '../api/players';
+import type { PageResponse } from '../types';
 import {
   getAuction, createAuction, startAuction, advanceToLive,
   pauseAuction, resumeAuction, switchToDraft, completeAuction,
@@ -34,8 +41,8 @@ function CustomTabs({ value, onChange, tabs }: { value: number; onChange: (v: nu
       sx={{
         display: 'flex',
         gap: 0.5,
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: '#f1f5f9',
+        border: '1px solid #e2e8f0',
         borderRadius: '14px',
         p: 0.75,
         mb: 3,
@@ -61,13 +68,13 @@ function CustomTabs({ value, onChange, tabs }: { value: number; onChange: (v: nu
               ? {
                   background: 'rgba(245,158,11,0.2)',
                   border: '1px solid rgba(245,158,11,0.35)',
-                  color: '#f59e0b',
+                  color: '#b45309',
                   boxShadow: '0 2px 12px rgba(245,158,11,0.15)',
                 }
               : {
                   color: '#64748b',
                   border: '1px solid transparent',
-                  '&:hover': { color: '#94a3b8', background: 'rgba(255,255,255,0.04)' },
+                  '&:hover': { color: '#94a3b8', background: '#f1f5f9' },
                 }),
           }}
         >
@@ -89,9 +96,9 @@ function StyledTable({ columns, rows }: { columns: string[]; rows: React.ReactNo
   return (
     <Box
       sx={{
-        background: 'rgba(26,26,46,0.8)',
+        background: '#ffffff',
         backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255,255,255,0.07)',
+        border: '1px solid #e2e8f0',
         borderRadius: '16px',
         overflow: 'hidden',
       }}
@@ -102,8 +109,8 @@ function StyledTable({ columns, rows }: { columns: string[]; rows: React.ReactNo
           gridTemplateColumns: `repeat(${columns.length}, 1fr)`,
           px: 2.5,
           py: 1.25,
-          background: 'rgba(255,255,255,0.03)',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          background: '#f8fafc',
+          borderBottom: '1px solid #e2e8f0',
         }}
       >
         {columns.map(col => (
@@ -129,7 +136,7 @@ function StyledTable({ columns, rows }: { columns: string[]; rows: React.ReactNo
               px: 2.5,
               py: 1.5,
               alignItems: 'center',
-              borderBottom: '1px solid rgba(255,255,255,0.04)',
+              borderBottom: '1px solid #f1f5f9',
               background: i % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent',
               transition: 'background 0.2s',
               '&:hover': { background: 'rgba(245,158,11,0.05)' },
@@ -205,11 +212,11 @@ function LeaguesTab() {
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
-  if (isLoading) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#f59e0b' }} /></Box>;
+  if (isLoading) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#b45309' }} /></Box>;
   if (error) return <Alert severity="error" sx={{ borderRadius: '12px' }}>Failed to load leagues</Alert>;
 
   const rows = (leagues ?? []).map(l => [
-    <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#e2e8f0' }}>{l.name}</Typography>,
+    <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>{l.name}</Typography>,
     <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{l.season}</Typography>,
     <StatusBadge status={l.status} />,
     <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{l.teamBudget} CR</Typography>,
@@ -220,7 +227,7 @@ function LeaguesTab() {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box>
-          <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#e2e8f0' }}>
+          <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#1e293b' }}>
             Leagues
           </Typography>
           <Typography sx={{ fontSize: '12px', color: '#64748b' }}>
@@ -255,16 +262,16 @@ function LeaguesTab() {
         fullWidth
         PaperProps={{
           sx: {
-            background: 'rgba(26,26,46,0.97)',
+            background: '#ffffff',
             backdropFilter: 'blur(20px)',
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: '20px',
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700, color: '#e2e8f0', pb: 1 }}>
+        <DialogTitle sx={{ fontWeight: 700, color: '#1e293b', pb: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <SportsCricketIcon sx={{ color: '#f59e0b' }} />
+            <SportsCricketIcon sx={{ color: '#b45309' }} />
             Create New League
           </Box>
         </DialogTitle>
@@ -290,13 +297,13 @@ function LeaguesTab() {
                 size="small"
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    background: 'rgba(255,255,255,0.04)',
+                    background: '#f1f5f9',
                     borderRadius: '10px',
                     '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
                     '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
                     '&.Mui-focused fieldset': { borderColor: '#f59e0b' },
                   },
-                  '& .MuiInputLabel-root.Mui-focused': { color: '#f59e0b' },
+                  '& .MuiInputLabel-root.Mui-focused': { color: '#b45309' },
                 }}
               />
             ))}
@@ -306,7 +313,7 @@ function LeaguesTab() {
         <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
           <Button
             onClick={() => setOpen(false)}
-            sx={{ color: '#64748b', borderRadius: '10px', '&:hover': { background: 'rgba(255,255,255,0.05)' } }}
+            sx={{ color: '#64748b', borderRadius: '10px', '&:hover': { background: '#eef2f7' } }}
           >
             Cancel
           </Button>
@@ -345,13 +352,13 @@ function TeamsTab() {
     enabled: !!activeLeague,
   });
 
-  if (isLoading) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#f59e0b' }} /></Box>;
+  if (isLoading) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#b45309' }} /></Box>;
   if (error) return <Alert severity="error" sx={{ borderRadius: '12px' }}>Failed to load teams</Alert>;
 
   const rows = (teams ?? []).map(t => [
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <Box sx={{ width: 14, height: 14, borderRadius: '50%', bgcolor: t.color || '#888', boxShadow: `0 0 6px ${t.color || '#888'}80`, flexShrink: 0 }} />
-      <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#e2e8f0' }}>{t.name}</Typography>
+      <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>{t.name}</Typography>
     </Box>,
     <Box
       sx={{
@@ -369,9 +376,9 @@ function TeamsTab() {
       {t.shortName}
     </Box>,
     <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{t.ownerName ?? '—'}</Typography>,
-    <Typography sx={{ fontSize: '13px', color: '#60a5fa', fontWeight: 600 }}>{t.budget} CR</Typography>,
+    <Typography sx={{ fontSize: '13px', color: '#1d4ed8', fontWeight: 600 }}>{t.budget} CR</Typography>,
     <Box>
-      <Typography sx={{ fontSize: '13px', color: '#f59e0b', fontWeight: 600 }}>{t.budgetSpent} CR</Typography>
+      <Typography sx={{ fontSize: '13px', color: '#b45309', fontWeight: 600 }}>{t.budgetSpent} CR</Typography>
       <LinearProgress
         variant="determinate"
         value={t.budget > 0 ? Math.min((t.budgetSpent / t.budget) * 100, 100) : 0}
@@ -379,7 +386,7 @@ function TeamsTab() {
           mt: 0.5,
           height: 3,
           borderRadius: 2,
-          bgcolor: 'rgba(255,255,255,0.06)',
+          bgcolor: '#eef2f7',
           '& .MuiLinearProgress-bar': {
             background: `linear-gradient(90deg, ${t.color || '#888'}, ${t.color || '#888'}cc)`,
             borderRadius: 2,
@@ -392,7 +399,7 @@ function TeamsTab() {
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
-        <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#e2e8f0' }}>Teams</Typography>
+        <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#1e293b' }}>Teams</Typography>
         <Typography sx={{ fontSize: '12px', color: '#64748b' }}>{(teams ?? []).length} teams in active league</Typography>
       </Box>
       <StyledTable
@@ -404,21 +411,514 @@ function TeamsTab() {
 }
 
 // ---- Players Tab ----
+interface PlayerFormState {
+  name: string;
+  playerNumber: string;
+  category: 'CRICKET' | 'OTHER';
+  role: string;
+  basePrice: string;
+}
+
+const EMPTY_PLAYER_FORM: PlayerFormState = {
+  name: '', playerNumber: '', category: 'CRICKET', role: '', basePrice: '0',
+};
+
+function formToPayload(form: PlayerFormState): Partial<Player> {
+  return {
+    name: form.name.trim(),
+    playerNumber: form.playerNumber.trim() ? Number(form.playerNumber) : undefined,
+    category: form.category,
+    role: form.role.trim() || undefined,
+    basePrice: Number(form.basePrice) || 0,
+  };
+}
+
+function playerToForm(p: Player): PlayerFormState {
+  return {
+    name: p.name,
+    playerNumber: p.playerNumber != null ? String(p.playerNumber) : '',
+    category: p.category,
+    role: p.role ?? '',
+    basePrice: String(p.basePrice ?? 0),
+  };
+}
+
+function parsePlayerCsv(text: string): { rows: Partial<Player>[]; errors: string[] } {
+  const errors: string[] = [];
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (lines.length === 0) return { rows: [], errors: ['Empty file'] };
+
+  const header = lines[0].split(',').map(c => c.trim().toLowerCase());
+  const required = ['name', 'category'];
+  for (const r of required) {
+    if (!header.includes(r)) {
+      errors.push(`Missing required column: ${r}`);
+    }
+  }
+  if (errors.length > 0) return { rows: [], errors };
+
+  const idx = (col: string) => header.indexOf(col);
+  const rows: Partial<Player>[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(',').map(c => c.trim());
+    const name = cols[idx('name')] ?? '';
+    if (!name) { errors.push(`Row ${i + 1}: missing name`); continue; }
+
+    const category = (cols[idx('category')] ?? '').toUpperCase();
+    if (category !== 'CRICKET' && category !== 'OTHER') {
+      errors.push(`Row ${i + 1}: category must be CRICKET or OTHER (got "${cols[idx('category')]}")`);
+      continue;
+    }
+
+    const playerNumberRaw = idx('playernumber') >= 0 ? cols[idx('playernumber')] : '';
+    const roleRaw = idx('role') >= 0 ? cols[idx('role')] : '';
+    const basePriceRaw = idx('baseprice') >= 0 ? cols[idx('baseprice')] : '';
+
+    rows.push({
+      name,
+      category: category as 'CRICKET' | 'OTHER',
+      playerNumber: playerNumberRaw ? Number(playerNumberRaw) : undefined,
+      role: roleRaw || undefined,
+      basePrice: basePriceRaw ? Number(basePriceRaw) : 0,
+    });
+  }
+
+  return { rows, errors };
+}
+
+function SeasonSelector({
+  leagues,
+  activeId,
+  onChange,
+}: { leagues: League[]; activeId: number | null; onChange: (id: number) => void }) {
+  if (leagues.length === 0) return null;
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        background: 'rgba(255,255,255,0.92)',
+        border: '1px solid #e2e8f0',
+        borderRadius: '14px',
+        p: 0.5,
+        gap: 0.4,
+        flexWrap: 'wrap',
+      }}
+    >
+      {leagues.map(l => {
+        const active = activeId === l.id;
+        return (
+          <Box
+            key={l.id}
+            onClick={() => onChange(l.id)}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              px: 2,
+              py: 0.9,
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 700,
+              transition: 'all 0.2s ease',
+              userSelect: 'none',
+              ...(active
+                ? {
+                    background: 'linear-gradient(135deg, rgba(167,139,250,0.25), rgba(139,92,246,0.12))',
+                    border: '1px solid rgba(167,139,250,0.45)',
+                    color: '#6d28d9',
+                  }
+                : {
+                    color: '#64748b',
+                    border: '1px solid transparent',
+                    '&:hover': { color: '#94a3b8', background: '#f1f5f9' },
+                  }),
+            }}
+          >
+            {l.season}
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
+
+function PlayerFormDialog({
+  open,
+  title,
+  form,
+  onChange,
+  onClose,
+  onSubmit,
+  busy,
+  error,
+}: {
+  open: boolean;
+  title: string;
+  form: PlayerFormState;
+  onChange: (next: PlayerFormState) => void;
+  onClose: () => void;
+  onSubmit: () => void;
+  busy: boolean;
+  error?: string | null;
+}) {
+  const fieldSx = {
+    '& .MuiOutlinedInput-root': {
+      background: '#f1f5f9',
+      borderRadius: '10px',
+      '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+      '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
+      '&.Mui-focused fieldset': { borderColor: '#f59e0b' },
+    },
+    '& .MuiInputLabel-root.Mui-focused': { color: '#b45309' },
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          background: '#ffffff',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '20px',
+        },
+      }}
+    >
+      <DialogTitle sx={{ fontWeight: 700, color: '#1e293b', pb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <PersonIcon sx={{ color: '#b45309' }} />
+          {title}
+        </Box>
+      </DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          <TextField
+            label="Name *"
+            value={form.name}
+            onChange={e => onChange({ ...form, name: e.target.value })}
+            fullWidth size="small" sx={fieldSx}
+          />
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {(['CRICKET', 'OTHER'] as const).map(c => {
+              const active = form.category === c;
+              return (
+                <Box
+                  key={c}
+                  onClick={() => onChange({ ...form, category: c })}
+                  sx={{
+                    flex: 1,
+                    textAlign: 'center',
+                    px: 2,
+                    py: 1.1,
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    letterSpacing: '0.8px',
+                    transition: 'all 0.2s ease',
+                    ...(active
+                      ? {
+                          background: c === 'CRICKET'
+                            ? 'linear-gradient(135deg, rgba(96,165,250,0.25), rgba(59,130,246,0.12))'
+                            : 'linear-gradient(135deg, rgba(167,139,250,0.25), rgba(139,92,246,0.12))',
+                          border: c === 'CRICKET' ? '1px solid rgba(96,165,250,0.5)' : '1px solid rgba(167,139,250,0.5)',
+                          color: c === 'CRICKET' ? '#60a5fa' : '#a78bfa',
+                        }
+                      : {
+                          background: '#f1f5f9',
+                          border: '1px solid #e2e8f0',
+                          color: '#64748b',
+                          '&:hover': { color: '#94a3b8', borderColor: 'rgba(255,255,255,0.18)' },
+                        }),
+                  }}
+                >
+                  {c}
+                </Box>
+              );
+            })}
+          </Box>
+          <TextField
+            label="Player Number"
+            type="number"
+            value={form.playerNumber}
+            onChange={e => onChange({ ...form, playerNumber: e.target.value })}
+            fullWidth size="small" sx={fieldSx}
+          />
+          <TextField
+            label="Role (e.g. Batsman, Bowler)"
+            value={form.role}
+            onChange={e => onChange({ ...form, role: e.target.value })}
+            fullWidth size="small" sx={fieldSx}
+          />
+          <TextField
+            label="Base Price (CR)"
+            type="number"
+            value={form.basePrice}
+            onChange={e => onChange({ ...form, basePrice: e.target.value })}
+            fullWidth size="small" sx={fieldSx}
+            inputProps={{ step: '0.5', min: 0 }}
+          />
+        </Stack>
+        {error && <Alert severity="error" sx={{ mt: 2, borderRadius: '10px' }}>{error}</Alert>}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+        <Button onClick={onClose} sx={{ color: '#64748b', borderRadius: '10px', '&:hover': { background: '#eef2f7' } }}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={onSubmit}
+          disabled={busy || !form.name.trim()}
+          sx={{
+            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            fontWeight: 700,
+            borderRadius: '10px',
+            '&:hover': { background: 'linear-gradient(135deg, #fbbf24, #f59e0b)' },
+          }}
+        >
+          {busy ? 'Saving...' : 'Save'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+function ImportCsvDialog({
+  open,
+  onClose,
+  onImport,
+  busy,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onImport: (rows: Partial<Player>[]) => void;
+  busy: boolean;
+}) {
+  const [parsed, setParsed] = useState<Partial<Player>[]>([]);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [fileName, setFileName] = useState<string>('');
+
+  const reset = () => { setParsed([]); setErrors([]); setFileName(''); };
+
+  const handleClose = () => { reset(); onClose(); };
+
+  const handleFile = async (file: File) => {
+    setFileName(file.name);
+    const text = await file.text();
+    const { rows, errors } = parsePlayerCsv(text);
+    setParsed(rows);
+    setErrors(errors);
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          background: '#ffffff',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '20px',
+        },
+      }}
+    >
+      <DialogTitle sx={{ fontWeight: 700, color: '#1e293b', pb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <UploadFileIcon sx={{ color: '#b45309' }} />
+          Import Players from CSV
+        </Box>
+      </DialogTitle>
+      <DialogContent>
+        <Box sx={{ background: '#f1f5f9', border: '1px dashed rgba(255,255,255,0.18)', borderRadius: '12px', p: 2, mb: 2 }}>
+          <Typography sx={{ fontSize: '12px', fontWeight: 700, color: '#94a3b8', mb: 1 }}>
+            Required columns: <code>name</code>, <code>category</code>
+          </Typography>
+          <Typography sx={{ fontSize: '12px', color: '#64748b' }}>
+            Optional: <code>playerNumber</code>, <code>role</code>, <code>basePrice</code>. Category must be <code>CRICKET</code> or <code>OTHER</code>.
+          </Typography>
+          <Typography sx={{ fontSize: '11px', color: '#475569', mt: 1, fontFamily: 'monospace' }}>
+            name,category,playerNumber,role,basePrice<br />
+            Aman Kumar,CRICKET,7,Batsman,2<br />
+            Priya Singh,OTHER,,Quizzer,1
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+          <Button
+            component="label"
+            variant="outlined"
+            startIcon={<UploadFileIcon />}
+            sx={{
+              color: '#b45309',
+              borderColor: 'rgba(245,158,11,0.4)',
+              borderRadius: '10px',
+              fontWeight: 700,
+              '&:hover': { borderColor: '#f59e0b', background: 'rgba(245,158,11,0.06)' },
+            }}
+          >
+            Choose CSV file
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              hidden
+              onChange={e => {
+                const f = e.target.files?.[0];
+                if (f) handleFile(f);
+              }}
+            />
+          </Button>
+          {fileName && <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{fileName}</Typography>}
+        </Box>
+
+        {errors.length > 0 && (
+          <Alert severity="error" sx={{ mb: 2, borderRadius: '10px' }}>
+            <Typography sx={{ fontSize: '12px', fontWeight: 700 }}>Found {errors.length} issue{errors.length === 1 ? '' : 's'}:</Typography>
+            <Box component="ul" sx={{ m: 0, pl: 2.5, fontSize: '12px' }}>
+              {errors.slice(0, 8).map((e, i) => <li key={i}>{e}</li>)}
+              {errors.length > 8 && <li>...and {errors.length - 8} more</li>}
+            </Box>
+          </Alert>
+        )}
+
+        {parsed.length > 0 && (
+          <Box sx={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #eef2f7', overflow: 'hidden' }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 100px 80px 1fr 100px', px: 2, py: 1, background: '#f1f5f9', borderBottom: '1px solid #e2e8f0' }}>
+              {['Name', 'Category', '#', 'Role', 'Base Price'].map(c => (
+                <Typography key={c} sx={{ fontSize: '10px', fontWeight: 800, color: '#cbd5e1', letterSpacing: '0.8px', textTransform: 'uppercase' }}>{c}</Typography>
+              ))}
+            </Box>
+            <Box sx={{ maxHeight: 280, overflowY: 'auto' }}>
+              {parsed.map((p, i) => (
+                <Box key={i} sx={{ display: 'grid', gridTemplateColumns: '1fr 100px 80px 1fr 100px', px: 2, py: 0.8, borderBottom: '1px solid #f1f5f9' }}>
+                  <Typography sx={{ fontSize: '13px', color: '#1e293b' }} noWrap>{p.name}</Typography>
+                  <Typography sx={{ fontSize: '12px', fontWeight: 700, color: p.category === 'CRICKET' ? '#60a5fa' : '#a78bfa' }}>{p.category}</Typography>
+                  <Typography sx={{ fontSize: '12px', color: '#64748b' }}>{p.playerNumber ?? '—'}</Typography>
+                  <Typography sx={{ fontSize: '12px', color: '#94a3b8' }} noWrap>{p.role ?? '—'}</Typography>
+                  <Typography sx={{ fontSize: '12px', color: '#94a3b8' }}>{p.basePrice ?? 0} CR</Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+        <Button onClick={handleClose} sx={{ color: '#64748b', borderRadius: '10px', '&:hover': { background: '#eef2f7' } }}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => onImport(parsed)}
+          disabled={busy || parsed.length === 0 || errors.length > 0}
+          sx={{
+            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            fontWeight: 700,
+            borderRadius: '10px',
+            '&:hover': { background: 'linear-gradient(135deg, #fbbf24, #f59e0b)' },
+          }}
+        >
+          {busy ? 'Importing...' : `Import ${parsed.length} player${parsed.length === 1 ? '' : 's'}`}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 function PlayersTab() {
+  const qc = useQueryClient();
   const { data: leagues } = useQuery<League[]>({
     queryKey: ['leagues'],
     queryFn: getLeagues,
   });
 
-  const activeLeague = leagues?.find(l => l.status !== 'COMPLETED') ?? leagues?.[0];
-
-  const { data: players, isLoading, error } = useQuery<Player[]>({
-    queryKey: ['players', activeLeague?.id],
-    queryFn: () => getPlayers(activeLeague!.id),
-    enabled: !!activeLeague,
+  const sortedLeagues = (leagues ?? []).slice().sort((a, b) => {
+    const order: Record<string, number> = { ACTIVE: 0, SETUP: 1, COMPLETED: 2 };
+    return (order[a.status] ?? 9) - (order[b.status] ?? 9);
   });
 
-  if (isLoading) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#f59e0b' }} /></Box>;
+  const [selectedLeagueId, setSelectedLeagueId] = useState<number | null>(null);
+  useEffect(() => {
+    if (selectedLeagueId === null && sortedLeagues.length > 0) {
+      setSelectedLeagueId(sortedLeagues[0].id);
+    }
+  }, [sortedLeagues, selectedLeagueId]);
+
+  const activeLeague = sortedLeagues.find(l => l.id === selectedLeagueId) ?? sortedLeagues[0];
+
+  const PAGE_SIZE = 20;
+  const [page, setPage] = useState(0);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // 300ms debounce for search
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Reset to page 0 when filters/league change
+  useEffect(() => { setPage(0); }, [debouncedSearch, activeLeague?.id]);
+
+  const { data: pageData, isLoading, error } = useQuery<PageResponse<Player>>({
+    queryKey: ['players-admin-page', activeLeague?.id, page, PAGE_SIZE, debouncedSearch],
+    queryFn: () => getPlayersPaginated(activeLeague!.id, {
+      page,
+      size: PAGE_SIZE,
+      ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
+    }),
+    enabled: !!activeLeague,
+    placeholderData: prev => prev,
+  });
+
+  const players = pageData?.content ?? [];
+  const totalElements = pageData?.totalElements ?? 0;
+  const totalPages = pageData?.totalPages ?? 0;
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [editing, setEditing] = useState<Player | null>(null);
+  const [deleting, setDeleting] = useState<Player | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [form, setForm] = useState<PlayerFormState>(EMPTY_PLAYER_FORM);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['players-admin-page', activeLeague?.id] });
+
+  const createMut = useMutation({
+    mutationFn: (data: Partial<Player>) => createPlayer(activeLeague!.id, data),
+    onSuccess: () => { invalidate(); setAddOpen(false); setForm(EMPTY_PLAYER_FORM); setFormError(null); },
+    onError: (e: { response?: { data?: { message?: string } } }) =>
+      setFormError(e?.response?.data?.message ?? 'Failed to create player'),
+  });
+
+  const updateMut = useMutation({
+    mutationFn: (data: Partial<Player>) => updatePlayer(editing!.id, data),
+    onSuccess: () => { invalidate(); setEditing(null); setFormError(null); },
+    onError: (e: { response?: { data?: { message?: string } } }) =>
+      setFormError(e?.response?.data?.message ?? 'Failed to update player'),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: () => deletePlayer(deleting!.id),
+    onSuccess: () => { invalidate(); setDeleting(null); },
+  });
+
+  const importMut = useMutation({
+    mutationFn: (rows: Partial<Player>[]) => importPlayers(activeLeague!.id, rows),
+    onSuccess: () => { invalidate(); setImportOpen(false); },
+  });
+
+  const openAdd = () => { setForm(EMPTY_PLAYER_FORM); setFormError(null); setAddOpen(true); };
+  const openEdit = (p: Player) => { setForm(playerToForm(p)); setFormError(null); setEditing(p); };
+
+  // Initial page load only — once we have data, keep showing it during refetch via placeholderData
+  if (isLoading && !pageData) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#b45309' }} /></Box>;
   if (error) return <Alert severity="error" sx={{ borderRadius: '12px' }}>Failed to load players</Alert>;
 
   const statusColor = (s: string) => {
@@ -426,10 +926,17 @@ function PlayersTab() {
     return m[s] ?? '#94a3b8';
   };
 
-  const rows = (players ?? []).map(p => [
-    <Typography sx={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>{p.playerNumber ?? '—'}</Typography>,
+  const iconBtnSx = (color: string) => ({
+    minWidth: 32, width: 32, height: 32, p: 0,
+    color, borderRadius: '8px',
+    background: `${color}10`,
+    border: `1px solid ${color}30`,
+    '&:hover': { background: `${color}20`, borderColor: `${color}55` },
+  });
+
+  const rows = players.map(p => [
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#e2e8f0' }}>{p.name}</Typography>
+      <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>{p.name}</Typography>
       {p.isCaptain && (
         <Box sx={{ width: 16, height: 16, borderRadius: '50%', background: 'linear-gradient(135deg, #f59e0b, #d97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 900, color: '#fff' }}>C</Box>
       )}
@@ -447,18 +954,232 @@ function PlayersTab() {
       </Box>
     ) : <Typography sx={{ fontSize: '13px', color: '#475569' }}>—</Typography>,
     <Typography sx={{ fontSize: '13px', color: '#94a3b8', fontWeight: 600 }}>{p.basePrice} CR</Typography>,
+    <Box sx={{ display: 'flex', gap: 0.75 }}>
+      <Button onClick={() => openEdit(p)} sx={iconBtnSx('#60a5fa')} title="Edit"><EditIcon sx={{ fontSize: 16 }} /></Button>
+      <Button onClick={() => setDeleting(p)} sx={iconBtnSx('#ef4444')} title="Delete"><DeleteOutlineIcon sx={{ fontSize: 16 }} /></Button>
+    </Box>,
   ]);
 
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
-        <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#e2e8f0' }}>Players</Typography>
-        <Typography sx={{ fontSize: '12px', color: '#64748b' }}>{(players ?? []).length} players total</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2.5, gap: 2, flexWrap: 'wrap' }}>
+        <Box>
+          <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#1e293b' }}>Players</Typography>
+          <Typography sx={{ fontSize: '12px', color: '#64748b' }}>
+            {totalElements} player{totalElements === 1 ? '' : 's'} in {activeLeague?.season ?? '—'}
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+          <SeasonSelector
+            leagues={sortedLeagues}
+            activeId={activeLeague?.id ?? null}
+            onChange={id => setSelectedLeagueId(id)}
+          />
+          <Button
+            variant="outlined"
+            startIcon={<UploadFileIcon />}
+            disabled={!activeLeague}
+            onClick={() => setImportOpen(true)}
+            sx={{
+              color: '#6d28d9',
+              borderColor: 'rgba(167,139,250,0.4)',
+              borderRadius: '12px',
+              fontWeight: 700,
+              '&:hover': { borderColor: '#a78bfa', background: 'rgba(167,139,250,0.08)' },
+            }}
+          >
+            Import CSV
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            disabled={!activeLeague}
+            onClick={openAdd}
+            sx={{
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              fontWeight: 700,
+              borderRadius: '12px',
+              boxShadow: '0 4px 16px rgba(245,158,11,0.3)',
+              '&:hover': { background: 'linear-gradient(135deg, #fbbf24, #f59e0b)' },
+            }}
+          >
+            Add Player
+          </Button>
+        </Box>
       </Box>
-      <StyledTable
-        columns={['#', 'Name', 'Category', 'Status', 'Team', 'Base Price']}
-        rows={rows}
+
+      {/* Search */}
+      <Box sx={{ mb: 2 }}>
+        <TextField
+          placeholder="Search players by name…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          fullWidth
+          size="small"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: '#475569', fontSize: 20 }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            maxWidth: 420,
+            '& .MuiOutlinedInput-root': {
+              background: 'rgba(255,255,255,0.92)',
+              borderRadius: '12px',
+              fontSize: 14,
+              '& fieldset': { borderColor: '#e2e8f0' },
+              '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.15)' },
+              '&.Mui-focused fieldset': { borderColor: '#f59e0b' },
+            },
+            '& .MuiInputBase-input': {
+              color: '#1e293b',
+              '&::placeholder': { color: '#475569', opacity: 1 },
+            },
+          }}
+        />
+      </Box>
+
+      {/* Table with optional refetch overlay */}
+      <Box sx={{ position: 'relative' }}>
+        {isLoading && pageData && (
+          <Box
+            sx={{
+              position: 'absolute', inset: 0, zIndex: 5,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              borderRadius: '16px',
+              background: 'rgba(255,255,255,0.55)',
+              backdropFilter: 'blur(3px)',
+            }}
+          >
+            <CircularProgress sx={{ color: '#b45309' }} size={28} />
+          </Box>
+        )}
+        <StyledTable
+          columns={['Name', 'Category', 'Status', 'Team', 'Base Price', '']}
+          rows={rows}
+        />
+      </Box>
+
+      {/* Pagination */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2.5, gap: 2, flexWrap: 'wrap' }}>
+        <Typography sx={{ fontSize: '13px', color: '#475569', fontWeight: 500 }}>
+          {totalElements === 0
+            ? 'No players match'
+            : `Showing ${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, totalElements)} of ${totalElements}`}
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <Box
+            onClick={page === 0 ? undefined : () => setPage(p => Math.max(0, p - 1))}
+            sx={{
+              display: 'flex', alignItems: 'center', gap: 0.5,
+              px: 2, py: 0.9, borderRadius: '10px',
+              fontSize: 13, fontWeight: 700,
+              userSelect: 'none',
+              color: '#94a3b8',
+              border: '1px solid #e2e8f0',
+              background: 'rgba(255,255,255,0.92)',
+              cursor: page === 0 ? 'not-allowed' : 'pointer',
+              opacity: page === 0 ? 0.45 : 1,
+              '&:hover': page === 0 ? {} : { background: '#eef2f7', color: '#eef2f7' },
+            }}
+          >
+            <ChevronLeftIcon sx={{ fontSize: 16 }} /> Prev
+          </Box>
+          <Box
+            sx={{
+              px: 2, py: 0.9, borderRadius: '10px',
+              fontSize: 13, fontWeight: 800, color: '#b45309',
+              background: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(251,191,36,0.1))',
+              border: '1px solid rgba(245,158,11,0.4)',
+            }}
+          >
+            Page {page + 1} of {Math.max(totalPages, 1)}
+          </Box>
+          <Box
+            onClick={page >= totalPages - 1 ? undefined : () => setPage(p => Math.min(totalPages - 1, p + 1))}
+            sx={{
+              display: 'flex', alignItems: 'center', gap: 0.5,
+              px: 2, py: 0.9, borderRadius: '10px',
+              fontSize: 13, fontWeight: 700,
+              userSelect: 'none',
+              color: '#94a3b8',
+              border: '1px solid #e2e8f0',
+              background: 'rgba(255,255,255,0.92)',
+              cursor: page >= totalPages - 1 ? 'not-allowed' : 'pointer',
+              opacity: page >= totalPages - 1 ? 0.45 : 1,
+              '&:hover': page >= totalPages - 1 ? {} : { background: '#eef2f7', color: '#eef2f7' },
+            }}
+          >
+            Next <ChevronRightIcon sx={{ fontSize: 16 }} />
+          </Box>
+        </Box>
+      </Box>
+
+      <PlayerFormDialog
+        open={addOpen}
+        title="Add Player"
+        form={form}
+        onChange={setForm}
+        onClose={() => setAddOpen(false)}
+        onSubmit={() => createMut.mutate(formToPayload(form))}
+        busy={createMut.isPending}
+        error={formError}
       />
+      <PlayerFormDialog
+        open={!!editing}
+        title="Edit Player"
+        form={form}
+        onChange={setForm}
+        onClose={() => setEditing(null)}
+        onSubmit={() => updateMut.mutate(formToPayload(form))}
+        busy={updateMut.isPending}
+        error={formError}
+      />
+      <ImportCsvDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImport={rows => importMut.mutate(rows)}
+        busy={importMut.isPending}
+      />
+
+      <Dialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        PaperProps={{
+          sx: {
+            background: '#ffffff',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '18px',
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#1e293b' }}>Delete Player?</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ color: '#94a3b8' }}>
+            Remove <b style={{ color: '#1e293b' }}>{deleting?.name}</b> from the league? This cannot be undone.
+          </Typography>
+          {deleteMut.error && <Alert severity="error" sx={{ mt: 2, borderRadius: '10px' }}>Failed to delete</Alert>}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <Button onClick={() => setDeleting(null)} sx={{ color: '#64748b', borderRadius: '10px' }}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={() => deleteMut.mutate()}
+            disabled={deleteMut.isPending}
+            sx={{
+              background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
+              fontWeight: 700,
+              borderRadius: '10px',
+              '&:hover': { background: 'linear-gradient(135deg, #fca5a5, #dc2626)' },
+            }}
+          >
+            {deleteMut.isPending ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
@@ -564,7 +1285,7 @@ function AuctionControlTab() {
                 boxShadow: `0 3px 12px ${color}40`,
                 border: 'none',
                 '&:hover': { background: `linear-gradient(135deg, ${color}ee, ${color})`, boxShadow: `0 5px 16px ${color}50` },
-                '&:disabled': { background: 'rgba(255,255,255,0.08)', color: '#475569', boxShadow: 'none' },
+                '&:disabled': { background: '#e2e8f0', color: '#475569', boxShadow: 'none' },
               }
             : {
                 border: `1px solid ${color}50`,
@@ -584,9 +1305,9 @@ function AuctionControlTab() {
     return (
       <Box
         sx={{
-          background: 'rgba(26,26,46,0.8)',
+          background: '#ffffff',
           backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255,255,255,0.07)',
+          border: '1px solid #e2e8f0',
           borderRadius: '16px',
           mb: 2,
           overflow: 'hidden',
@@ -596,8 +1317,8 @@ function AuctionControlTab() {
           sx={{
             px: 2.5,
             py: 1.5,
-            borderBottom: '1px solid rgba(255,255,255,0.07)',
-            background: 'rgba(255,255,255,0.03)',
+            borderBottom: '1px solid #e2e8f0',
+            background: '#f8fafc',
           }}
         >
           <Typography sx={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>
@@ -612,7 +1333,7 @@ function AuctionControlTab() {
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
-        <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#e2e8f0' }}>Auction Control</Typography>
+        <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#1e293b' }}>Auction Control</Typography>
         <Typography sx={{ fontSize: '12px', color: '#64748b' }}>Manage auction lifecycle and player flow</Typography>
       </Box>
 
@@ -630,7 +1351,7 @@ function AuctionControlTab() {
       {/* Status indicator */}
       <SectionCard title="Auction Status">
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          {isLoading && <CircularProgress size={16} sx={{ color: '#f59e0b' }} />}
+          {isLoading && <CircularProgress size={16} sx={{ color: '#b45309' }} />}
           {!auction && !isLoading && (
             <Typography sx={{ fontSize: '13px', color: '#64748b' }}>No auction found. Create one below.</Typography>
           )}
@@ -688,12 +1409,12 @@ function AuctionControlTab() {
             sx={{
               minWidth: 250,
               '& .MuiOutlinedInput-root': {
-                background: 'rgba(255,255,255,0.04)',
+                background: '#f1f5f9',
                 borderRadius: '10px',
                 '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
                 '&.Mui-focused fieldset': { borderColor: '#f59e0b' },
               },
-              '& .MuiInputLabel-root.Mui-focused': { color: '#f59e0b' },
+              '& .MuiInputLabel-root.Mui-focused': { color: '#b45309' },
             }}
           >
             <option value="">-- Choose a player --</option>

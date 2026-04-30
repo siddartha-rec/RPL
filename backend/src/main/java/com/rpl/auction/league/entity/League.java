@@ -36,6 +36,14 @@ public class League {
 
     @Column(nullable = false)
     @Builder.Default
+    private Integer minPlayersPerTeam = 15;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer minWomenPerTeam = 2;
+
+    @Column(nullable = false)
+    @Builder.Default
     private Integer maxRetentionsPerTeam = 0;
 
     @Column(precision = 12, scale = 2)

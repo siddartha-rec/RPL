@@ -16,6 +16,7 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
     List<Player> findByLeagueIdAndCategory(Long leagueId, Player.PlayerCategory category);
     List<Player> findByLeagueIdAndTeamId(Long leagueId, Long teamId);
     long countByTeamId(Long teamId);
+    long countByTeamIdAndGender(Long teamId, Player.Gender gender);
 
     @Query("SELECT p FROM Player p WHERE p.league.id = :leagueId " +
            "AND (:category IS NULL OR p.category = :category) " +

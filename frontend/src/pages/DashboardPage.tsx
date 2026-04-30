@@ -75,8 +75,8 @@ function LiveStatusBar({ league }: { league: League }) {
       sx={{
         background: isLive
           ? 'linear-gradient(90deg, rgba(239,68,68,0.15) 0%, rgba(245,158,11,0.1) 50%, rgba(239,68,68,0.15) 100%)'
-          : 'rgba(15,15,30,0.8)',
-        border: isLive ? '1px solid rgba(239,68,68,0.4)' : '1px solid rgba(255,255,255,0.07)',
+          : 'rgba(255,255,255,0.92)',
+        border: isLive ? '1px solid rgba(239,68,68,0.4)' : '1px solid #e2e8f0',
         borderRadius: '12px',
         px: 3,
         py: 1.5,
@@ -114,7 +114,7 @@ function LiveStatusBar({ league }: { league: League }) {
 
       <Box sx={{ width: '1px', height: 20, bgcolor: 'rgba(255,255,255,0.1)' }} />
 
-      <Typography sx={{ flex: 1, color: '#e2e8f0', fontSize: '14px', fontWeight: 600 }}>
+      <Typography sx={{ flex: 1, color: '#1e293b', fontSize: '14px', fontWeight: 600 }}>
         {statusLabel}
       </Typography>
 
@@ -157,7 +157,7 @@ function SeasonStatCard({
   return (
     <Card
       sx={{
-        background: 'rgba(20,20,40,0.6)',
+        background: '#f8fafc',
         backdropFilter: 'blur(16px)',
         border: `1px solid ${color}25`,
         borderRadius: '16px',
@@ -166,7 +166,7 @@ function SeasonStatCard({
         transition: 'all 0.3s ease',
         '&:hover': {
           transform: 'translateY(-4px)',
-          background: 'rgba(26,26,50,0.8)',
+          background: '#ffffff',
           border: `1px solid ${color}60`,
           boxShadow: `0 8px 32px ${color}25`,
         },
@@ -194,7 +194,7 @@ function SeasonStatCard({
           <Typography sx={{ fontSize: '11px', fontWeight: 700, color: '#475569', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
             {label}
           </Typography>
-          <Typography sx={{ fontSize: '22px', fontWeight: 800, color: '#e2e8f0', lineHeight: 1.2, mt: 0.25 }}>
+          <Typography sx={{ fontSize: '22px', fontWeight: 800, color: '#1e293b', lineHeight: 1.2, mt: 0.25 }}>
             {value}
           </Typography>
         </Box>
@@ -215,9 +215,9 @@ function TeamCard({ team, onClick, index }: { team: Team; onClick: () => void; i
       onClick={onClick}
       sx={{
         cursor: 'pointer',
-        background: 'rgba(15,15,30,0.9)',
+        background: 'rgba(255,255,255,0.95)',
         backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        border: '1px solid #eef2f7',
         borderRadius: '20px',
         overflow: 'hidden',
         position: 'relative',
@@ -263,40 +263,6 @@ function TeamCard({ team, onClick, index }: { team: Team; onClick: () => void; i
           {team.name}
         </Typography>
 
-        {/* Short name badge */}
-        <Box
-          sx={{
-            px: 1.5,
-            py: 0.5,
-            borderRadius: '8px',
-            background: 'rgba(0,0,0,0.35)',
-            border: '1px solid rgba(255,255,255,0.25)',
-            backdropFilter: 'blur(4px)',
-          }}
-        >
-          <Typography sx={{ fontSize: '11px', fontWeight: 800, color: '#fff', letterSpacing: '1px' }}>
-            {team.shortName}
-          </Typography>
-        </Box>
-
-        {/* Player count bubble */}
-        <Box
-          sx={{
-            width: 32,
-            height: 32,
-            borderRadius: '50%',
-            background: 'rgba(0,0,0,0.4)',
-            border: '1px solid rgba(255,255,255,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#fff', lineHeight: 1 }}>
-            {playerCount}
-          </Typography>
-        </Box>
       </Box>
 
       {/* ── Watermark short name ── */}
@@ -341,7 +307,7 @@ function TeamCard({ team, onClick, index }: { team: Team; onClick: () => void; i
             >
               C
             </Box>
-            <Typography sx={{ fontSize: '13px', color: '#cbd5e1', fontWeight: 600 }}>
+            <Typography sx={{ fontSize: '13px', color: '#475569', fontWeight: 600 }}>
               {team.captainName}
             </Typography>
           </Box>
@@ -360,8 +326,8 @@ function TeamCard({ team, onClick, index }: { team: Team; onClick: () => void; i
             <Grid key={label} size={{ xs: 6 }}>
               <Box
                 sx={{
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  background: '#f8fafc',
+                  border: '1px solid #eef2f7',
                   borderRadius: '10px',
                   p: 1,
                   textAlign: 'center',
@@ -388,7 +354,7 @@ function TeamCard({ team, onClick, index }: { team: Team; onClick: () => void; i
               {budgetPct.toFixed(0)}%
             </Typography>
           </Box>
-          <Box sx={{ position: 'relative', height: 8, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+          <Box sx={{ position: 'relative', height: 8, borderRadius: 4, bgcolor: '#e2e8f0', overflow: 'hidden' }}>
             <LinearProgress
               variant="determinate"
               value={budgetPct}
@@ -448,7 +414,7 @@ function LeagueTeamsSection({ league }: { league: League }) {
 
       {isLoading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-          <CircularProgress sx={{ color: '#f59e0b' }} size={40} />
+          <CircularProgress sx={{ color: '#b45309' }} size={40} />
         </Box>
       )}
       {error && (
@@ -457,21 +423,6 @@ function LeagueTeamsSection({ league }: { league: League }) {
 
       {teams && (
         <>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-            <Box sx={{ width: 3, height: 20, background: 'linear-gradient(180deg, #f59e0b, #d97706)', borderRadius: 2 }} />
-            <Typography
-              sx={{
-                fontSize: '12px',
-                fontWeight: 700,
-                color: '#475569',
-                letterSpacing: '2.5px',
-                textTransform: 'uppercase',
-              }}
-            >
-              Teams — {teams.length}
-            </Typography>
-          </Box>
-
           <Grid container spacing={2.5}>
             {teams.map((team, i) => (
               <Grid key={team.id} size={{ xs: 12, sm: 6, md: 4 }}>
@@ -484,8 +435,8 @@ function LeagueTeamsSection({ league }: { league: League }) {
                   sx={{
                     textAlign: 'center',
                     py: 8,
-                    color: '#334155',
-                    border: '1px dashed rgba(255,255,255,0.07)',
+                    color: '#475569',
+                    border: '1px dashed #e2e8f0',
                     borderRadius: '16px',
                   }}
                 >
@@ -510,7 +461,7 @@ function HeroBanner({ league }: { league: League | undefined }) {
         borderRadius: '24px',
         overflow: 'hidden',
         mb: 4,
-        background: 'linear-gradient(135deg, #0a0a1a 0%, #0f0f25 40%, #1a0a30 70%, #0a1020 100%)',
+        background: 'linear-gradient(135deg, #ffffff 0%, #ffffff 40%, #ffffff 70%, #ffffff 100%)',
         border: '1px solid rgba(245,158,11,0.2)',
         animation: 'glowPulse 4s ease-in-out infinite',
         minHeight: 220,
@@ -589,7 +540,7 @@ function HeroBanner({ league }: { league: League | undefined }) {
             boxShadow: '0 0 30px rgba(245,158,11,0.3)',
           }}
         >
-          <EmojiEventsIcon sx={{ fontSize: { xs: 32, md: 40 }, color: '#f59e0b' }} />
+          <EmojiEventsIcon sx={{ fontSize: { xs: 32, md: 40 }, color: '#b45309' }} />
         </Box>
 
         {/* Titles */}
@@ -600,7 +551,7 @@ function HeroBanner({ league }: { league: League | undefined }) {
               sx={{
                 fontWeight: 900,
                 fontSize: { xs: '26px', md: '38px', lg: '44px' },
-                background: 'linear-gradient(135deg, #f59e0b 0%, #fde68a 40%, #f59e0b 70%, #d97706 100%)',
+                background: 'linear-gradient(135deg, #f59e0b 0%, #b45309 40%, #f59e0b 70%, #d97706 100%)',
                 backgroundSize: '200% auto',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -623,7 +574,7 @@ function HeroBanner({ league }: { league: League | undefined }) {
                   flexShrink: 0,
                 }}
               >
-                <Typography sx={{ fontSize: '12px', fontWeight: 800, color: '#f59e0b', letterSpacing: '1px' }}>
+                <Typography sx={{ fontSize: '12px', fontWeight: 800, color: '#b45309', letterSpacing: '1px' }}>
                   SEASON {league.season}
                 </Typography>
               </Box>
@@ -657,12 +608,12 @@ function HeroBanner({ league }: { league: League | undefined }) {
                 px: 2,
                 py: 1,
                 borderRadius: '12px',
-                background: 'rgba(15,15,30,0.7)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'rgba(255,255,255,0.88)',
+                border: '1px solid #e2e8f0',
                 backdropFilter: 'blur(10px)',
               }}
             >
-              <SportsCricketIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
+              <SportsCricketIcon sx={{ fontSize: 18, color: '#b45309' }} />
               <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#94a3b8' }}>
                 {league.name}
               </Typography>
@@ -686,7 +637,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 2 }}>
-        <CircularProgress sx={{ color: '#f59e0b' }} size={48} />
+        <CircularProgress sx={{ color: '#b45309' }} size={48} />
         <Typography sx={{ color: '#475569', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase' }}>
           Loading Dashboard…
         </Typography>
@@ -721,8 +672,8 @@ export default function DashboardPage() {
           <Box
             sx={{
               display: 'flex',
-              background: 'rgba(15,15,35,0.8)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'rgba(255,255,255,0.92)',
+              border: '1px solid #e2e8f0',
               borderRadius: '14px',
               p: 0.5,
               gap: 0.4,
@@ -750,13 +701,13 @@ export default function DashboardPage() {
                       ? {
                           background: 'linear-gradient(135deg, rgba(167,139,250,0.25), rgba(139,92,246,0.12))',
                           border: '1px solid rgba(167,139,250,0.45)',
-                          color: '#a78bfa',
+                          color: '#6d28d9',
                           boxShadow: '0 2px 8px rgba(167,139,250,0.2)',
                         }
                       : {
                           color: '#64748b',
                           border: '1px solid transparent',
-                          '&:hover': { color: '#94a3b8', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' },
+                          '&:hover': { color: '#94a3b8', background: '#eef2f7', border: '1px solid #eef2f7' },
                         }),
                   }}
                 >
@@ -776,7 +727,7 @@ export default function DashboardPage() {
             borderRadius: '12px',
             background: 'rgba(96,165,250,0.08)',
             border: '1px solid rgba(96,165,250,0.25)',
-            color: '#60a5fa',
+            color: '#1d4ed8',
           }}
         >
           No leagues found. Create a league in the Admin panel.

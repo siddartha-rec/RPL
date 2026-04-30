@@ -14,6 +14,8 @@ public class LeagueResponse {
     private String status;
     private BigDecimal teamBudget;
     private Integer maxPlayersPerTeam;
+    private Integer minPlayersPerTeam;
+    private Integer minWomenPerTeam;
     private Integer maxRetentionsPerTeam;
     private BigDecimal retentionCost;
     private BigDecimal bidIncrement;
@@ -29,6 +31,8 @@ public class LeagueResponse {
                 .status(league.getStatus().name())
                 .teamBudget(league.getTeamBudget())
                 .maxPlayersPerTeam(league.getMaxPlayersPerTeam())
+                .minPlayersPerTeam(league.getMinPlayersPerTeam())
+                .minWomenPerTeam(league.getMinWomenPerTeam())
                 .maxRetentionsPerTeam(league.getMaxRetentionsPerTeam())
                 .retentionCost(league.getRetentionCost())
                 .bidIncrement(league.getBidIncrement())

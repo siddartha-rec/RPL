@@ -21,17 +21,17 @@ function statusStyle(status: string): { gradient: string; color: string; label: 
   switch (status) {
     case 'RETAINED': return {
       gradient: 'linear-gradient(135deg, rgba(96,165,250,0.28), rgba(59,130,246,0.14))',
-      color: '#60a5fa',
+      color: '#1d4ed8',
       label: 'Retained',
     };
     case 'SOLD': return {
       gradient: 'linear-gradient(135deg, rgba(74,222,128,0.28), rgba(34,197,94,0.14))',
-      color: '#4ade80',
+      color: '#047857',
       label: 'Sold',
     };
     case 'UNSOLD': return {
       gradient: 'linear-gradient(135deg, rgba(239,68,68,0.28), rgba(220,38,38,0.14))',
-      color: '#ef4444',
+      color: '#b91c1c',
       label: 'Unsold',
     };
     default: return {
@@ -59,8 +59,8 @@ function CategoryToggle({
     <Box
       sx={{
         display: 'flex',
-        background: 'rgba(15,15,35,0.8)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'rgba(255,255,255,0.92)',
+        border: '1px solid #e2e8f0',
         borderRadius: '14px',
         p: 0.5,
         gap: 0.4,
@@ -88,7 +88,7 @@ function CategoryToggle({
                 ? {
                     background: 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(251,191,36,0.12))',
                     border: '1px solid rgba(245,158,11,0.45)',
-                    color: '#f59e0b',
+                    color: '#b45309',
                     boxShadow: '0 2px 8px rgba(245,158,11,0.2)',
                   }
                 : {
@@ -96,8 +96,8 @@ function CategoryToggle({
                     border: '1px solid transparent',
                     '&:hover': {
                       color: '#94a3b8',
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.06)',
+                      background: '#f8fafc',
+                      border: '1px solid #eef2f7',
                     },
                   }),
             }}
@@ -124,8 +124,8 @@ function TeamFilter({
     <Box
       sx={{
         display: 'flex',
-        background: 'rgba(15,15,35,0.8)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'rgba(255,255,255,0.92)',
+        border: '1px solid #e2e8f0',
         borderRadius: '14px',
         p: 0.5,
         gap: 0.4,
@@ -151,7 +151,7 @@ function TeamFilter({
             ? {
                 background: 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(251,191,36,0.12))',
                 border: '1px solid rgba(245,158,11,0.45)',
-                color: '#f59e0b',
+                color: '#b45309',
                 boxShadow: '0 2px 8px rgba(245,158,11,0.2)',
               }
             : {
@@ -159,8 +159,8 @@ function TeamFilter({
                 border: '1px solid transparent',
                 '&:hover': {
                   color: '#94a3b8',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  background: '#f8fafc',
+                  border: '1px solid #eef2f7',
                 },
               }),
         }}
@@ -200,8 +200,8 @@ function TeamFilter({
                     border: '1px solid transparent',
                     '&:hover': {
                       color: '#94a3b8',
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.06)',
+                      background: '#f8fafc',
+                      border: '1px solid #eef2f7',
                     },
                   }),
             }}
@@ -230,9 +230,9 @@ function PlayersTable({ players }: { players: Player[] }) {
   return (
     <Box
       sx={{
-        background: 'rgba(15,15,35,0.8)',
+        background: 'rgba(255,255,255,0.92)',
         backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        border: '1px solid #eef2f7',
         borderRadius: '18px',
         overflow: 'hidden',
       }}
@@ -245,8 +245,8 @@ function PlayersTable({ players }: { players: Player[] }) {
           alignItems: 'center',
           px: 2.5,
           py: 1.4,
-          background: 'rgba(8,8,24,0.9)',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          background: '#f8fafc',
+          borderBottom: '1px solid #e2e8f0',
           position: 'sticky',
           top: 0,
           zIndex: 2,
@@ -258,7 +258,7 @@ function PlayersTable({ players }: { players: Player[] }) {
             sx={{
               fontSize: '10px',
               fontWeight: 800,
-              color: '#334155',
+              color: '#475569',
               textTransform: 'uppercase',
               letterSpacing: '1px',
               ...(col === 'Base Price' && { textAlign: 'right' }),
@@ -289,8 +289,8 @@ function PlayersTable({ players }: { players: Player[] }) {
                 alignItems: 'center',
                 px: 2.5,
                 py: 1.4,
-                borderBottom: '1px solid rgba(255,255,255,0.04)',
-                background: i % 2 === 0 ? 'rgba(255,255,255,0.018)' : 'transparent',
+                borderBottom: '1px solid #eef2f7',
+                background: i % 2 === 0 ? 'rgba(248,250,252,0.6)' : 'transparent',
                 transition: 'background 0.2s ease',
                 '&:hover': { background: 'rgba(245,158,11,0.07)' },
                 '&:last-child': { borderBottom: 'none' },
@@ -298,7 +298,7 @@ function PlayersTable({ players }: { players: Player[] }) {
             >
               {/* Name + captain badge */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, overflow: 'hidden' }}>
-                <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#e2e8f0' }} noWrap>
+                <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }} noWrap>
                   {p.name}
                 </Typography>
                 {p.isCaptain && (
@@ -338,12 +338,12 @@ function PlayersTable({ players }: { players: Player[] }) {
                   ...(p.category === 'CRICKET'
                     ? {
                         background: 'linear-gradient(135deg, rgba(96,165,250,0.2), rgba(59,130,246,0.1))',
-                        color: '#60a5fa',
+                        color: '#1d4ed8',
                         border: '1px solid rgba(96,165,250,0.3)',
                       }
                     : {
                         background: 'linear-gradient(135deg, rgba(167,139,250,0.2), rgba(139,92,246,0.1))',
-                        color: '#a78bfa',
+                        color: '#6d28d9',
                         border: '1px solid rgba(167,139,250,0.3)',
                       }),
                 }}
@@ -372,7 +372,7 @@ function PlayersTable({ players }: { players: Player[] }) {
                   </Typography>
                 </Box>
               ) : (
-                <Typography sx={{ fontSize: '13px', color: '#334155', fontWeight: 500 }}>—</Typography>
+                <Typography sx={{ fontSize: '13px', color: '#475569', fontWeight: 500 }}>—</Typography>
               )}
 
               {/* Status chip with gradient */}
@@ -401,7 +401,7 @@ function PlayersTable({ players }: { players: Player[] }) {
               </Typography>
 
               {/* Auction price */}
-              <Typography sx={{ fontSize: '13px', fontWeight: 700, textAlign: 'right', color: p.soldPrice ? '#4ade80' : '#334155' }}>
+              <Typography sx={{ fontSize: '13px', fontWeight: 700, textAlign: 'right', color: p.soldPrice ? '#4ade80' : '#475569' }}>
                 {p.soldPrice ? `${p.soldPrice} CR` : '—'}
               </Typography>
             </Box>
@@ -440,8 +440,8 @@ function PaginationControls({
     cursor: 'pointer',
     userSelect: 'none' as const,
     transition: 'all 0.2s ease',
-    border: '1px solid rgba(255,255,255,0.08)',
-    background: 'rgba(15,15,35,0.8)',
+    border: '1px solid #e2e8f0',
+    background: 'rgba(255,255,255,0.92)',
     backdropFilter: 'blur(10px)',
   };
 
@@ -469,13 +469,13 @@ function PaginationControls({
           onClick={page === 0 ? undefined : onPrev}
           sx={{
             ...btnBase,
-            color: page === 0 ? '#334155' : '#94a3b8',
+            color: page === 0 ? '#475569' : '#94a3b8',
             cursor: page === 0 ? 'not-allowed' : 'pointer',
             opacity: page === 0 ? 0.45 : 1,
             '&:hover': page === 0 ? {} : {
-              background: 'rgba(255,255,255,0.06)',
+              background: '#eef2f7',
               border: '1px solid rgba(255,255,255,0.15)',
-              color: '#e2e8f0',
+              color: '#1e293b',
             },
           }}
         >
@@ -492,7 +492,7 @@ function PaginationControls({
             border: '1px solid rgba(245,158,11,0.4)',
             fontSize: '13px',
             fontWeight: 800,
-            color: '#f59e0b',
+            color: '#b45309',
             whiteSpace: 'nowrap',
           }}
         >
@@ -503,13 +503,13 @@ function PaginationControls({
           onClick={page >= totalPages - 1 ? undefined : onNext}
           sx={{
             ...btnBase,
-            color: page >= totalPages - 1 ? '#334155' : '#94a3b8',
+            color: page >= totalPages - 1 ? '#475569' : '#94a3b8',
             cursor: page >= totalPages - 1 ? 'not-allowed' : 'pointer',
             opacity: page >= totalPages - 1 ? 0.45 : 1,
             '&:hover': page >= totalPages - 1 ? {} : {
-              background: 'rgba(255,255,255,0.06)',
+              background: '#eef2f7',
               border: '1px solid rgba(255,255,255,0.15)',
-              color: '#e2e8f0',
+              color: '#1e293b',
             },
           }}
         >
@@ -576,14 +576,14 @@ function AllPlayersContent() {
   if (isLoading && !pageData) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-        <CircularProgress sx={{ color: '#f59e0b' }} size={36} />
+        <CircularProgress sx={{ color: '#b45309' }} size={36} />
       </Box>
     );
   }
 
   if (error) {
     return (
-      <Alert severity="error" sx={{ borderRadius: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5' }}>
+      <Alert severity="error" sx={{ borderRadius: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#b91c1c' }}>
         Failed to load players
       </Alert>
     );
@@ -608,17 +608,17 @@ function AllPlayersContent() {
           sx={{
             minWidth: 300,
             '& .MuiOutlinedInput-root': {
-              background: 'rgba(15,15,35,0.8)',
+              background: 'rgba(255,255,255,0.92)',
               backdropFilter: 'blur(10px)',
               borderRadius: '14px',
               fontSize: '14px',
               height: 46,
-              '& fieldset': { borderColor: 'rgba(255,255,255,0.08)' },
+              '& fieldset': { borderColor: '#e2e8f0' },
               '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.15)' },
               '&.Mui-focused fieldset': { borderColor: '#f59e0b', borderWidth: '1.5px' },
             },
             '& .MuiInputBase-input': {
-              color: '#e2e8f0',
+              color: '#1e293b',
               '&::placeholder': { color: '#475569', opacity: 1 },
             },
           }}
@@ -632,8 +632,8 @@ function AllPlayersContent() {
           <Box
             sx={{
               display: 'flex',
-              background: 'rgba(15,15,35,0.8)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'rgba(255,255,255,0.92)',
+              border: '1px solid #e2e8f0',
               borderRadius: '14px',
               p: 0.5,
               gap: 0.4,
@@ -661,13 +661,13 @@ function AllPlayersContent() {
                       ? {
                           background: 'linear-gradient(135deg, rgba(167,139,250,0.25), rgba(139,92,246,0.12))',
                           border: '1px solid rgba(167,139,250,0.45)',
-                          color: '#a78bfa',
+                          color: '#6d28d9',
                           boxShadow: '0 2px 8px rgba(167,139,250,0.2)',
                         }
                       : {
                           color: '#64748b',
                           border: '1px solid transparent',
-                          '&:hover': { color: '#94a3b8', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' },
+                          '&:hover': { color: '#94a3b8', background: '#eef2f7', border: '1px solid #eef2f7' },
                         }),
                   }}
                 >
@@ -692,8 +692,8 @@ function AllPlayersContent() {
               gap: 0.75,
             }}
           >
-            <PersonIcon sx={{ fontSize: 14, color: '#f59e0b' }} />
-            <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#f59e0b' }}>
+            <PersonIcon sx={{ fontSize: 14, color: '#b45309' }} />
+            <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#b45309' }}>
               {totalElements} {totalElements === 1 ? 'player' : 'players'}
             </Typography>
           </Box>
@@ -719,11 +719,11 @@ function AllPlayersContent() {
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: '18px',
-              background: 'rgba(5,5,20,0.55)',
+              background: 'rgba(255,255,255,0.55)',
               backdropFilter: 'blur(3px)',
             }}
           >
-            <CircularProgress sx={{ color: '#f59e0b' }} size={32} />
+            <CircularProgress sx={{ color: '#b45309' }} size={32} />
           </Box>
         )}
         <PlayersTable players={players} />
@@ -749,7 +749,7 @@ export default function PlayersPage() {
         sx={{
           mb: 4,
           pb: 3,
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid #eef2f7',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 2, flexWrap: 'wrap' }}>
@@ -779,7 +779,7 @@ export default function PlayersPage() {
                   border: '1px solid rgba(74,222,128,0.28)',
                   fontSize: '11px',
                   fontWeight: 800,
-                  color: '#4ade80',
+                  color: '#047857',
                   letterSpacing: '0.8px',
                   alignSelf: 'center',
                 }}

@@ -12,6 +12,7 @@ public class PlayerResponse {
     private Integer playerNumber;
     private String category;
     private String role;
+    private String gender;
     private BigDecimal basePrice;
     private BigDecimal soldPrice;
     private Long teamId;
@@ -29,6 +30,7 @@ public class PlayerResponse {
                 .playerNumber(player.getPlayerNumber())
                 .category(player.getCategory().name())
                 .role(player.getRole())
+                .gender(player.getGender() != null ? player.getGender().name() : null)
                 .basePrice(player.getBasePrice())
                 .soldPrice(player.getSoldPrice())
                 .teamId(player.getTeam() != null ? player.getTeam().getId() : null)
