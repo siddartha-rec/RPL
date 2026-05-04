@@ -13,6 +13,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     List<Team> findByLeagueId(Long leagueId);
     Optional<Team> findByOwnerIdAndLeagueId(Long ownerId, Long leagueId);
     boolean existsByNameAndLeagueId(String name, Long leagueId);
+    Optional<Team> findByCricheroesId(Long cricheroesId);
 
     @Modifying
     @Query("DELETE FROM Team t WHERE t.league.id = :leagueId")

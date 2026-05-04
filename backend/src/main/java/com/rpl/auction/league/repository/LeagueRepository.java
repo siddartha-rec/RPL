@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface LeagueRepository extends JpaRepository<League, Long> {
     Optional<League> findBySeason(String season);
     boolean existsBySeason(String season);
+    Optional<League> findByCricheroesId(Long cricheroesId);
 }

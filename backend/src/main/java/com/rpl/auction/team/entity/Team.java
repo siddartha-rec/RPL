@@ -51,6 +51,9 @@ public class Team {
     @Builder.Default
     private BigDecimal budgetSpent = BigDecimal.ZERO;
 
+    @Column(name = "cricheroes_id", unique = true)
+    private Long cricheroesId;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;

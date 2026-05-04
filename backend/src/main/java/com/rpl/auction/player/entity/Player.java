@@ -60,6 +60,17 @@ public class Player {
     @Builder.Default
     private Boolean isCaptain = false;
 
+    @Column(name = "cricheroes_id", unique = true)
+    private Long cricheroesId;
+
+    @Column(name = "photo_url", length = 500)
+    private String photoUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private PlayerSource source = PlayerSource.MANUAL;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
@@ -71,4 +82,5 @@ public class Player {
     public enum PlayerCategory { CRICKET, OTHER }
     public enum PlayerStatus { AVAILABLE, RETAINED, SOLD, UNSOLD }
     public enum Gender { MALE, FEMALE, OTHER }
+    public enum PlayerSource { MANUAL, CRICHEROES }
 }

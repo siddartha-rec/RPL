@@ -57,6 +57,9 @@ public class League {
     @Builder.Default
     private Integer timerSeconds = 30;
 
+    @Column(name = "cricheroes_id", unique = true)
+    private Long cricheroesId;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;

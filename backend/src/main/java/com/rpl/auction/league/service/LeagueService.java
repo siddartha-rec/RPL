@@ -7,6 +7,10 @@ import com.rpl.auction.common.exception.BadRequestException;
 import com.rpl.auction.common.exception.ResourceNotFoundException;
 import com.rpl.auction.history.repository.PlayerHistoryRepository;
 import com.rpl.auction.history.repository.TeamStandingRepository;
+import com.rpl.auction.match.repository.BattingPerformanceRepository;
+import com.rpl.auction.match.repository.BowlingPerformanceRepository;
+import com.rpl.auction.match.repository.InningsRepository;
+import com.rpl.auction.match.repository.MatchRepository;
 import com.rpl.auction.league.dto.LeagueRequest;
 import com.rpl.auction.league.dto.LeagueResponse;
 import com.rpl.auction.league.entity.League;
@@ -31,6 +35,10 @@ public class LeagueService {
     private final DraftPickRepository draftPickRepository;
     private final PlayerHistoryRepository playerHistoryRepository;
     private final TeamStandingRepository teamStandingRepository;
+    private final MatchRepository matchRepository;
+    private final InningsRepository inningsRepository;
+    private final BattingPerformanceRepository battingPerformanceRepository;
+    private final BowlingPerformanceRepository bowlingPerformanceRepository;
 
     @Transactional
     public LeagueResponse create(LeagueRequest request) {
@@ -90,6 +98,16 @@ public class LeagueService {
     @Transactional
     public void delete(Long id) {
         getLeagueOrThrow(id);
+        List<Long> matchIds = matchRepository.findIdsByLeagueId(id);
+        if (!matchIds.isEmpty()) {
+            List<Long> inningsIds = inningsRepository.findIdsByMatchIdIn(matchIds);
+            if (!inningsIds.isEmpty()) {
+                battingPerformanceRepository.deleteByInningsIdIn(inningsIds);
+                bowlingPerformanceRepository.deleteByInningsIdIn(inningsIds);
+                inningsRepository.deleteByMatchIdIn(matchIds);
+            }
+            matchRepository.deleteByLeagueId(id);
+        }
         List<Long> auctionIds = auctionRepository.findIdsByLeagueId(id);
         if (!auctionIds.isEmpty()) {
             bidRepository.deleteByAuctionIdIn(auctionIds);

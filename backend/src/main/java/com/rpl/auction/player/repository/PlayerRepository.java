@@ -9,9 +9,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PlayerRepository extends JpaRepository<Player, Long> {
     List<Player> findByLeagueId(Long leagueId);
+    Optional<Player> findByCricheroesId(Long cricheroesId);
 
     @Modifying
     @Query("DELETE FROM Player p WHERE p.league.id = :leagueId")
