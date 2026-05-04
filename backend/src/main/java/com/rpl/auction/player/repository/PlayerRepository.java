@@ -4,6 +4,7 @@ import com.rpl.auction.player.entity.Player;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -11,6 +12,10 @@ import java.util.List;
 
 public interface PlayerRepository extends JpaRepository<Player, Long> {
     List<Player> findByLeagueId(Long leagueId);
+
+    @Modifying
+    @Query("DELETE FROM Player p WHERE p.league.id = :leagueId")
+    int deleteByLeagueId(@Param("leagueId") Long leagueId);
     List<Player> findByTeamId(Long teamId);
     List<Player> findByLeagueIdAndStatus(Long leagueId, Player.PlayerStatus status);
     List<Player> findByLeagueIdAndCategory(Long leagueId, Player.PlayerCategory category);

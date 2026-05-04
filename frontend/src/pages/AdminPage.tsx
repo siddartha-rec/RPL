@@ -22,13 +22,13 @@ import StopIcon from '@mui/icons-material/Stop';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import {
-  getLeagues, createLeague,
+  getLeagues, createLeague, deleteLeague,
 } from '../api/leagues';
 import { getTeams } from '../api/teams';
 import { getPlayers, createPlayer, updatePlayer, deletePlayer, importPlayers, getPlayersPaginated } from '../api/players';
 import type { PageResponse } from '../types';
 import {
-  getAuction, createAuction, startAuction, advanceToLive,
+  getAuctionByLeague, createAuction, startAuction, advanceToLive,
   pauseAuction, resumeAuction, switchToDraft, completeAuction,
   putUpPlayer, soldPlayer,
 } from '../api/auctions';
@@ -92,7 +92,8 @@ function TabPanel({ children, value, index }: { children: React.ReactNode; value
 }
 
 // ---- Styled Table ----
-function StyledTable({ columns, rows }: { columns: string[]; rows: React.ReactNode[][] }) {
+function StyledTable({ columns, rows, columnTemplate }: { columns: string[]; rows: React.ReactNode[][]; columnTemplate?: string }) {
+  const template = columnTemplate ?? `repeat(${columns.length}, 1fr)`;
   return (
     <Box
       sx={{
@@ -106,7 +107,7 @@ function StyledTable({ columns, rows }: { columns: string[]; rows: React.ReactNo
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: `repeat(${columns.length}, 1fr)`,
+          gridTemplateColumns: template,
           px: 2.5,
           py: 1.25,
           background: '#f8fafc',
@@ -132,7 +133,7 @@ function StyledTable({ columns, rows }: { columns: string[]; rows: React.ReactNo
             key={i}
             sx={{
               display: 'grid',
-              gridTemplateColumns: `repeat(${columns.length}, 1fr)`,
+              gridTemplateColumns: template,
               px: 2.5,
               py: 1.5,
               alignItems: 'center',
@@ -187,6 +188,8 @@ function StatusBadge({ status }: { status: string }) {
 function LeaguesTab() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [deleting, setDeleting] = useState<League | null>(null);
+  const [confirmText, setConfirmText] = useState('');
   const [form, setForm] = useState<Partial<League>>({
     name: '', season: '', teamBudget: 100, maxPlayersPerTeam: 35,
     maxRetentionsPerTeam: 5, retentionCost: 10, bidIncrement: 0.5, timerSeconds: 30,
@@ -205,6 +208,15 @@ function LeaguesTab() {
     },
   });
 
+  const deleteMut = useMutation({
+    mutationFn: () => deleteLeague(deleting!.id),
+    onSuccess: () => {
+      qc.invalidateQueries();
+      setDeleting(null);
+      setConfirmText('');
+    },
+  });
+
   const handleChange = (field: keyof League) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = ['teamBudget', 'maxPlayersPerTeam', 'maxRetentionsPerTeam', 'retentionCost', 'bidIncrement', 'timerSeconds'].includes(field)
       ? Number(e.target.value)
@@ -212,8 +224,23 @@ function LeaguesTab() {
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
+  const closeDelete = () => {
+    if (deleteMut.isPending) return;
+    setDeleting(null);
+    setConfirmText('');
+    deleteMut.reset();
+  };
+
   if (isLoading) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#b45309' }} /></Box>;
   if (error) return <Alert severity="error" sx={{ borderRadius: '12px' }}>Failed to load leagues</Alert>;
+
+  const deleteBtnSx = {
+    minWidth: 32, width: 32, height: 32, p: 0,
+    color: '#ef4444', borderRadius: '8px',
+    background: '#ef444410',
+    border: '1px solid #ef444430',
+    '&:hover': { background: '#ef444420', borderColor: '#ef444455' },
+  };
 
   const rows = (leagues ?? []).map(l => [
     <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>{l.name}</Typography>,
@@ -221,6 +248,9 @@ function LeaguesTab() {
     <StatusBadge status={l.status} />,
     <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{l.teamBudget} CR</Typography>,
     <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{l.maxPlayersPerTeam}</Typography>,
+    <Box sx={{ display: 'flex', gap: 0.75 }}>
+      <Button onClick={() => setDeleting(l)} sx={deleteBtnSx} title="Delete league"><DeleteOutlineIcon sx={{ fontSize: 16 }} /></Button>
+    </Box>,
   ]);
 
   return (
@@ -251,7 +281,8 @@ function LeaguesTab() {
         </Button>
       </Box>
       <StyledTable
-        columns={['Name', 'Season', 'Status', 'Budget', 'Max Players']}
+        columns={['Name', 'Season', 'Status', 'Budget', 'Max Players', 'Actions']}
+        columnTemplate="1.5fr 1fr 1fr 1fr 1fr 64px"
         rows={rows}
       />
 
@@ -330,6 +361,64 @@ function LeaguesTab() {
             }}
           >
             {mutation.isPending ? 'Creating...' : 'Create League'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={!!deleting}
+        onClose={closeDelete}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: '#ffffff',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(239,68,68,0.25)',
+            borderRadius: '18px',
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#b91c1c' }}>Delete league?</DialogTitle>
+        <DialogContent>
+          <Alert severity="error" sx={{ borderRadius: '10px', mb: 2 }}>
+            This permanently wipes <b>{deleting?.name}</b> ({deleting?.season}) and all its data: teams, players, auctions, bids, draft picks, history, standings. Cannot be undone.
+          </Alert>
+          <Typography sx={{ color: '#475569', fontSize: '13px', mb: 1 }}>
+            Type the season <b style={{ color: '#1e293b' }}>{deleting?.season}</b> to confirm.
+          </Typography>
+          <TextField
+            value={confirmText}
+            onChange={e => setConfirmText(e.target.value)}
+            fullWidth
+            size="small"
+            autoFocus
+            placeholder={deleting?.season ?? ''}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                background: '#f1f5f9',
+                borderRadius: '10px',
+                '&.Mui-focused fieldset': { borderColor: '#ef4444' },
+              },
+            }}
+          />
+          {deleteMut.error && <Alert severity="error" sx={{ mt: 2, borderRadius: '10px' }}>Failed to delete league</Alert>}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <Button onClick={closeDelete} disabled={deleteMut.isPending} sx={{ color: '#64748b', borderRadius: '10px' }}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={() => deleteMut.mutate()}
+            disabled={deleteMut.isPending || confirmText !== (deleting?.season ?? '')}
+            sx={{
+              background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
+              fontWeight: 700,
+              borderRadius: '10px',
+              '&:hover': { background: 'linear-gradient(135deg, #fca5a5, #dc2626)' },
+              '&.Mui-disabled': { background: '#e2e8f0', color: '#94a3b8' },
+            }}
+          >
+            {deleteMut.isPending ? 'Deleting...' : 'Delete league'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1187,7 +1276,7 @@ function PlayersTab() {
 // ---- Auction Control Tab ----
 function AuctionControlTab() {
   const qc = useQueryClient();
-  const [auctionId, setAuctionId] = useState<number | null>(null);
+  const [selectedLeagueId, setSelectedLeagueId] = useState<number | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
   const [actionError, setActionError] = useState('');
   const [actionSuccess, setActionSuccess] = useState('');
@@ -1197,24 +1286,25 @@ function AuctionControlTab() {
     queryFn: getLeagues,
   });
 
-  const activeLeague = leagues?.find(l => l.status !== 'COMPLETED') ?? leagues?.[0];
+  const sortedLeagues = (leagues ?? []).slice().sort((a, b) => (b.season ?? '').localeCompare(a.season ?? ''));
 
-  // Auto-detect auction for active league
-  const { data: auction, isLoading, refetch } = useQuery<Auction>({
-    queryKey: ['auction', auctionId ?? 'latest'],
-    queryFn: () => getAuction(auctionId ?? 1),
-    retry: false,
-    enabled: auctionId !== null,
+  useEffect(() => {
+    if (selectedLeagueId === null && sortedLeagues.length > 0) {
+      const def = sortedLeagues.find(l => l.status !== 'COMPLETED') ?? sortedLeagues[0];
+      setSelectedLeagueId(def.id);
+    }
+  }, [sortedLeagues, selectedLeagueId]);
+
+  const activeLeague = sortedLeagues.find(l => l.id === selectedLeagueId) ?? null;
+
+  const { data: auction, isLoading, refetch } = useQuery<Auction | null>({
+    queryKey: ['auction-by-league', activeLeague?.id],
+    queryFn: () => getAuctionByLeague(activeLeague!.id).catch(() => null),
+    enabled: !!activeLeague,
   });
 
-  // Try to find existing auction on mount
-  useEffect(() => {
-    if (auctionId === null) {
-      getAuction(1).then(a => setAuctionId(a.id)).catch(() => {});
-    }
-  }, [auctionId]);
+  const auctionId = auction?.id ?? null;
 
-  // Fetch available players for the select dropdown
   const { data: availablePlayers } = useQuery<Player[]>({
     queryKey: ['players', activeLeague?.id],
     queryFn: () => getPlayers(activeLeague!.id),
@@ -1228,7 +1318,7 @@ function AuctionControlTab() {
       .then(() => {
         setActionSuccess(successMsg);
         refetch();
-        qc.invalidateQueries({ queryKey: ['auction'] });
+        qc.invalidateQueries({ queryKey: ['auction-by-league'] });
         qc.invalidateQueries({ queryKey: ['players'] });
       })
       .catch((e: unknown) => {
@@ -1239,16 +1329,16 @@ function AuctionControlTab() {
 
   const createMutation = useMutation({
     mutationFn: () => createAuction(activeLeague!.id),
-    onSuccess: (data: Auction) => {
-      setAuctionId(data.id);
+    onSuccess: () => {
       setActionSuccess('Auction created successfully');
-      qc.invalidateQueries({ queryKey: ['auction'] });
+      qc.invalidateQueries({ queryKey: ['auction-by-league'] });
+      refetch();
     },
     onError: () => setActionError('Failed to create auction'),
   });
 
-  if (!activeLeague) {
-    return <Alert severity="warning" sx={{ borderRadius: '12px' }}>No active league found. Create a league first.</Alert>;
+  if (sortedLeagues.length === 0) {
+    return <Alert severity="warning" sx={{ borderRadius: '12px' }}>No leagues found. Create a league first.</Alert>;
   }
 
   const auctionStatusColor = (s: string) => {
@@ -1332,9 +1422,23 @@ function AuctionControlTab() {
 
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
-        <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#1e293b' }}>Auction Control</Typography>
-        <Typography sx={{ fontSize: '12px', color: '#64748b' }}>Manage auction lifecycle and player flow</Typography>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, flexWrap: 'wrap' }}>
+        <Box>
+          <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#1e293b' }}>Auction Control</Typography>
+          <Typography sx={{ fontSize: '12px', color: '#64748b' }}>
+            Manage auction lifecycle and player flow{activeLeague ? ` — ${activeLeague.name}` : ''}
+          </Typography>
+        </Box>
+        <SeasonSelector
+          leagues={sortedLeagues}
+          activeId={selectedLeagueId}
+          onChange={id => {
+            setSelectedLeagueId(id);
+            setSelectedPlayerId(null);
+            setActionError('');
+            setActionSuccess('');
+          }}
+        />
       </Box>
 
       {actionError && (

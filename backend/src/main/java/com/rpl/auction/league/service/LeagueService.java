@@ -1,11 +1,18 @@
 package com.rpl.auction.league.service;
 
+import com.rpl.auction.auction.repository.AuctionRepository;
+import com.rpl.auction.auction.repository.BidRepository;
+import com.rpl.auction.auction.repository.DraftPickRepository;
 import com.rpl.auction.common.exception.BadRequestException;
 import com.rpl.auction.common.exception.ResourceNotFoundException;
+import com.rpl.auction.history.repository.PlayerHistoryRepository;
+import com.rpl.auction.history.repository.TeamStandingRepository;
 import com.rpl.auction.league.dto.LeagueRequest;
 import com.rpl.auction.league.dto.LeagueResponse;
 import com.rpl.auction.league.entity.League;
 import com.rpl.auction.league.repository.LeagueRepository;
+import com.rpl.auction.player.repository.PlayerRepository;
+import com.rpl.auction.team.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +24,13 @@ import java.util.List;
 public class LeagueService {
 
     private final LeagueRepository leagueRepository;
+    private final TeamRepository teamRepository;
+    private final PlayerRepository playerRepository;
+    private final AuctionRepository auctionRepository;
+    private final BidRepository bidRepository;
+    private final DraftPickRepository draftPickRepository;
+    private final PlayerHistoryRepository playerHistoryRepository;
+    private final TeamStandingRepository teamStandingRepository;
 
     @Transactional
     public LeagueResponse create(LeagueRequest request) {
@@ -76,6 +90,16 @@ public class LeagueService {
     @Transactional
     public void delete(Long id) {
         getLeagueOrThrow(id);
+        List<Long> auctionIds = auctionRepository.findIdsByLeagueId(id);
+        if (!auctionIds.isEmpty()) {
+            bidRepository.deleteByAuctionIdIn(auctionIds);
+            draftPickRepository.deleteByAuctionIdIn(auctionIds);
+        }
+        auctionRepository.deleteByLeagueId(id);
+        playerHistoryRepository.deleteByLeagueId(id);
+        teamStandingRepository.deleteByLeagueId(id);
+        playerRepository.deleteByLeagueId(id);
+        teamRepository.deleteByLeagueId(id);
         leagueRepository.deleteById(id);
     }
 
