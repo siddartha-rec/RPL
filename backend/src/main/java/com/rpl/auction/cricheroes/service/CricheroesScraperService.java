@@ -51,7 +51,7 @@ public class CricheroesScraperService {
             if (tid > 0) teamIds.add(tid);
         }
 
-        return new ScrapedTournament(cricheroesId, name, season, city, logo, teamIds, matches);
+        return new ScrapedTournament(cricheroesId, ref.slug(), name, season, city, logo, teamIds, matches);
     }
 
     public ScrapedTeam scrapeTeam(Long cricheroesTeamId) {
@@ -82,9 +82,10 @@ public class CricheroesScraperService {
         return new ScrapedTeam(teamId, name, shortName, logo, captainId, players);
     }
 
-    public ScrapedScorecard scrapeScorecard(Long cricheroesMatchId, String slug) {
-        String safeSlug = slug == null || slug.isBlank() ? "match" : slug;
-        JsonNode pp = client.fetchPageProps("/scorecard/" + cricheroesMatchId + "/" + safeSlug + "/scorecard");
+    public ScrapedScorecard scrapeScorecard(Long cricheroesMatchId, String tournamentSlug, String matchSlug) {
+        String tslug = tournamentSlug == null || tournamentSlug.isBlank() ? "tournament" : tournamentSlug;
+        String mslug = matchSlug == null || matchSlug.isBlank() ? "match" : matchSlug;
+        JsonNode pp = client.fetchPageProps("/scorecard/" + cricheroesMatchId + "/" + tslug + "/" + mslug + "/scorecard");
 
         JsonNode sd = pp.path("summaryData").path("data");
         if (sd.isMissingNode() || !sd.has("match_id")) {

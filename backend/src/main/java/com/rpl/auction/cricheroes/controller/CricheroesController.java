@@ -53,8 +53,8 @@ public class CricheroesController {
     @PostMapping("/import/match")
     public ResponseEntity<ApiResponse<Map<String, Object>>> importMatch(@Valid @RequestBody MatchImportRequest req) {
         Match match = req.isForce()
-                ? importService.reimportMatch(req.getCricheroesMatchId(), req.getSlug(), req.getLeagueId())
-                : importService.importMatchPublic(req.getCricheroesMatchId(), req.getSlug(), req.getLeagueId());
+                ? importService.reimportMatch(req.getCricheroesMatchId(), req.getTournamentSlug(), req.getMatchSlug(), req.getLeagueId())
+                : importService.importMatchPublic(req.getCricheroesMatchId(), req.getTournamentSlug(), req.getMatchSlug(), req.getLeagueId());
         return ResponseEntity.ok(ApiResponse.success(
                 Map.of("matchId", match.getId(), "cricheroesId", match.getCricheroesId()),
                 "Match imported"));

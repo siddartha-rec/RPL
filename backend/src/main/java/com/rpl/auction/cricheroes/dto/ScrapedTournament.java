@@ -4,6 +4,7 @@ import java.util.List;
 
 public record ScrapedTournament(
         Long cricheroesId,
+        String slug,
         String name,
         String season,
         String cityName,

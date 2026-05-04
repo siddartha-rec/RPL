@@ -72,7 +72,7 @@ public class CricheroesImportService {
                     continue;
                 }
                 try {
-                    importScorecard(m.cricheroesMatchId(), m.slug(), league);
+                    importScorecard(m.cricheroesMatchId(), t.slug(), m.slug(), league);
                     progress.setMatchesDone(progress.getMatchesDone() + 1);
                 } catch (Exception e) {
                     log.warn("Failed match {}: {}", m.cricheroesMatchId(), e.getMessage());
@@ -177,8 +177,8 @@ public class CricheroesImportService {
     }
 
     @Transactional
-    public Match importScorecard(Long cricheroesMatchId, String slug, League league) {
-        ScrapedScorecard sc = scraper.scrapeScorecard(cricheroesMatchId, slug);
+    public Match importScorecard(Long cricheroesMatchId, String tournamentSlug, String matchSlug, League league) {
+        ScrapedScorecard sc = scraper.scrapeScorecard(cricheroesMatchId, tournamentSlug, matchSlug);
 
         Team teamA = resolveTeamForImport(sc.teamAId(), sc.teamAName(), league);
         Team teamB = resolveTeamForImport(sc.teamBId(), sc.teamBName(), league);
@@ -351,18 +351,18 @@ public class CricheroesImportService {
     }
 
     @Transactional
-    public Match importMatchPublic(Long cricheroesMatchId, String slug, Long leagueId) {
+    public Match importMatchPublic(Long cricheroesMatchId, String tournamentSlug, String matchSlug, Long leagueId) {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new IllegalArgumentException("League not found: " + leagueId));
         if (matchRepository.existsByCricheroesId(cricheroesMatchId)) {
             return matchRepository.findByCricheroesId(cricheroesMatchId).orElseThrow();
         }
-        return importScorecard(cricheroesMatchId, slug, league);
+        return importScorecard(cricheroesMatchId, tournamentSlug, matchSlug, league);
     }
 
     /** Force-rescrape: wipe innings + perf for match then re-import. */
     @Transactional
-    public Match reimportMatch(Long cricheroesMatchId, String slug, Long leagueId) {
+    public Match reimportMatch(Long cricheroesMatchId, String tournamentSlug, String matchSlug, Long leagueId) {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new IllegalArgumentException("League not found: " + leagueId));
         Optional<Match> existing = matchRepository.findByCricheroesId(cricheroesMatchId);
@@ -376,6 +376,6 @@ public class CricheroesImportService {
                 inningsRepository.deleteByMatchIdIn(List.of(m.getId()));
             }
         }
-        return importScorecard(cricheroesMatchId, slug, league);
+        return importScorecard(cricheroesMatchId, tournamentSlug, matchSlug, league);
     }
 }

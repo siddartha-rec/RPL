@@ -7,7 +7,8 @@ import lombok.Data;
 public class MatchImportRequest {
     @NotNull
     private Long cricheroesMatchId;
-    private String slug;
+    private String tournamentSlug;
+    private String matchSlug;
     @NotNull
     private Long leagueId;
     private boolean force;

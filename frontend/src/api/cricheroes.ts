@@ -30,6 +30,12 @@ export const importTeam = (cricheroesTeamId: number, leagueId: number) =>
   api.post<ApiResponse<{ teamId: number; name: string }>>('/cricheroes/import/team',
     { cricheroesTeamId, leagueId }).then(r => r.data.data);
 
-export const importMatch = (cricheroesMatchId: number, leagueId: number, slug?: string, force = false) =>
+export const importMatch = (
+  cricheroesMatchId: number,
+  leagueId: number,
+  tournamentSlug?: string,
+  matchSlug?: string,
+  force = false,
+) =>
   api.post<ApiResponse<{ matchId: number; cricheroesId: number }>>('/cricheroes/import/match',
-    { cricheroesMatchId, leagueId, slug, force }).then(r => r.data.data);
+    { cricheroesMatchId, leagueId, tournamentSlug, matchSlug, force }).then(r => r.data.data);
