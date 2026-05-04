@@ -24,6 +24,9 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import {
   getLeagues, createLeague, deleteLeague,
 } from '../api/leagues';
+import { importTournament, getImportProgress } from '../api/cricheroes';
+import type { ImportProgress as CHProgress } from '../api/cricheroes';
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import { getTeams } from '../api/teams';
 import { getPlayers, createPlayer, updatePlayer, deletePlayer, importPlayers, getPlayersPaginated } from '../api/players';
 import type { PageResponse } from '../types';
@@ -190,6 +193,11 @@ function LeaguesTab() {
   const [open, setOpen] = useState(false);
   const [deleting, setDeleting] = useState<League | null>(null);
   const [confirmText, setConfirmText] = useState('');
+  const [importOpen, setImportOpen] = useState(false);
+  const [importUrl, setImportUrl] = useState('');
+  const [importLeagueId, setImportLeagueId] = useState<number | ''>('');
+  const [importJobId, setImportJobId] = useState<string | null>(null);
+  const [importStartError, setImportStartError] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<League>>({
     name: '', season: '', teamBudget: 100, maxPlayersPerTeam: 35,
     maxRetentionsPerTeam: 5, retentionCost: 10, bidIncrement: 0.5, timerSeconds: 30,
@@ -216,6 +224,42 @@ function LeaguesTab() {
       setConfirmText('');
     },
   });
+
+  const startImportMut = useMutation({
+    mutationFn: () => importTournament(importUrl.trim(), importLeagueId === '' ? undefined : Number(importLeagueId)),
+    onSuccess: (d) => {
+      setImportJobId(d.jobId);
+      setImportStartError(null);
+    },
+    onError: (e: { response?: { data?: { message?: string } } }) =>
+      setImportStartError(e?.response?.data?.message ?? 'Failed to start import'),
+  });
+
+  const { data: importProgress } = useQuery<CHProgress>({
+    queryKey: ['cricheroes-import', importJobId],
+    queryFn: () => getImportProgress(importJobId!),
+    enabled: !!importJobId,
+    refetchInterval: (q) => {
+      const s = q.state.data?.status;
+      return s === 'COMPLETED' || s === 'FAILED' ? false : 1500;
+    },
+  });
+
+  useEffect(() => {
+    if (importProgress?.status === 'COMPLETED' || importProgress?.status === 'FAILED') {
+      qc.invalidateQueries();
+    }
+  }, [importProgress?.status, qc]);
+
+  const closeImport = () => {
+    if (importJobId && importProgress && (importProgress.status === 'PENDING' || importProgress.status === 'RUNNING')) return;
+    setImportOpen(false);
+    setImportUrl('');
+    setImportLeagueId('');
+    setImportJobId(null);
+    setImportStartError(null);
+    startImportMut.reset();
+  };
 
   const handleChange = (field: keyof League) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = ['teamBudget', 'maxPlayersPerTeam', 'maxRetentionsPerTeam', 'retentionCost', 'bidIncrement', 'timerSeconds'].includes(field)
@@ -264,6 +308,21 @@ function LeaguesTab() {
             {(leagues ?? []).length} league{(leagues ?? []).length !== 1 ? 's' : ''} total
           </Typography>
         </Box>
+        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+        <Button
+          variant="outlined"
+          startIcon={<CloudDownloadIcon />}
+          onClick={() => setImportOpen(true)}
+          sx={{
+            color: '#6d28d9',
+            borderColor: 'rgba(167,139,250,0.4)',
+            borderRadius: '12px',
+            fontWeight: 700,
+            '&:hover': { borderColor: '#a78bfa', background: 'rgba(167,139,250,0.08)' },
+          }}
+        >
+          Import from CricHeroes
+        </Button>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -279,6 +338,7 @@ function LeaguesTab() {
         >
           Create League
         </Button>
+        </Box>
       </Box>
       <StyledTable
         columns={['Name', 'Season', 'Status', 'Budget', 'Max Players', 'Actions']}
@@ -420,6 +480,160 @@ function LeaguesTab() {
           >
             {deleteMut.isPending ? 'Deleting...' : 'Delete league'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={importOpen}
+        onClose={closeImport}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: '#ffffff',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(167,139,250,0.25)',
+            borderRadius: '20px',
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#1e293b', pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <CloudDownloadIcon sx={{ color: '#6d28d9' }} />
+            Import from CricHeroes
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {!importJobId ? (
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <Typography sx={{ fontSize: '13px', color: '#64748b' }}>
+                Paste a CricHeroes tournament URL. Pulls teams, players, matches and per-player stats.
+              </Typography>
+              <TextField
+                label="Tournament URL"
+                placeholder="https://cricheroes.com/tournament/1611803/recykal-premier-league-2025/matches/past-matches"
+                value={importUrl}
+                onChange={e => setImportUrl(e.target.value)}
+                fullWidth
+                size="small"
+                autoFocus
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    background: '#f1f5f9',
+                    borderRadius: '10px',
+                    '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
+                  },
+                }}
+              />
+              <TextField
+                select
+                label="Attach to existing league (optional)"
+                value={importLeagueId}
+                onChange={e => setImportLeagueId(e.target.value === '' ? '' : Number(e.target.value))}
+                fullWidth
+                size="small"
+                SelectProps={{ native: true }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    background: '#f1f5f9',
+                    borderRadius: '10px',
+                  },
+                }}
+              >
+                <option value="">— Create new league from tournament —</option>
+                {(leagues ?? []).map(l => (
+                  <option key={l.id} value={l.id}>{l.name} ({l.season})</option>
+                ))}
+              </TextField>
+              {importStartError && (
+                <Alert severity="error" sx={{ borderRadius: '10px' }}>{importStartError}</Alert>
+              )}
+            </Stack>
+          ) : (
+            <Stack spacing={1.5} sx={{ mt: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {(importProgress?.status === 'PENDING' || importProgress?.status === 'RUNNING') &&
+                  <CircularProgress size={14} sx={{ color: '#a78bfa' }} />}
+                <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
+                  {importProgress?.currentStep ?? 'Starting...'}
+                </Typography>
+                <Box sx={{ ml: 'auto', px: 1.2, py: 0.3, borderRadius: '20px', fontSize: '11px', fontWeight: 700,
+                  background: importProgress?.status === 'COMPLETED' ? 'rgba(74,222,128,0.15)'
+                    : importProgress?.status === 'FAILED' ? 'rgba(239,68,68,0.15)'
+                    : 'rgba(167,139,250,0.15)',
+                  color: importProgress?.status === 'COMPLETED' ? '#16a34a'
+                    : importProgress?.status === 'FAILED' ? '#dc2626'
+                    : '#6d28d9' }}>
+                  {importProgress?.status ?? 'PENDING'}
+                </Box>
+              </Box>
+              <Box>
+                <Typography sx={{ fontSize: '12px', color: '#64748b', mb: 0.5 }}>
+                  Teams: {importProgress?.teamsDone ?? 0} / {importProgress?.teamsTotal ?? 0}
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={importProgress?.teamsTotal ? (importProgress.teamsDone / importProgress.teamsTotal) * 100 : 0}
+                  sx={{ height: 6, borderRadius: 3, bgcolor: '#eef2f7',
+                    '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg, #a78bfa, #8b5cf6)' } }}
+                />
+              </Box>
+              <Box>
+                <Typography sx={{ fontSize: '12px', color: '#64748b', mb: 0.5 }}>
+                  Matches: {importProgress?.matchesDone ?? 0} / {importProgress?.matchesTotal ?? 0}
+                  {importProgress?.matchesSkipped ? ` (${importProgress.matchesSkipped} skipped)` : ''}
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={importProgress?.matchesTotal ? (importProgress.matchesDone / importProgress.matchesTotal) * 100 : 0}
+                  sx={{ height: 6, borderRadius: 3, bgcolor: '#eef2f7',
+                    '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg, #60a5fa, #3b82f6)' } }}
+                />
+              </Box>
+              {importProgress?.errorMessage && (
+                <Alert severity="error" sx={{ borderRadius: '10px' }}>{importProgress.errorMessage}</Alert>
+              )}
+              {(importProgress?.warnings?.length ?? 0) > 0 && (
+                <Alert severity="warning" sx={{ borderRadius: '10px', maxHeight: 140, overflow: 'auto' }}>
+                  <Typography sx={{ fontSize: '12px', fontWeight: 700, mb: 0.5 }}>
+                    {importProgress!.warnings.length} warning{importProgress!.warnings.length > 1 ? 's' : ''}
+                  </Typography>
+                  {importProgress!.warnings.map((w, i) => (
+                    <Typography key={i} sx={{ fontSize: '11px', fontFamily: 'monospace' }}>{w}</Typography>
+                  ))}
+                </Alert>
+              )}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          {!importJobId ? (
+            <>
+              <Button onClick={closeImport} sx={{ color: '#64748b', borderRadius: '10px' }}>Cancel</Button>
+              <Button
+                variant="contained"
+                onClick={() => startImportMut.mutate()}
+                disabled={!importUrl.trim() || startImportMut.isPending}
+                sx={{
+                  background: 'linear-gradient(135deg, #a78bfa, #8b5cf6)',
+                  fontWeight: 700,
+                  borderRadius: '10px',
+                  '&:hover': { background: 'linear-gradient(135deg, #c4b5fd, #a78bfa)' },
+                  '&.Mui-disabled': { background: '#e2e8f0', color: '#94a3b8' },
+                }}
+              >
+                {startImportMut.isPending ? 'Starting...' : 'Start Import'}
+              </Button>
+            </>
+          ) : (
+            <Button
+              onClick={closeImport}
+              disabled={importProgress?.status === 'PENDING' || importProgress?.status === 'RUNNING'}
+              sx={{ color: '#64748b', borderRadius: '10px' }}
+            >
+              {importProgress?.status === 'COMPLETED' || importProgress?.status === 'FAILED' ? 'Close' : 'Running...'}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </Box>
