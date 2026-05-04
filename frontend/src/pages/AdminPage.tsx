@@ -24,8 +24,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import {
   getLeagues, createLeague, deleteLeague,
 } from '../api/leagues';
-import { importTournament, getImportProgress } from '../api/cricheroes';
-import type { ImportProgress as CHProgress } from '../api/cricheroes';
+import { importTournament, getImportProgress, checkTournamentImport } from '../api/cricheroes';
+import type { ImportProgress as CHProgress, TournamentImportCheck } from '../api/cricheroes';
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import { getTeams } from '../api/teams';
 import { getPlayers, createPlayer, updatePlayer, deletePlayer, importPlayers, getPlayersPaginated } from '../api/players';
@@ -196,10 +196,12 @@ function LeaguesTab() {
   const [importOpen, setImportOpen] = useState(false);
   const [importUrl, setImportUrl] = useState('');
   const [importLeagueId, setImportLeagueId] = useState<number | ''>('');
+  const [importSeasonDisplayName, setImportSeasonDisplayName] = useState('');
+  const [importCheck, setImportCheck] = useState<TournamentImportCheck | null>(null);
   const [importJobId, setImportJobId] = useState<string | null>(null);
   const [importStartError, setImportStartError] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<League>>({
-    name: '', season: '', teamBudget: 100, maxPlayersPerTeam: 35,
+    name: '', season: '', seasonDisplayName: '', teamBudget: 100, maxPlayersPerTeam: 35,
     maxRetentionsPerTeam: 5, retentionCost: 10, bidIncrement: 0.5, timerSeconds: 30,
   });
 
@@ -226,7 +228,12 @@ function LeaguesTab() {
   });
 
   const startImportMut = useMutation({
-    mutationFn: () => importTournament(importUrl.trim(), importLeagueId === '' ? undefined : Number(importLeagueId)),
+    mutationFn: (overrideExisting: boolean) => importTournament(
+      importUrl.trim(),
+      importLeagueId === '' ? undefined : Number(importLeagueId),
+      importSeasonDisplayName.trim() || undefined,
+      overrideExisting,
+    ),
     onSuccess: (d) => {
       setImportJobId(d.jobId);
       setImportStartError(null);
@@ -256,9 +263,25 @@ function LeaguesTab() {
     setImportOpen(false);
     setImportUrl('');
     setImportLeagueId('');
+    setImportSeasonDisplayName('');
+    setImportCheck(null);
     setImportJobId(null);
     setImportStartError(null);
     startImportMut.reset();
+  };
+
+  const handleStartImport = async () => {
+    try {
+      const check = await checkTournamentImport(importUrl.trim());
+      if (check.exists) {
+        setImportCheck(check);
+        return;
+      }
+      startImportMut.mutate(false);
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      setImportStartError(err?.response?.data?.message ?? 'Failed to check tournament');
+    }
   };
 
   const handleChange = (field: keyof League) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -288,7 +311,7 @@ function LeaguesTab() {
 
   const rows = (leagues ?? []).map(l => [
     <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>{l.name}</Typography>,
-    <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{l.season}</Typography>,
+    <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{(l.seasonDisplayName || l.season)}</Typography>,
     <StatusBadge status={l.status} />,
     <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{l.teamBudget} CR</Typography>,
     <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{l.maxPlayersPerTeam}</Typography>,
@@ -371,6 +394,7 @@ function LeaguesTab() {
             {[
               { label: 'League Name', field: 'name' as keyof League, type: 'text' },
               { label: 'Season', field: 'season' as keyof League, type: 'text' },
+              { label: 'Season Display Name', field: 'seasonDisplayName' as keyof League, type: 'text' },
               { label: 'Team Budget (₹)', field: 'teamBudget' as keyof League, type: 'number' },
               { label: 'Max Players Per Team', field: 'maxPlayersPerTeam' as keyof League, type: 'number' },
               { label: 'Max Retentions', field: 'maxRetentionsPerTeam' as keyof League, type: 'number' },
@@ -442,10 +466,10 @@ function LeaguesTab() {
         <DialogTitle sx={{ fontWeight: 700, color: '#b91c1c' }}>Delete league?</DialogTitle>
         <DialogContent>
           <Alert severity="error" sx={{ borderRadius: '10px', mb: 2 }}>
-            This permanently wipes <b>{deleting?.name}</b> ({deleting?.season}) and all its data: teams, players, auctions, bids, draft picks, history, standings. Cannot be undone.
+            This permanently wipes <b>{deleting?.name}</b> ({(deleting?.seasonDisplayName || deleting?.season)}) and all its data: teams, players, auctions, bids, draft picks, history, standings. Cannot be undone.
           </Alert>
           <Typography sx={{ color: '#475569', fontSize: '13px', mb: 1 }}>
-            Type the season <b style={{ color: '#1e293b' }}>{deleting?.season}</b> to confirm.
+            Type the season <b style={{ color: '#1e293b' }}>{(deleting?.seasonDisplayName || deleting?.season)}</b> to confirm.
           </Typography>
           <TextField
             value={confirmText}
@@ -453,7 +477,7 @@ function LeaguesTab() {
             fullWidth
             size="small"
             autoFocus
-            placeholder={deleting?.season ?? ''}
+            placeholder={(deleting?.seasonDisplayName || deleting?.season) ?? ''}
             sx={{
               '& .MuiOutlinedInput-root': {
                 background: '#f1f5f9',
@@ -469,7 +493,7 @@ function LeaguesTab() {
           <Button
             variant="contained"
             onClick={() => deleteMut.mutate()}
-            disabled={deleteMut.isPending || confirmText !== (deleting?.season ?? '')}
+            disabled={deleteMut.isPending || confirmText !== ((deleting?.seasonDisplayName || deleting?.season) ?? '')}
             sx={{
               background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
               fontWeight: 700,
@@ -513,7 +537,10 @@ function LeaguesTab() {
                 label="Tournament URL"
                 placeholder="https://cricheroes.com/tournament/1611803/recykal-premier-league-2025/matches/past-matches"
                 value={importUrl}
-                onChange={e => setImportUrl(e.target.value)}
+                onChange={e => {
+                  setImportUrl(e.target.value);
+                  setImportCheck(null);
+                }}
                 fullWidth
                 size="small"
                 autoFocus
@@ -529,7 +556,10 @@ function LeaguesTab() {
                 select
                 label="Attach to existing league (optional)"
                 value={importLeagueId}
-                onChange={e => setImportLeagueId(e.target.value === '' ? '' : Number(e.target.value))}
+                onChange={e => {
+                  setImportLeagueId(e.target.value === '' ? '' : Number(e.target.value));
+                  setImportCheck(null);
+                }}
                 fullWidth
                 size="small"
                 SelectProps={{ native: true }}
@@ -542,9 +572,35 @@ function LeaguesTab() {
               >
                 <option value="">— Create new league from tournament —</option>
                 {(leagues ?? []).map(l => (
-                  <option key={l.id} value={l.id}>{l.name} ({l.season})</option>
+                  <option key={l.id} value={l.id}>{l.name} ({(l.seasonDisplayName || l.season)})</option>
                 ))}
               </TextField>
+              <TextField
+                label="Season Display Name (optional)"
+                placeholder="e.g. Recykal Premier League 2025"
+                value={importSeasonDisplayName}
+                onChange={e => {
+                  setImportSeasonDisplayName(e.target.value);
+                  setImportCheck(null);
+                }}
+                fullWidth
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    background: '#f1f5f9',
+                    borderRadius: '10px',
+                    '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
+                  },
+                }}
+              />
+              {importCheck?.exists && (
+                <Alert severity="warning" sx={{ borderRadius: '10px' }}>
+                  Tournament already exists in league{' '}
+                  <b>{importCheck.leagueName}</b>{' '}
+                  ({importCheck.seasonDisplayName || importCheck.season}).
+                  Choose <b>Skip</b> or <b>Override</b>.
+                </Alert>
+              )}
               {importStartError && (
                 <Alert severity="error" sx={{ borderRadius: '10px' }}>{importStartError}</Alert>
               )}
@@ -610,20 +666,42 @@ function LeaguesTab() {
           {!importJobId ? (
             <>
               <Button onClick={closeImport} sx={{ color: '#64748b', borderRadius: '10px' }}>Cancel</Button>
-              <Button
-                variant="contained"
-                onClick={() => startImportMut.mutate()}
-                disabled={!importUrl.trim() || startImportMut.isPending}
-                sx={{
-                  background: 'linear-gradient(135deg, #a78bfa, #8b5cf6)',
-                  fontWeight: 700,
-                  borderRadius: '10px',
-                  '&:hover': { background: 'linear-gradient(135deg, #c4b5fd, #a78bfa)' },
-                  '&.Mui-disabled': { background: '#e2e8f0', color: '#94a3b8' },
-                }}
-              >
-                {startImportMut.isPending ? 'Starting...' : 'Start Import'}
-              </Button>
+              {!importCheck?.exists && (
+                <Button
+                  variant="contained"
+                  onClick={handleStartImport}
+                  disabled={!importUrl.trim() || startImportMut.isPending}
+                  sx={{
+                    background: 'linear-gradient(135deg, #a78bfa, #8b5cf6)',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    '&:hover': { background: 'linear-gradient(135deg, #c4b5fd, #a78bfa)' },
+                    '&.Mui-disabled': { background: '#e2e8f0', color: '#94a3b8' },
+                  }}
+                >
+                  {startImportMut.isPending ? 'Starting...' : 'Start Import'}
+                </Button>
+              )}
+              {importCheck?.exists && (
+                <>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setImportCheck(null)}
+                    sx={{ borderRadius: '10px' }}
+                  >
+                    Skip
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="warning"
+                    onClick={() => startImportMut.mutate(true)}
+                    disabled={startImportMut.isPending}
+                    sx={{ borderRadius: '10px', fontWeight: 700 }}
+                  >
+                    {startImportMut.isPending ? 'Overriding...' : 'Override & Re-import'}
+                  </Button>
+                </>
+              )}
             </>
           ) : (
             <Button
@@ -839,7 +917,7 @@ function SeasonSelector({
                   }),
             }}
           >
-            {l.season}
+            {(l.seasonDisplayName || l.season)}
           </Box>
         );
       })}
@@ -1269,7 +1347,7 @@ function PlayersTab() {
         <Box>
           <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#1e293b' }}>Players</Typography>
           <Typography sx={{ fontSize: '12px', color: '#64748b' }}>
-            {totalElements} player{totalElements === 1 ? '' : 's'} in {activeLeague?.season ?? '—'}
+            {totalElements} player{totalElements === 1 ? '' : 's'} in {(activeLeague?.seasonDisplayName || activeLeague?.season) ?? '—'}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>

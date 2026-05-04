@@ -1,6 +1,11 @@
 package com.rpl.auction.cricheroes.service;
 
 import com.rpl.auction.cricheroes.dto.*;
+import com.rpl.auction.auction.repository.AuctionRepository;
+import com.rpl.auction.auction.repository.BidRepository;
+import com.rpl.auction.auction.repository.DraftPickRepository;
+import com.rpl.auction.history.repository.PlayerHistoryRepository;
+import com.rpl.auction.history.repository.TeamStandingRepository;
 import com.rpl.auction.league.entity.League;
 import com.rpl.auction.league.repository.LeagueRepository;
 import com.rpl.auction.match.entity.BattingPerformance;
@@ -40,15 +45,25 @@ public class CricheroesImportService {
     private final InningsRepository inningsRepository;
     private final BattingPerformanceRepository battingPerformanceRepository;
     private final BowlingPerformanceRepository bowlingPerformanceRepository;
+    private final AuctionRepository auctionRepository;
+    private final BidRepository bidRepository;
+    private final DraftPickRepository draftPickRepository;
+    private final PlayerHistoryRepository playerHistoryRepository;
+    private final TeamStandingRepository teamStandingRepository;
 
     @Async
-    public void runTournamentImport(String tournamentUrl, Long leagueId, ImportProgress progress) {
+    @Transactional
+    public void runTournamentImport(String tournamentUrl, Long leagueId, String seasonDisplayNameOverride, Boolean overrideExisting, ImportProgress progress) {
         try {
             progress.setStatus(ImportProgress.Status.RUNNING);
             progress.setCurrentStep("Fetching tournament");
             ScrapedTournament t = scraper.scrapeTournament(tournamentUrl);
 
-            League league = upsertLeague(t, leagueId);
+            League league = upsertLeague(t, leagueId, seasonDisplayNameOverride);
+            if (Boolean.TRUE.equals(overrideExisting)) {
+                progress.setCurrentStep("Overriding existing league data");
+                purgeLeagueTournamentData(league.getId());
+            }
             progress.setLeagueId(league.getId());
 
             progress.setCurrentStep("Importing teams");
@@ -92,23 +107,63 @@ public class CricheroesImportService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public TournamentImportCheckResponse checkTournamentImport(String tournamentUrl) {
+        Long cricheroesId = scraper.extractTournamentId(tournamentUrl);
+        Optional<League> existing = leagueRepository.findAnyByCricheroesId(cricheroesId);
+        if (existing.isEmpty()) {
+            return TournamentImportCheckResponse.builder()
+                    .exists(false)
+                    .cricheroesId(cricheroesId)
+                    .build();
+        }
+        League l = existing.get();
+        return TournamentImportCheckResponse.builder()
+                .exists(true)
+                .cricheroesId(cricheroesId)
+                .leagueId(l.getId())
+                .leagueName(l.getName())
+                .season(l.getSeason())
+                .seasonDisplayName(l.getSeasonDisplayName())
+                .build();
+    }
+
     @Transactional
-    public League upsertLeague(ScrapedTournament t, Long preferredLeagueId) {
+    public League upsertLeague(ScrapedTournament t, Long preferredLeagueId, String seasonDisplayNameOverride) {
+        String season = t.season() != null ? t.season() : t.name();
+        String seasonDisplayName = (seasonDisplayNameOverride != null && !seasonDisplayNameOverride.isBlank())
+                ? seasonDisplayNameOverride.trim()
+                : (t.seasonDisplayName() != null ? t.seasonDisplayName() : t.name());
+
         if (preferredLeagueId != null) {
             League existing = leagueRepository.findById(preferredLeagueId)
                     .orElseThrow(() -> new IllegalArgumentException("League not found: " + preferredLeagueId));
             if (existing.getCricheroesId() == null) {
                 existing.setCricheroesId(t.cricheroesId());
-                leagueRepository.save(existing);
             }
+            existing.setSeason(season);
+            existing.setSeasonDisplayName(seasonDisplayName);
+            leagueRepository.save(existing);
             return existing;
         }
-        Optional<League> byCh = leagueRepository.findByCricheroesId(t.cricheroesId());
-        if (byCh.isPresent()) return byCh.get();
+        Optional<League> byCh = leagueRepository.findAnyByCricheroesId(t.cricheroesId());
+        if (byCh.isPresent()) {
+            League existing = byCh.get();
+            leagueRepository.reviveAndUpdateImportedLeagueById(
+                    existing.getId(),
+                    t.name(),
+                    season,
+                    seasonDisplayName,
+                    t.cricheroesId()
+            );
+            return leagueRepository.findById(existing.getId())
+                    .orElseThrow(() -> new IllegalStateException("League not found after revive/update: " + existing.getId()));
+        }
 
         League league = League.builder()
                 .name(t.name())
-                .season(t.season() != null ? t.season() : t.name())
+                .season(season)
+                .seasonDisplayName(seasonDisplayName)
                 .status(League.LeagueStatus.COMPLETED)
                 .teamBudget(BigDecimal.ZERO)
                 .maxPlayersPerTeam(15)
@@ -126,7 +181,7 @@ public class CricheroesImportService {
     @Transactional
     public Team importTeam(Long cricheroesTeamId, League league) {
         ScrapedTeam st = scraper.scrapeTeam(cricheroesTeamId);
-        Team team = teamRepository.findByCricheroesId(st.cricheroesId())
+        Team team = teamRepository.findAnyByCricheroesIdAndLeagueId(st.cricheroesId(), league.getId())
                 .orElseGet(() -> Team.builder()
                         .league(league)
                         .name(st.name())
@@ -138,6 +193,7 @@ public class CricheroesImportService {
         team.setName(st.name());
         team.setLogoUrl(st.logo());
         team.setLeague(league);
+        team.setArchived(false);
         if (team.getShortName() == null || team.getShortName().isBlank()) {
             team.setShortName(buildShortName(st));
         }
@@ -151,7 +207,7 @@ public class CricheroesImportService {
 
     @Transactional
     public Player upsertPlayer(ScrapedPlayer sp, League league, Team team) {
-        Player p = playerRepository.findByCricheroesId(sp.cricheroesId())
+        Player p = playerRepository.findAnyByCricheroesIdAndLeagueId(sp.cricheroesId(), league.getId())
                 .orElseGet(() -> Player.builder()
                         .name(sp.name())
                         .category(Player.PlayerCategory.CRICKET)
@@ -170,6 +226,7 @@ public class CricheroesImportService {
         p.setIsCaptain(sp.isCaptain());
         p.setPhotoUrl(sp.profilePhoto());
         p.setSource(Player.PlayerSource.CRICHEROES);
+        p.setArchived(false);
         if (p.getStatus() == null) p.setStatus(Player.PlayerStatus.SOLD);
         if (p.getCategory() == null) p.setCategory(Player.PlayerCategory.CRICKET);
         if (p.getBasePrice() == null) p.setBasePrice(BigDecimal.ZERO);
@@ -183,7 +240,7 @@ public class CricheroesImportService {
         Team teamA = resolveTeamForImport(sc.teamAId(), sc.teamAName(), league);
         Team teamB = resolveTeamForImport(sc.teamBId(), sc.teamBName(), league);
 
-        Match match = matchRepository.findByCricheroesId(sc.cricheroesMatchId())
+        Match match = matchRepository.findAnyByCricheroesId(sc.cricheroesMatchId())
                 .orElseGet(() -> Match.builder()
                         .league(league)
                         .cricheroesId(sc.cricheroesMatchId())
@@ -199,6 +256,7 @@ public class CricheroesImportService {
         match.setFormat(sc.matchType());
         match.setOvers(sc.overs());
         match.setStatus(Match.MatchStatus.COMPLETED);
+        match.setArchived(false);
         match.setResultText(buildResultText(sc));
         if (sc.winningTeamName() != null) {
             if (sc.winningTeamName().equalsIgnoreCase(teamA.getName())) match.setWinnerTeam(teamA);
@@ -267,10 +325,17 @@ public class CricheroesImportService {
 
     private Team resolveTeamForImport(Long cricheroesTeamId, String name, League league) {
         if (cricheroesTeamId != null && cricheroesTeamId > 0) {
-            Optional<Team> existing = teamRepository.findByCricheroesId(cricheroesTeamId);
-            if (existing.isPresent()) return existing.get();
+            Optional<Team> existing = teamRepository.findAnyByCricheroesIdAndLeagueId(cricheroesTeamId, league.getId());
+            if (existing.isPresent()) {
+                Team t = existing.get();
+                if (Boolean.TRUE.equals(t.getArchived())) {
+                    t.setArchived(false);
+                    return teamRepository.save(t);
+                }
+                return t;
+            }
         }
-        // Stub team if not yet imported
+        // Stub team if not yet imported in this league
         Team t = Team.builder()
                 .league(league)
                 .name(name != null ? name : "Team " + cricheroesTeamId)
@@ -288,7 +353,7 @@ public class CricheroesImportService {
             return cache.get(cricheroesPlayerId);
         }
         Player p = (cricheroesPlayerId != null && cricheroesPlayerId > 0)
-                ? playerRepository.findByCricheroesId(cricheroesPlayerId).orElse(null)
+                ? playerRepository.findAnyByCricheroesIdAndLeagueId(cricheroesPlayerId, league.getId()).orElse(null)
                 : null;
         if (p == null) {
             p = Player.builder()
@@ -304,9 +369,11 @@ public class CricheroesImportService {
                     .source(Player.PlayerSource.CRICHEROES)
                     .build();
             p = playerRepository.save(p);
-        } else if (p.getTeam() == null && team != null) {
-            p.setTeam(team);
-            p = playerRepository.save(p);
+        } else {
+            boolean dirty = false;
+            if (Boolean.TRUE.equals(p.getArchived())) { p.setArchived(false); dirty = true; }
+            if (p.getTeam() == null && team != null) { p.setTeam(team); dirty = true; }
+            if (dirty) p = playerRepository.save(p);
         }
         if (cricheroesPlayerId != null) cache.put(cricheroesPlayerId, p);
         return p;
@@ -355,7 +422,7 @@ public class CricheroesImportService {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new IllegalArgumentException("League not found: " + leagueId));
         if (matchRepository.existsByCricheroesId(cricheroesMatchId)) {
-            return matchRepository.findByCricheroesId(cricheroesMatchId).orElseThrow();
+            return matchRepository.findAnyByCricheroesId(cricheroesMatchId).orElseThrow();
         }
         return importScorecard(cricheroesMatchId, tournamentSlug, matchSlug, league);
     }
@@ -365,7 +432,7 @@ public class CricheroesImportService {
     public Match reimportMatch(Long cricheroesMatchId, String tournamentSlug, String matchSlug, Long leagueId) {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new IllegalArgumentException("League not found: " + leagueId));
-        Optional<Match> existing = matchRepository.findByCricheroesId(cricheroesMatchId);
+        Optional<Match> existing = matchRepository.findAnyByCricheroesId(cricheroesMatchId);
         if (existing.isPresent()) {
             Match m = existing.get();
             List<Long> inningsIds = inningsRepository.findByMatchIdOrderByInningsNumberAsc(m.getId())
@@ -377,5 +444,65 @@ public class CricheroesImportService {
             }
         }
         return importScorecard(cricheroesMatchId, tournamentSlug, matchSlug, league);
+    }
+
+    private void purgeLeagueTournamentData(Long leagueId) {
+        // 1. Wipe matches/innings/perf belonging to this league
+        List<Long> matchIds = matchRepository.findAnyIdsByLeagueId(leagueId);
+        if (!matchIds.isEmpty()) {
+            List<Long> inningsIds = inningsRepository.findIdsByMatchIdIn(matchIds);
+            if (!inningsIds.isEmpty()) {
+                battingPerformanceRepository.deleteByInningsIdIn(inningsIds);
+                bowlingPerformanceRepository.deleteByInningsIdIn(inningsIds);
+                inningsRepository.deleteByMatchIdIn(matchIds);
+            }
+            matchRepository.hardDeleteByLeagueId(leagueId);
+        }
+
+        // 2. Auctions chain
+        List<Long> auctionIds = auctionRepository.findAnyIdsByLeagueId(leagueId);
+        if (!auctionIds.isEmpty()) {
+            bidRepository.deleteByAuctionIdIn(auctionIds);
+            draftPickRepository.deleteByAuctionIdIn(auctionIds);
+            auctionRepository.hardDeleteByLeagueId(leagueId);
+        }
+
+        // 3. History/standings
+        playerHistoryRepository.deleteByLeagueId(leagueId);
+        teamStandingRepository.deleteByLeagueId(leagueId);
+
+        // 4. Cross-league legacy cleanup. From pre-migration era when teams/players
+        //    were globally shared, OTHER leagues' matches/innings/perf rows may reference
+        //    this league's teams or players. Wipe those before deleting our teams/players.
+        List<Long> teamIds = teamRepository.findAnyIdsByLeagueId(leagueId);
+        if (!teamIds.isEmpty()) {
+            // Cross-league innings referencing our teams
+            List<Long> orphanInningsIds = inningsRepository.findIdsByAnyTeamIdIn(teamIds);
+            if (!orphanInningsIds.isEmpty()) {
+                battingPerformanceRepository.deleteByInningsIdIn(orphanInningsIds);
+                bowlingPerformanceRepository.deleteByInningsIdIn(orphanInningsIds);
+                inningsRepository.hardDeleteByAnyTeamIdIn(teamIds);
+            }
+            // Cross-league matches referencing our teams (after their innings gone)
+            matchRepository.hardDeleteByAnyTeamIdIn(teamIds);
+            // Players parked under our teams whose league_id is elsewhere
+            List<Long> orphanPlayerIds = playerRepository.findAnyIdsByTeamIdIn(teamIds);
+            if (!orphanPlayerIds.isEmpty()) {
+                battingPerformanceRepository.deleteByPlayerIdIn(orphanPlayerIds);
+                bowlingPerformanceRepository.deleteByPlayerIdIn(orphanPlayerIds);
+                playerRepository.hardDeleteByTeamIdIn(teamIds);
+            }
+        }
+
+        // 5. Cross-league perf rows still referencing our players (any innings)
+        List<Long> playerIds = playerRepository.findAnyIdsByLeagueId(leagueId);
+        if (!playerIds.isEmpty()) {
+            battingPerformanceRepository.deleteByPlayerIdIn(playerIds);
+            bowlingPerformanceRepository.deleteByPlayerIdIn(playerIds);
+        }
+
+        // 6. Finally drop our players + teams
+        playerRepository.hardDeleteByLeagueId(leagueId);
+        teamRepository.hardDeleteByLeagueId(leagueId);
     }
 }

@@ -5,15 +5,20 @@ import com.rpl.auction.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.Where;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
 @Table(name = "teams", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"name", "league_id"})
+        @UniqueConstraint(columnNames = {"name", "league_id"}),
+        @UniqueConstraint(name = "uk_teams_cricheroes_league", columnNames = {"cricheroes_id", "league_id"})
 })
+@SQLDelete(sql = "UPDATE teams SET archived = true WHERE id = ?")
+@Where(clause = "archived = false")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Team {
 
@@ -51,8 +56,12 @@ public class Team {
     @Builder.Default
     private BigDecimal budgetSpent = BigDecimal.ZERO;
 
-    @Column(name = "cricheroes_id", unique = true)
+    @Column(name = "cricheroes_id")
     private Long cricheroesId;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean archived = false;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

@@ -671,7 +671,7 @@ function AllPlayersContent() {
                         }),
                   }}
                 >
-                  {l.season}
+                  {(l.seasonDisplayName || l.season)}
                 </Box>
               );
             })}

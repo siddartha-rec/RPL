@@ -1,22 +1,11 @@
 package com.rpl.auction.league.service;
 
-import com.rpl.auction.auction.repository.AuctionRepository;
-import com.rpl.auction.auction.repository.BidRepository;
-import com.rpl.auction.auction.repository.DraftPickRepository;
 import com.rpl.auction.common.exception.BadRequestException;
 import com.rpl.auction.common.exception.ResourceNotFoundException;
-import com.rpl.auction.history.repository.PlayerHistoryRepository;
-import com.rpl.auction.history.repository.TeamStandingRepository;
-import com.rpl.auction.match.repository.BattingPerformanceRepository;
-import com.rpl.auction.match.repository.BowlingPerformanceRepository;
-import com.rpl.auction.match.repository.InningsRepository;
-import com.rpl.auction.match.repository.MatchRepository;
 import com.rpl.auction.league.dto.LeagueRequest;
 import com.rpl.auction.league.dto.LeagueResponse;
 import com.rpl.auction.league.entity.League;
 import com.rpl.auction.league.repository.LeagueRepository;
-import com.rpl.auction.player.repository.PlayerRepository;
-import com.rpl.auction.team.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,26 +17,16 @@ import java.util.List;
 public class LeagueService {
 
     private final LeagueRepository leagueRepository;
-    private final TeamRepository teamRepository;
-    private final PlayerRepository playerRepository;
-    private final AuctionRepository auctionRepository;
-    private final BidRepository bidRepository;
-    private final DraftPickRepository draftPickRepository;
-    private final PlayerHistoryRepository playerHistoryRepository;
-    private final TeamStandingRepository teamStandingRepository;
-    private final MatchRepository matchRepository;
-    private final InningsRepository inningsRepository;
-    private final BattingPerformanceRepository battingPerformanceRepository;
-    private final BowlingPerformanceRepository bowlingPerformanceRepository;
 
     @Transactional
     public LeagueResponse create(LeagueRequest request) {
-        if (leagueRepository.existsBySeason(request.getSeason())) {
+        if (leagueRepository.existsBySeasonAndArchivedFalse(request.getSeason())) {
             throw new BadRequestException("A league for season '" + request.getSeason() + "' already exists");
         }
         League league = League.builder()
                 .name(request.getName())
                 .season(request.getSeason())
+                .seasonDisplayName(request.getSeasonDisplayName())
                 .teamBudget(request.getTeamBudget())
                 .maxPlayersPerTeam(request.getMaxPlayersPerTeam())
                 .minPlayersPerTeam(request.getMinPlayersPerTeam() != null ? request.getMinPlayersPerTeam() : 15)
@@ -62,7 +41,7 @@ public class LeagueService {
 
     @Transactional(readOnly = true)
     public List<LeagueResponse> findAll() {
-        return leagueRepository.findAll().stream()
+        return leagueRepository.findAllByArchivedFalse().stream()
                 .map(LeagueResponse::from)
                 .toList();
     }
@@ -75,11 +54,12 @@ public class LeagueService {
     @Transactional
     public LeagueResponse update(Long id, LeagueRequest request) {
         League league = getLeagueOrThrow(id);
-        if (!league.getSeason().equals(request.getSeason()) && leagueRepository.existsBySeason(request.getSeason())) {
+        if (!league.getSeason().equals(request.getSeason()) && leagueRepository.existsBySeasonAndArchivedFalse(request.getSeason())) {
             throw new BadRequestException("A league for season '" + request.getSeason() + "' already exists");
         }
         league.setName(request.getName());
         league.setSeason(request.getSeason());
+        league.setSeasonDisplayName(request.getSeasonDisplayName());
         league.setTeamBudget(request.getTeamBudget());
         league.setMaxPlayersPerTeam(request.getMaxPlayersPerTeam());
         if (request.getMinPlayersPerTeam() != null) {
@@ -97,32 +77,13 @@ public class LeagueService {
 
     @Transactional
     public void delete(Long id) {
-        getLeagueOrThrow(id);
-        List<Long> matchIds = matchRepository.findIdsByLeagueId(id);
-        if (!matchIds.isEmpty()) {
-            List<Long> inningsIds = inningsRepository.findIdsByMatchIdIn(matchIds);
-            if (!inningsIds.isEmpty()) {
-                battingPerformanceRepository.deleteByInningsIdIn(inningsIds);
-                bowlingPerformanceRepository.deleteByInningsIdIn(inningsIds);
-                inningsRepository.deleteByMatchIdIn(matchIds);
-            }
-            matchRepository.deleteByLeagueId(id);
-        }
-        List<Long> auctionIds = auctionRepository.findIdsByLeagueId(id);
-        if (!auctionIds.isEmpty()) {
-            bidRepository.deleteByAuctionIdIn(auctionIds);
-            draftPickRepository.deleteByAuctionIdIn(auctionIds);
-        }
-        auctionRepository.deleteByLeagueId(id);
-        playerHistoryRepository.deleteByLeagueId(id);
-        teamStandingRepository.deleteByLeagueId(id);
-        playerRepository.deleteByLeagueId(id);
-        teamRepository.deleteByLeagueId(id);
-        leagueRepository.deleteById(id);
+        League league = getLeagueOrThrow(id);
+        league.setArchived(true);
+        leagueRepository.save(league);
     }
 
     public League getLeagueOrThrow(Long id) {
-        return leagueRepository.findById(id)
+        return leagueRepository.findByIdAndArchivedFalse(id)
                 .orElseThrow(() -> new ResourceNotFoundException("League not found with id: " + id));
     }
 }

@@ -47,6 +47,6 @@ public class TeamController {
     @DeleteMapping("/api/teams/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         teamService.delete(id);
-        return ResponseEntity.ok(ApiResponse.success(null, "Team deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Team archived successfully"));
     }
 }

@@ -358,7 +358,7 @@ export default function TeamsPage() {
                           }),
                     }}
                   >
-                    {l.season}
+                    {(l.seasonDisplayName || l.season)}
                   </Box>
                 );
               })}

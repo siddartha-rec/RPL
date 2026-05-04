@@ -16,4 +16,8 @@ public interface BowlingPerformanceRepository extends JpaRepository<BowlingPerfo
     @Modifying
     @Query("DELETE FROM BowlingPerformance bp WHERE bp.innings.id IN :inningsIds")
     int deleteByInningsIdIn(@Param("inningsIds") Collection<Long> inningsIds);
+
+    @Modifying
+    @Query("DELETE FROM BowlingPerformance bp WHERE bp.player.id IN :playerIds")
+    int deleteByPlayerIdIn(@Param("playerIds") Collection<Long> playerIds);
 }

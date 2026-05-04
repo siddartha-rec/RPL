@@ -5,6 +5,7 @@ import com.rpl.auction.common.exception.ResourceNotFoundException;
 import com.rpl.auction.cricheroes.dto.ImportProgress;
 import com.rpl.auction.cricheroes.dto.MatchImportRequest;
 import com.rpl.auction.cricheroes.dto.TeamImportRequest;
+import com.rpl.auction.cricheroes.dto.TournamentImportCheckResponse;
 import com.rpl.auction.cricheroes.dto.TournamentImportRequest;
 import com.rpl.auction.cricheroes.service.CricheroesImportService;
 import com.rpl.auction.cricheroes.service.ImportProgressRegistry;
@@ -30,9 +31,21 @@ public class CricheroesController {
     public ResponseEntity<ApiResponse<Map<String, String>>> importTournament(
             @Valid @RequestBody TournamentImportRequest req) {
         ImportProgress progress = progressRegistry.create();
-        importService.runTournamentImport(req.getTournamentUrl(), req.getLeagueId(), progress);
+        importService.runTournamentImport(
+                req.getTournamentUrl(),
+                req.getLeagueId(),
+                req.getSeasonDisplayName(),
+                req.getOverrideExisting(),
+                progress
+        );
         return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .body(ApiResponse.success(Map.of("jobId", progress.getJobId()), "Import started"));
+    }
+
+    @GetMapping("/import/tournament/check")
+    public ResponseEntity<ApiResponse<TournamentImportCheckResponse>> checkTournament(@RequestParam String tournamentUrl) {
+        TournamentImportCheckResponse response = importService.checkTournamentImport(tournamentUrl);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/import/{jobId}")

@@ -17,7 +17,14 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
     @Query("SELECT a.id FROM Auction a WHERE a.leagueId = :leagueId")
     List<Long> findIdsByLeagueId(@Param("leagueId") Long leagueId);
 
+    @Query(value = "SELECT id FROM auctions WHERE league_id = :leagueId", nativeQuery = true)
+    List<Long> findAnyIdsByLeagueId(@Param("leagueId") Long leagueId);
+
     @Modifying
     @Query("DELETE FROM Auction a WHERE a.leagueId = :leagueId")
     int deleteByLeagueId(@Param("leagueId") Long leagueId);
+
+    @Modifying
+    @Query(value = "DELETE FROM auctions WHERE league_id = :leagueId", nativeQuery = true)
+    int hardDeleteByLeagueId(@Param("leagueId") Long leagueId);
 }

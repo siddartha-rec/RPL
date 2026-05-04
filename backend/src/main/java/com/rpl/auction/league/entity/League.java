@@ -3,13 +3,17 @@ package com.rpl.auction.league.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.Where;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
 @Table(name = "leagues")
+@SQLDelete(sql = "UPDATE leagues SET archived = true WHERE id = ?")
+@Where(clause = "archived = false")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class League {
 
@@ -20,8 +24,11 @@ public class League {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 100)
     private String season;
+
+    @Column(name = "season_display_name", length = 150)
+    private String seasonDisplayName;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -59,6 +66,10 @@ public class League {
 
     @Column(name = "cricheroes_id", unique = true)
     private Long cricheroesId;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean archived = false;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

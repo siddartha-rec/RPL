@@ -5,13 +5,19 @@ import com.rpl.auction.team.entity.Team;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.Where;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
-@Table(name = "players")
+@Table(name = "players", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_players_cricheroes_league", columnNames = {"cricheroes_id", "league_id"})
+})
+@SQLDelete(sql = "UPDATE players SET archived = true WHERE id = ?")
+@Where(clause = "archived = false")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Player {
 
@@ -60,7 +66,7 @@ public class Player {
     @Builder.Default
     private Boolean isCaptain = false;
 
-    @Column(name = "cricheroes_id", unique = true)
+    @Column(name = "cricheroes_id")
     private Long cricheroesId;
 
     @Column(name = "photo_url", length = 500)
@@ -70,6 +76,10 @@ public class Player {
     @Column(nullable = false, length = 20)
     @Builder.Default
     private PlayerSource source = PlayerSource.MANUAL;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean archived = false;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

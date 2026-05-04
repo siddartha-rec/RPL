@@ -10,6 +10,14 @@
 
 **Spec:** `docs/superpowers/specs/2026-04-03-rpl-platform-ui-design.md`
 
+## Migration Note (Added 2026-05-04)
+
+This plan documents the original auction-platform implementation.
+
+For the forward roadmap to evolve RPL into a broader cricket product platform (Tournament/Season/League, Matches, Stats, Points Table, Gallery, with Auction as a bounded module), refer to:
+
+- `docs/superpowers/plans/2026-05-04-rpl-auction-to-cricket-platform-migration.md`
+
 ---
 
 ## Sub-project 1: Backend — Domain Entities & CRUD APIs

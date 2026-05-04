@@ -408,7 +408,7 @@ function LeagueTeamsSection({ league }: { league: League }) {
           <SeasonStatCard icon={<AccountBalanceWalletIcon fontSize="inherit" />} label="Budget Pool" value={budgetDisplay}     color="#4ade80" delay={0.12} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <SeasonStatCard icon={<SportsCricketIcon fontSize="inherit" />}    label="Season"        value={league.season}        color="#a78bfa" delay={0.18} />
+          <SeasonStatCard icon={<SportsCricketIcon fontSize="inherit" />}    label="Season"        value={(league.seasonDisplayName || league.season)}        color="#a78bfa" delay={0.18} />
         </Grid>
       </Grid>
 
@@ -575,7 +575,7 @@ function HeroBanner({ league }: { league: League | undefined }) {
                 }}
               >
                 <Typography sx={{ fontSize: '12px', fontWeight: 800, color: '#b45309', letterSpacing: '1px' }}>
-                  SEASON {league.season}
+                  SEASON {(league.seasonDisplayName || league.season)}
                 </Typography>
               </Box>
             )}
@@ -711,7 +711,7 @@ export default function DashboardPage() {
                         }),
                   }}
                 >
-                  {l.season}
+                  {(l.seasonDisplayName || l.season)}
                 </Box>
               );
             })}

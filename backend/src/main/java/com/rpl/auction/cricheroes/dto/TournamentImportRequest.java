@@ -8,4 +8,6 @@ public class TournamentImportRequest {
     @NotBlank
     private String tournamentUrl;
     private Long leagueId;
+    private String seasonDisplayName;
+    private Boolean overrideExisting = false;
 }

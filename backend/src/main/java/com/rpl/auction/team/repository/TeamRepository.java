@@ -13,9 +13,18 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     List<Team> findByLeagueId(Long leagueId);
     Optional<Team> findByOwnerIdAndLeagueId(Long ownerId, Long leagueId);
     boolean existsByNameAndLeagueId(String name, Long leagueId);
-    Optional<Team> findByCricheroesId(Long cricheroesId);
+    @Query(value = "SELECT * FROM teams WHERE cricheroes_id = :cricheroesId AND league_id = :leagueId LIMIT 1",
+            nativeQuery = true)
+    Optional<Team> findAnyByCricheroesIdAndLeagueId(@Param("cricheroesId") Long cricheroesId,
+                                                   @Param("leagueId") Long leagueId);
+    @Query(value = "SELECT id FROM teams WHERE league_id = :leagueId", nativeQuery = true)
+    List<Long> findAnyIdsByLeagueId(@Param("leagueId") Long leagueId);
 
     @Modifying
     @Query("DELETE FROM Team t WHERE t.league.id = :leagueId")
     int deleteByLeagueId(@Param("leagueId") Long leagueId);
+
+    @Modifying
+    @Query(value = "DELETE FROM teams WHERE league_id = :leagueId", nativeQuery = true)
+    int hardDeleteByLeagueId(@Param("leagueId") Long leagueId);
 }

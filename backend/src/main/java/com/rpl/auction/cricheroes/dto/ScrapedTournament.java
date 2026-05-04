@@ -7,6 +7,7 @@ public record ScrapedTournament(
         String slug,
         String name,
         String season,
+        String seasonDisplayName,
         String cityName,
         String logo,
         List<Long> teamIds,

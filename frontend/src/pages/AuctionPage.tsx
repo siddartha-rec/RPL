@@ -1703,7 +1703,7 @@ export default function AuctionPage() {
       <BroadcastHeader
         status={auction.status}
         leagueName={league?.name}
-        season={league?.season}
+        season={(league?.seasonDisplayName || league?.season)}
       />
 
       <Grid container spacing={2.5}>

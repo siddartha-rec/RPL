@@ -18,4 +18,13 @@ public interface InningsRepository extends JpaRepository<Innings, Long> {
     @Modifying
     @Query("DELETE FROM Innings i WHERE i.match.id IN :matchIds")
     int deleteByMatchIdIn(@Param("matchIds") Collection<Long> matchIds);
+
+    @Query(value = "SELECT id FROM innings WHERE batting_team_id IN :teamIds OR bowling_team_id IN :teamIds",
+            nativeQuery = true)
+    List<Long> findIdsByAnyTeamIdIn(@Param("teamIds") Collection<Long> teamIds);
+
+    @Modifying
+    @Query(value = "DELETE FROM innings WHERE batting_team_id IN :teamIds OR bowling_team_id IN :teamIds",
+            nativeQuery = true)
+    int hardDeleteByAnyTeamIdIn(@Param("teamIds") Collection<Long> teamIds);
 }

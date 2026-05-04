@@ -11,6 +11,7 @@ public class LeagueResponse {
     private Long id;
     private String name;
     private String season;
+    private String seasonDisplayName;
     private String status;
     private BigDecimal teamBudget;
     private Integer maxPlayersPerTeam;
@@ -28,6 +29,7 @@ public class LeagueResponse {
                 .id(league.getId())
                 .name(league.getName())
                 .season(league.getSeason())
+                .seasonDisplayName(league.getSeasonDisplayName())
                 .status(league.getStatus().name())
                 .teamBudget(league.getTeamBudget())
                 .maxPlayersPerTeam(league.getMaxPlayersPerTeam())

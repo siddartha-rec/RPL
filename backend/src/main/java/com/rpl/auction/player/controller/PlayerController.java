@@ -76,6 +76,6 @@ public class PlayerController {
     @DeleteMapping("/api/players/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         playerService.delete(id);
-        return ResponseEntity.ok(ApiResponse.success(null, "Player deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Player archived successfully"));
     }
 }

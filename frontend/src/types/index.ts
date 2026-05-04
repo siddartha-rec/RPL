@@ -24,7 +24,7 @@ export interface UserInfo {
 }
 
 export interface League {
-  id: number; name: string; season: string; status: string;
+  id: number; name: string; season: string; seasonDisplayName?: string; status: string;
   teamBudget: number; maxPlayersPerTeam: number; maxRetentionsPerTeam: number;
   retentionCost: number; bidIncrement: number; timerSeconds: number;
   createdAt: string; updatedAt: string;

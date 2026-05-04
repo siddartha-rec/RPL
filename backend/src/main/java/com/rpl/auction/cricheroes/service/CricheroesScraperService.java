@@ -35,6 +35,7 @@ public class CricheroesScraperService {
         Long cricheroesId = td.path("tournament_id").asLong();
         String name = td.path("name").asText();
         String season = extractSeason(name);
+        String seasonDisplayName = name;
         String city = td.path("city_name").asText(null);
         String logo = td.path("tournament_logo").asText(null);
 
@@ -51,7 +52,7 @@ public class CricheroesScraperService {
             if (tid > 0) teamIds.add(tid);
         }
 
-        return new ScrapedTournament(cricheroesId, ref.slug(), name, season, city, logo, teamIds, matches);
+        return new ScrapedTournament(cricheroesId, ref.slug(), name, season, seasonDisplayName, city, logo, teamIds, matches);
     }
 
     public ScrapedTeam scrapeTeam(Long cricheroesTeamId) {
@@ -244,4 +245,8 @@ public class CricheroesScraperService {
     }
 
     private record TournamentRef(long id, String slug) {}
+
+    public Long extractTournamentId(String tournamentUrl) {
+        return parseTournamentUrl(tournamentUrl).id();
+    }
 }

@@ -362,7 +362,7 @@ export default function TeamDetailPage() {
                       color: 'rgba(255,255,255,0.75)',
                     }}
                   >
-                    Season {league.season}
+                    Season {(league.seasonDisplayName || league.season)}
                   </Box>
                 )}
               </Box>

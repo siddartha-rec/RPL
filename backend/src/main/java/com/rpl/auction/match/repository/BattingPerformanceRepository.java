@@ -16,4 +16,8 @@ public interface BattingPerformanceRepository extends JpaRepository<BattingPerfo
     @Modifying
     @Query("DELETE FROM BattingPerformance bp WHERE bp.innings.id IN :inningsIds")
     int deleteByInningsIdIn(@Param("inningsIds") Collection<Long> inningsIds);
+
+    @Modifying
+    @Query("DELETE FROM BattingPerformance bp WHERE bp.player.id IN :playerIds")
+    int deleteByPlayerIdIn(@Param("playerIds") Collection<Long> playerIds);
 }

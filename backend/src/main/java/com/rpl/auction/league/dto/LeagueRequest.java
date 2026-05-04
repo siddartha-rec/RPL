@@ -11,6 +11,7 @@ public class LeagueRequest {
     private String name;
     @NotBlank
     private String season;
+    private String seasonDisplayName;
     @NotNull @DecimalMin("1.0")
     private BigDecimal teamBudget;
     @NotNull @Min(1)

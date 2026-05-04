@@ -13,11 +13,30 @@ import java.util.Optional;
 
 public interface PlayerRepository extends JpaRepository<Player, Long> {
     List<Player> findByLeagueId(Long leagueId);
-    Optional<Player> findByCricheroesId(Long cricheroesId);
+
+    @Query(value = "SELECT * FROM players WHERE cricheroes_id = :cricheroesId AND league_id = :leagueId LIMIT 1",
+            nativeQuery = true)
+    Optional<Player> findAnyByCricheroesIdAndLeagueId(@Param("cricheroesId") Long cricheroesId,
+                                                     @Param("leagueId") Long leagueId);
 
     @Modifying
     @Query("DELETE FROM Player p WHERE p.league.id = :leagueId")
     int deleteByLeagueId(@Param("leagueId") Long leagueId);
+
+    @Modifying
+    @Query(value = "DELETE FROM players WHERE league_id = :leagueId", nativeQuery = true)
+    int hardDeleteByLeagueId(@Param("leagueId") Long leagueId);
+
+    @Modifying
+    @Query(value = "DELETE FROM players WHERE team_id IN :teamIds", nativeQuery = true)
+    int hardDeleteByTeamIdIn(@Param("teamIds") List<Long> teamIds);
+
+    @Query(value = "SELECT id FROM players WHERE league_id = :leagueId", nativeQuery = true)
+    List<Long> findAnyIdsByLeagueId(@Param("leagueId") Long leagueId);
+
+    @Query(value = "SELECT id FROM players WHERE team_id IN :teamIds", nativeQuery = true)
+    List<Long> findAnyIdsByTeamIdIn(@Param("teamIds") List<Long> teamIds);
+
     List<Player> findByTeamId(Long teamId);
     List<Player> findByLeagueIdAndStatus(Long leagueId, Player.PlayerStatus status);
     List<Player> findByLeagueIdAndCategory(Long leagueId, Player.PlayerCategory category);
@@ -37,4 +56,5 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
         @Param("teamId") Long teamId,
         @Param("search") String search,
         Pageable pageable);
+
 }

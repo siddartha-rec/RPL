@@ -193,7 +193,7 @@ function SeasonHistoryCard({ league }: { league: League }) {
           }}
         >
           <Typography sx={{ fontSize: '11px', fontWeight: 800, color: '#6d28d9', letterSpacing: '0.8px' }}>
-            {league.season}
+            {(league.seasonDisplayName || league.season)}
           </Typography>
         </Box>
         <Box

@@ -19,8 +19,27 @@ export interface ImportProgress {
   finishedAt: string | null;
 }
 
-export const importTournament = (tournamentUrl: string, leagueId?: number) =>
-  api.post<ApiResponse<{ jobId: string }>>('/cricheroes/import/tournament', { tournamentUrl, leagueId })
+export interface TournamentImportCheck {
+  exists: boolean;
+  cricheroesId: number;
+  leagueId?: number;
+  leagueName?: string;
+  season?: string;
+  seasonDisplayName?: string;
+}
+
+export const checkTournamentImport = (tournamentUrl: string) =>
+  api.get<ApiResponse<TournamentImportCheck>>('/cricheroes/import/tournament/check', { params: { tournamentUrl } })
+    .then(r => r.data.data);
+
+export const importTournament = (
+  tournamentUrl: string,
+  leagueId?: number,
+  seasonDisplayName?: string,
+  overrideExisting = false,
+) =>
+  api.post<ApiResponse<{ jobId: string }>>('/cricheroes/import/tournament',
+    { tournamentUrl, leagueId, seasonDisplayName, overrideExisting })
     .then(r => r.data.data);
 
 export const getImportProgress = (jobId: string) =>

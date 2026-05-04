@@ -66,7 +66,7 @@ function SeasonPills({
                   }),
             }}
           >
-            {l.season}
+            {(l.seasonDisplayName || l.season)}
           </Box>
         );
       })}

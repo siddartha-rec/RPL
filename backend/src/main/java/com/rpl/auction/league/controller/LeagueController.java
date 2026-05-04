@@ -47,6 +47,6 @@ public class LeagueController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         leagueService.delete(id);
-        return ResponseEntity.ok(ApiResponse.success(null, "League deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "League archived successfully"));
     }
 }
