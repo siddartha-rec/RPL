@@ -12,6 +12,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import PeopleIcon from '@mui/icons-material/People';
 import GavelIcon from '@mui/icons-material/Gavel';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import WorkspacesIcon from '@mui/icons-material/Workspaces';
 import HistoryIcon from '@mui/icons-material/History';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -126,12 +127,13 @@ export default function Sidebar() {
       : location.pathname === path || location.pathname.startsWith(path + '/');
 
   const mainItems: NavItem[] = [
-    { label: 'Dashboard',    icon: <DashboardIcon fontSize="small" />,    path: '/'        },
-    { label: 'Teams',        icon: <GroupsIcon fontSize="small" />,       path: '/teams'   },
-    { label: 'Players',      icon: <PeopleIcon fontSize="small" />,       path: '/players' },
-    { label: 'Live Auction', icon: <GavelIcon fontSize="small" />,        path: '/auction' },
-    { label: 'Results',      icon: <EmojiEventsIcon fontSize="small" />,  path: '/results' },
-    { label: 'History',      icon: <HistoryIcon fontSize="small" />,      path: '/history' },
+    { label: 'Dashboard',    icon: <DashboardIcon fontSize="small" />,    path: '/'             },
+    { label: 'Tournaments',  icon: <WorkspacesIcon fontSize="small" />,   path: '/tournaments'  },
+    { label: 'Teams',        icon: <GroupsIcon fontSize="small" />,       path: '/teams'        },
+    { label: 'Players',      icon: <PeopleIcon fontSize="small" />,       path: '/players'      },
+    { label: 'Live Auction', icon: <GavelIcon fontSize="small" />,        path: '/auction'      },
+    { label: 'Results',      icon: <EmojiEventsIcon fontSize="small" />,  path: '/results'      },
+    { label: 'History',      icon: <HistoryIcon fontSize="small" />,      path: '/history'      },
   ];
 
   const isAdmin = hasPermission('user:CREATE') || hasPermission('league:CREATE');

@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/login", "/api/auth/refresh",
                     "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/leagues", "/api/leagues/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/tournaments", "/api/tournaments/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/teams/**", "/api/players/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auctions/*/stream").permitAll()
                 .anyRequest().authenticated()
