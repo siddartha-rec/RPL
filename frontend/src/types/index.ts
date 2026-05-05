@@ -27,7 +27,21 @@ export interface League {
   id: number; name: string; season: string; seasonDisplayName?: string; status: string;
   teamBudget: number; maxPlayersPerTeam: number; maxRetentionsPerTeam: number;
   retentionCost: number; bidIncrement: number; timerSeconds: number;
+  cricheroesId?: number;
+  tournamentId?: number; tournamentName?: string;
   createdAt: string; updatedAt: string;
+}
+
+export interface Tournament {
+  id: number;
+  name: string;
+  slug: string;
+  logoUrl?: string;
+  description?: string;
+  cricheroesBrandName?: string;
+  leagueCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Team {

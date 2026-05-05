@@ -1,5 +1,6 @@
 package com.rpl.auction.league.entity;
 
+import com.rpl.auction.tournament.entity.Tournament;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -66,6 +67,10 @@ public class League {
 
     @Column(name = "cricheroes_id", unique = true)
     private Long cricheroesId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tournament_id")
+    private Tournament tournament;
 
     @Column(nullable = false)
     @Builder.Default

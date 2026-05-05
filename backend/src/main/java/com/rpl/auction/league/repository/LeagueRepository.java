@@ -20,6 +20,14 @@ public interface LeagueRepository extends JpaRepository<League, Long> {
     @Query(value = "SELECT * FROM leagues WHERE cricheroes_id = :cricheroesId LIMIT 1", nativeQuery = true)
     Optional<League> findAnyByCricheroesId(@Param("cricheroesId") Long cricheroesId);
 
+    List<League> findAllByTournamentIdAndArchivedFalse(Long tournamentId);
+    long countByTournamentIdAndArchivedFalse(Long tournamentId);
+
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE leagues SET tournament_id = :tournamentId WHERE id = :id", nativeQuery = true)
+    int updateTournamentId(@Param("id") Long id, @Param("tournamentId") Long tournamentId);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional
     @Query(value = """

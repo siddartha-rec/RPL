@@ -20,6 +20,8 @@ import com.rpl.auction.player.entity.Player;
 import com.rpl.auction.player.repository.PlayerRepository;
 import com.rpl.auction.team.entity.Team;
 import com.rpl.auction.team.repository.TeamRepository;
+import com.rpl.auction.tournament.entity.Tournament;
+import com.rpl.auction.tournament.service.TournamentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -50,6 +52,7 @@ public class CricheroesImportService {
     private final DraftPickRepository draftPickRepository;
     private final PlayerHistoryRepository playerHistoryRepository;
     private final TeamStandingRepository teamStandingRepository;
+    private final TournamentService tournamentService;
 
     @Async
     @Transactional
@@ -135,6 +138,10 @@ public class CricheroesImportService {
                 ? seasonDisplayNameOverride.trim()
                 : (t.seasonDisplayName() != null ? t.seasonDisplayName() : t.name());
 
+        // Resolve parent Tournament from cricheroes brand name (strip trailing year)
+        String brand = stripTrailingYear(t.name());
+        Tournament tournament = tournamentService.upsertByCricheroesBrand(brand);
+
         if (preferredLeagueId != null) {
             League existing = leagueRepository.findById(preferredLeagueId)
                     .orElseThrow(() -> new IllegalArgumentException("League not found: " + preferredLeagueId));
@@ -143,6 +150,7 @@ public class CricheroesImportService {
             }
             existing.setSeason(season);
             existing.setSeasonDisplayName(seasonDisplayName);
+            if (existing.getTournament() == null && tournament != null) existing.setTournament(tournament);
             leagueRepository.save(existing);
             return existing;
         }
@@ -156,8 +164,13 @@ public class CricheroesImportService {
                     seasonDisplayName,
                     t.cricheroesId()
             );
-            return leagueRepository.findById(existing.getId())
+            League refreshed = leagueRepository.findById(existing.getId())
                     .orElseThrow(() -> new IllegalStateException("League not found after revive/update: " + existing.getId()));
+            if (refreshed.getTournament() == null && tournament != null) {
+                leagueRepository.updateTournamentId(refreshed.getId(), tournament.getId());
+                refreshed.setTournament(tournament);
+            }
+            return refreshed;
         }
 
         League league = League.builder()
@@ -174,8 +187,15 @@ public class CricheroesImportService {
                 .bidIncrement(new BigDecimal("0.5"))
                 .timerSeconds(30)
                 .cricheroesId(t.cricheroesId())
+                .tournament(tournament)
                 .build();
         return leagueRepository.save(league);
+    }
+
+    /** "Recykal Premier League 2025" → "Recykal Premier League". */
+    private String stripTrailingYear(String name) {
+        if (name == null) return null;
+        return name.replaceAll("\\s+\\d{4}\\s*$", "").trim();
     }
 
     @Transactional

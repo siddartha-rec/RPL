@@ -21,6 +21,9 @@ public class LeagueResponse {
     private BigDecimal retentionCost;
     private BigDecimal bidIncrement;
     private Integer timerSeconds;
+    private Long cricheroesId;
+    private Long tournamentId;
+    private String tournamentName;
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -39,6 +42,9 @@ public class LeagueResponse {
                 .retentionCost(league.getRetentionCost())
                 .bidIncrement(league.getBidIncrement())
                 .timerSeconds(league.getTimerSeconds())
+                .cricheroesId(league.getCricheroesId())
+                .tournamentId(league.getTournament() != null ? league.getTournament().getId() : null)
+                .tournamentName(league.getTournament() != null ? league.getTournament().getName() : null)
                 .createdAt(league.getCreatedAt())
                 .updatedAt(league.getUpdatedAt())
                 .build();

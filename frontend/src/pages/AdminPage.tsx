@@ -16,6 +16,7 @@ import SportsCricketIcon from '@mui/icons-material/SportsCricket';
 import GroupsIcon from '@mui/icons-material/Groups';
 import PersonIcon from '@mui/icons-material/Person';
 import GavelIcon from '@mui/icons-material/Gavel';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import StopIcon from '@mui/icons-material/Stop';
@@ -24,6 +25,10 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import {
   getLeagues, createLeague, updateLeague, deleteLeague,
 } from '../api/leagues';
+import {
+  getTournaments, createTournament, updateTournament, archiveTournament,
+} from '../api/tournaments';
+import type { Tournament } from '../types';
 import { importTournament, getImportProgress, checkTournamentImport } from '../api/cricheroes';
 import type { ImportProgress as CHProgress, TournamentImportCheck } from '../api/cricheroes';
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
@@ -183,6 +188,243 @@ function StatusBadge({ status }: { status: string }) {
       }}
     >
       {status}
+    </Box>
+  );
+}
+
+// ---- Tournaments Tab ----
+function TournamentsTab() {
+  const qc = useQueryClient();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editing, setEditing] = useState<Tournament | null>(null);
+  const [deleting, setDeleting] = useState<Tournament | null>(null);
+  const [form, setForm] = useState<Partial<Tournament>>({
+    name: '', slug: '', description: '', logoUrl: '',
+  });
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const { data: tournaments, isLoading, error } = useQuery<Tournament[]>({
+    queryKey: ['tournaments'],
+    queryFn: getTournaments,
+  });
+
+  const createMut = useMutation({
+    mutationFn: () => createTournament(form),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tournaments'] });
+      setCreateOpen(false);
+      setForm({ name: '', slug: '', description: '', logoUrl: '' });
+      setFormError(null);
+    },
+    onError: (e: { response?: { data?: { message?: string } } }) =>
+      setFormError(e?.response?.data?.message ?? 'Failed to create tournament'),
+  });
+
+  const updateMut = useMutation({
+    mutationFn: () => updateTournament(editing!.id, form),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tournaments'] });
+      setEditing(null);
+      setFormError(null);
+    },
+    onError: (e: { response?: { data?: { message?: string } } }) =>
+      setFormError(e?.response?.data?.message ?? 'Failed to update tournament'),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: () => archiveTournament(deleting!.id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tournaments'] });
+      setDeleting(null);
+    },
+  });
+
+  const handleChange = (field: keyof Tournament) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm(prev => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const openCreate = () => {
+    setForm({ name: '', slug: '', description: '', logoUrl: '' });
+    setFormError(null);
+    setCreateOpen(true);
+  };
+
+  const openEdit = (t: Tournament) => {
+    setForm({
+      name: t.name,
+      slug: t.slug,
+      description: t.description ?? '',
+      logoUrl: t.logoUrl ?? '',
+    });
+    setFormError(null);
+    setEditing(t);
+  };
+
+  if (isLoading) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#b45309' }} /></Box>;
+  if (error) return <Alert severity="error" sx={{ borderRadius: '12px' }}>Failed to load tournaments</Alert>;
+
+  const editBtnSx = {
+    minWidth: 32, width: 32, height: 32, p: 0,
+    color: '#60a5fa', borderRadius: '8px',
+    background: '#60a5fa10',
+    border: '1px solid #60a5fa30',
+    '&:hover': { background: '#60a5fa20', borderColor: '#60a5fa55' },
+  };
+  const delBtnSx = {
+    minWidth: 32, width: 32, height: 32, p: 0,
+    color: '#ef4444', borderRadius: '8px',
+    background: '#ef444410',
+    border: '1px solid #ef444430',
+    '&:hover': { background: '#ef444420', borderColor: '#ef444455' },
+  };
+
+  const rows = (tournaments ?? []).map(t => [
+    <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>{t.name}</Typography>,
+    <Typography sx={{ fontSize: '13px', color: '#94a3b8', fontFamily: 'monospace' }}>{t.slug}</Typography>,
+    <Box sx={{ display: 'inline-block', px: 1.2, py: 0.3, borderRadius: '20px', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.35)', fontSize: '11px', fontWeight: 700, color: '#6d28d9' }}>
+      {t.leagueCount} season{t.leagueCount === 1 ? '' : 's'}
+    </Box>,
+    <Typography sx={{ fontSize: '13px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.description ?? '—'}</Typography>,
+    <Box sx={{ display: 'flex', gap: 0.75 }}>
+      <Button onClick={() => openEdit(t)} sx={editBtnSx} title="Edit"><EditIcon sx={{ fontSize: 16 }} /></Button>
+      <Button onClick={() => setDeleting(t)} sx={delBtnSx} title="Archive" disabled={t.leagueCount > 0}><DeleteOutlineIcon sx={{ fontSize: 16 }} /></Button>
+    </Box>,
+  ]);
+
+  const formFields = [
+    { label: 'Name', field: 'name' as keyof Tournament },
+    { label: 'Slug (auto from name if blank)', field: 'slug' as keyof Tournament },
+    { label: 'Logo URL', field: 'logoUrl' as keyof Tournament },
+    { label: 'Description', field: 'description' as keyof Tournament },
+  ];
+
+  const dialogPaperSx = {
+    background: '#ffffff',
+    backdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '20px',
+  };
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box>
+          <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#1e293b' }}>Tournaments</Typography>
+          <Typography sx={{ fontSize: '12px', color: '#64748b' }}>
+            {(tournaments ?? []).length} tournament{(tournaments ?? []).length === 1 ? '' : 's'} · brand-level competitions, hold many seasons
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={openCreate}
+          sx={{
+            background: 'linear-gradient(135deg, #a78bfa, #8b5cf6)',
+            color: '#fff',
+            fontWeight: 700,
+            borderRadius: '12px',
+            boxShadow: '0 4px 16px rgba(167,139,250,0.3)',
+            '&:hover': { background: 'linear-gradient(135deg, #c4b5fd, #a78bfa)' },
+          }}
+        >
+          Create Tournament
+        </Button>
+      </Box>
+      <StyledTable
+        columns={['Name', 'Slug', 'Seasons', 'Description', 'Actions']}
+        columnTemplate="1.5fr 1fr 0.8fr 2fr 96px"
+        rows={rows}
+      />
+
+      {/* Create / Edit dialog */}
+      <Dialog
+        open={createOpen || !!editing}
+        onClose={() => { if (!createMut.isPending && !updateMut.isPending) { setCreateOpen(false); setEditing(null); setFormError(null); } }}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: dialogPaperSx }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#1e293b', pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <EmojiEventsIcon sx={{ color: '#a78bfa' }} />
+            {editing ? 'Edit Tournament' : 'Create Tournament'}
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {formFields.map(({ label, field }) => (
+              <TextField
+                key={field}
+                label={label}
+                value={form[field] ?? ''}
+                onChange={handleChange(field)}
+                fullWidth
+                size="small"
+                multiline={field === 'description'}
+                minRows={field === 'description' ? 2 : 1}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    background: '#f1f5f9',
+                    borderRadius: '10px',
+                    '&.Mui-focused fieldset': { borderColor: '#a78bfa' },
+                  },
+                }}
+              />
+            ))}
+            {formError && <Alert severity="error" sx={{ borderRadius: '10px' }}>{formError}</Alert>}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <Button onClick={() => { setCreateOpen(false); setEditing(null); setFormError(null); }} sx={{ color: '#64748b', borderRadius: '10px' }}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={() => editing ? updateMut.mutate() : createMut.mutate()}
+            disabled={!form.name || createMut.isPending || updateMut.isPending}
+            sx={{
+              background: 'linear-gradient(135deg, #a78bfa, #8b5cf6)',
+              fontWeight: 700,
+              borderRadius: '10px',
+              '&:hover': { background: 'linear-gradient(135deg, #c4b5fd, #a78bfa)' },
+              '&.Mui-disabled': { background: '#e2e8f0', color: '#94a3b8' },
+            }}
+          >
+            {(createMut.isPending || updateMut.isPending) ? 'Saving...' : editing ? 'Save' : 'Create'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete confirm */}
+      <Dialog
+        open={!!deleting}
+        onClose={() => { if (!deleteMut.isPending) setDeleting(null); }}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { ...dialogPaperSx, border: '1px solid rgba(239,68,68,0.25)' } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#b91c1c' }}>Archive tournament?</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ color: '#475569', fontSize: '14px' }}>
+            Archive <b style={{ color: '#1e293b' }}>{deleting?.name}</b>? Only allowed if it has zero active seasons.
+          </Typography>
+          {deleteMut.error && <Alert severity="error" sx={{ mt: 2, borderRadius: '10px' }}>Failed to archive</Alert>}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <Button onClick={() => setDeleting(null)} disabled={deleteMut.isPending} sx={{ color: '#64748b', borderRadius: '10px' }}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={() => deleteMut.mutate()}
+            disabled={deleteMut.isPending}
+            sx={{
+              background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
+              fontWeight: 700,
+              borderRadius: '10px',
+              '&:hover': { background: 'linear-gradient(135deg, #fca5a5, #dc2626)' },
+            }}
+          >
+            {deleteMut.isPending ? 'Archiving...' : 'Archive'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
@@ -1974,6 +2216,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState(0);
 
   const tabs = [
+    { label: 'Tournaments', icon: <EmojiEventsIcon sx={{ fontSize: 16 }} /> },
     { label: 'Leagues', icon: <SportsCricketIcon sx={{ fontSize: 16 }} /> },
     { label: 'Teams', icon: <GroupsIcon sx={{ fontSize: 16 }} /> },
     { label: 'Players', icon: <PersonIcon sx={{ fontSize: 16 }} /> },
@@ -2003,10 +2246,11 @@ export default function AdminPage() {
 
       <CustomTabs value={tab} onChange={setTab} tabs={tabs} />
 
-      <TabPanel value={tab} index={0}><LeaguesTab /></TabPanel>
-      <TabPanel value={tab} index={1}><TeamsTab /></TabPanel>
-      <TabPanel value={tab} index={2}><PlayersTab /></TabPanel>
-      <TabPanel value={tab} index={3}><AuctionControlTab /></TabPanel>
+      <TabPanel value={tab} index={0}><TournamentsTab /></TabPanel>
+      <TabPanel value={tab} index={1}><LeaguesTab /></TabPanel>
+      <TabPanel value={tab} index={2}><TeamsTab /></TabPanel>
+      <TabPanel value={tab} index={3}><PlayersTab /></TabPanel>
+      <TabPanel value={tab} index={4}><AuctionControlTab /></TabPanel>
     </Box>
   );
 }
