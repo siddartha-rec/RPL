@@ -22,7 +22,7 @@ import StopIcon from '@mui/icons-material/Stop';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import {
-  getLeagues, createLeague, deleteLeague,
+  getLeagues, createLeague, updateLeague, deleteLeague,
 } from '../api/leagues';
 import { importTournament, getImportProgress, checkTournamentImport } from '../api/cricheroes';
 import type { ImportProgress as CHProgress, TournamentImportCheck } from '../api/cricheroes';
@@ -191,6 +191,9 @@ function StatusBadge({ status }: { status: string }) {
 function LeaguesTab() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<League | null>(null);
+  const [editForm, setEditForm] = useState<Partial<League>>({});
+  const [editError, setEditError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<League | null>(null);
   const [confirmText, setConfirmText] = useState('');
   const [importOpen, setImportOpen] = useState(false);
@@ -226,6 +229,49 @@ function LeaguesTab() {
       setConfirmText('');
     },
   });
+
+  const editMut = useMutation({
+    mutationFn: () => updateLeague(editing!.id, editForm),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['leagues'] });
+      setEditing(null);
+      setEditForm({});
+      setEditError(null);
+    },
+    onError: (e: { response?: { data?: { message?: string } } }) =>
+      setEditError(e?.response?.data?.message ?? 'Failed to update league'),
+  });
+
+  const openEdit = (l: League) => {
+    setEditForm({
+      name: l.name,
+      season: l.season,
+      seasonDisplayName: l.seasonDisplayName ?? '',
+      teamBudget: l.teamBudget,
+      maxPlayersPerTeam: l.maxPlayersPerTeam,
+      maxRetentionsPerTeam: l.maxRetentionsPerTeam,
+      retentionCost: l.retentionCost,
+      bidIncrement: l.bidIncrement,
+      timerSeconds: l.timerSeconds,
+    });
+    setEditError(null);
+    setEditing(l);
+  };
+
+  const closeEdit = () => {
+    if (editMut.isPending) return;
+    setEditing(null);
+    setEditForm({});
+    setEditError(null);
+    editMut.reset();
+  };
+
+  const handleEditChange = (field: keyof League) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = ['teamBudget', 'maxPlayersPerTeam', 'maxRetentionsPerTeam', 'retentionCost', 'bidIncrement', 'timerSeconds'].includes(field)
+      ? Number(e.target.value)
+      : e.target.value;
+    setEditForm(prev => ({ ...prev, [field]: value }));
+  };
 
   const startImportMut = useMutation({
     mutationFn: (overrideExisting: boolean) => importTournament(
@@ -308,6 +354,13 @@ function LeaguesTab() {
     border: '1px solid #ef444430',
     '&:hover': { background: '#ef444420', borderColor: '#ef444455' },
   };
+  const editBtnSx = {
+    minWidth: 32, width: 32, height: 32, p: 0,
+    color: '#60a5fa', borderRadius: '8px',
+    background: '#60a5fa10',
+    border: '1px solid #60a5fa30',
+    '&:hover': { background: '#60a5fa20', borderColor: '#60a5fa55' },
+  };
 
   const rows = (leagues ?? []).map(l => [
     <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>{l.name}</Typography>,
@@ -316,6 +369,7 @@ function LeaguesTab() {
     <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{l.teamBudget} CR</Typography>,
     <Typography sx={{ fontSize: '13px', color: '#94a3b8' }}>{l.maxPlayersPerTeam}</Typography>,
     <Box sx={{ display: 'flex', gap: 0.75 }}>
+      <Button onClick={() => openEdit(l)} sx={editBtnSx} title="Edit league"><EditIcon sx={{ fontSize: 16 }} /></Button>
       <Button onClick={() => setDeleting(l)} sx={deleteBtnSx} title="Delete league"><DeleteOutlineIcon sx={{ fontSize: 16 }} /></Button>
     </Box>,
   ]);
@@ -365,7 +419,7 @@ function LeaguesTab() {
       </Box>
       <StyledTable
         columns={['Name', 'Season', 'Status', 'Budget', 'Max Players', 'Actions']}
-        columnTemplate="1.5fr 1fr 1fr 1fr 1fr 64px"
+        columnTemplate="1.5fr 1fr 1fr 1fr 1fr 96px"
         rows={rows}
       />
 
@@ -445,6 +499,79 @@ function LeaguesTab() {
             }}
           >
             {mutation.isPending ? 'Creating...' : 'Create League'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={!!editing}
+        onClose={closeEdit}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: '#ffffff',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '20px',
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#1e293b', pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <EditIcon sx={{ color: '#60a5fa' }} />
+            Edit League
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {[
+              { label: 'League Name', field: 'name' as keyof League, type: 'text' },
+              { label: 'Season', field: 'season' as keyof League, type: 'text' },
+              { label: 'Season Display Name', field: 'seasonDisplayName' as keyof League, type: 'text' },
+              { label: 'Team Budget (CR)', field: 'teamBudget' as keyof League, type: 'number' },
+              { label: 'Max Players Per Team', field: 'maxPlayersPerTeam' as keyof League, type: 'number' },
+              { label: 'Max Retentions', field: 'maxRetentionsPerTeam' as keyof League, type: 'number' },
+              { label: 'Retention Cost (CR)', field: 'retentionCost' as keyof League, type: 'number' },
+              { label: 'Bid Increment (CR)', field: 'bidIncrement' as keyof League, type: 'number' },
+              { label: 'Timer (seconds)', field: 'timerSeconds' as keyof League, type: 'number' },
+            ].map(({ label, field, type }) => (
+              <TextField
+                key={field}
+                label={label}
+                type={type}
+                value={editForm[field] ?? ''}
+                onChange={handleEditChange(field)}
+                fullWidth
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    background: '#f1f5f9',
+                    borderRadius: '10px',
+                    '&.Mui-focused fieldset': { borderColor: '#60a5fa' },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': { color: '#3b82f6' },
+                }}
+              />
+            ))}
+          </Stack>
+          {editError && <Alert severity="error" sx={{ mt: 2, borderRadius: '10px' }}>{editError}</Alert>}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <Button onClick={closeEdit} disabled={editMut.isPending} sx={{ color: '#64748b', borderRadius: '10px' }}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={() => editMut.mutate()}
+            disabled={editMut.isPending || !editForm.name}
+            sx={{
+              background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+              fontWeight: 700,
+              borderRadius: '10px',
+              '&:hover': { background: 'linear-gradient(135deg, #60a5fa, #3b82f6)' },
+              '&.Mui-disabled': { background: '#e2e8f0', color: '#94a3b8' },
+            }}
+          >
+            {editMut.isPending ? 'Saving...' : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>
