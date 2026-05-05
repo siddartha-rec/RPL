@@ -30,8 +30,8 @@ export default function TournamentDetailPage() {
 
   const list = leagues ?? [];
 
-  const enterLeague = () => {
-    navigate('/');
+  const enterLeague = (leagueId: number) => {
+    navigate(`/tournaments/${tid}/leagues/${leagueId}`);
   };
 
   const statusColor = (s: string) => {
@@ -98,7 +98,7 @@ export default function TournamentDetailPage() {
           {list.map(l => (
             <Box
               key={l.id}
-              onClick={enterLeague}
+              onClick={() => enterLeague(l.id)}
               sx={{
                 cursor: 'pointer',
                 background: '#ffffff',
