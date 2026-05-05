@@ -90,7 +90,13 @@ public class CricheroesImportService {
                     continue;
                 }
                 try {
-                    importScorecard(m.cricheroesMatchId(), t.slug(), m.slug(), league);
+                    Match.MatchStatus matchStatus = mapStatus(m.cricheroesStatus());
+                    if (matchStatus == Match.MatchStatus.SCHEDULED) {
+                        // Upcoming match — no scorecard yet, just persist metadata
+                        upsertMatchMetadata(m, league, matchStatus);
+                    } else {
+                        importScorecard(m.cricheroesMatchId(), t.slug(), m.slug(), league, matchStatus);
+                    }
                     progress.setMatchesDone(progress.getMatchesDone() + 1);
                 } catch (Exception e) {
                     log.warn("Failed match {}: {}", m.cricheroesMatchId(), e.getMessage());
@@ -198,6 +204,45 @@ public class CricheroesImportService {
         return name.replaceAll("\\s+\\d{4}\\s*$", "").trim();
     }
 
+    private Match.MatchStatus mapStatus(String cricheroesStatus) {
+        if (cricheroesStatus == null) return Match.MatchStatus.SCHEDULED;
+        return switch (cricheroesStatus.toLowerCase()) {
+            case "live" -> Match.MatchStatus.LIVE;
+            case "past" -> Match.MatchStatus.COMPLETED;
+            case "upcoming", "scheduled" -> Match.MatchStatus.SCHEDULED;
+            case "abandoned" -> Match.MatchStatus.ABANDONED;
+            default -> Match.MatchStatus.SCHEDULED;
+        };
+    }
+
+    /** Persist a SCHEDULED/UPCOMING match without fetching its scorecard. */
+    @Transactional
+    public Match upsertMatchMetadata(ScrapedMatchSummary m, League league, Match.MatchStatus status) {
+        Team teamA = resolveTeamForImport(m.teamAId(), m.teamAName(), league);
+        Team teamB = resolveTeamForImport(m.teamBId(), m.teamBName(), league);
+        Match match = matchRepository.findAnyByCricheroesId(m.cricheroesMatchId())
+                .orElseGet(() -> Match.builder()
+                        .league(league)
+                        .cricheroesId(m.cricheroesMatchId())
+                        .teamA(teamA)
+                        .teamB(teamB)
+                        .status(status)
+                        .build());
+        match.setLeague(league);
+        match.setTeamA(teamA);
+        match.setTeamB(teamB);
+        match.setScheduledAt(m.startDateTime());
+        match.setVenue(m.groundName());
+        match.setFormat(m.matchType());
+        match.setOvers(m.overs());
+        match.setStatus(status);
+        match.setArchived(false);
+        if (m.winningTeamName() != null && m.winBy() != null) {
+            match.setResultText(m.winningTeamName() + " won by " + m.winBy());
+        }
+        return matchRepository.save(match);
+    }
+
     @Transactional
     public Team importTeam(Long cricheroesTeamId, League league) {
         ScrapedTeam st = scraper.scrapeTeam(cricheroesTeamId);
@@ -255,6 +300,12 @@ public class CricheroesImportService {
 
     @Transactional
     public Match importScorecard(Long cricheroesMatchId, String tournamentSlug, String matchSlug, League league) {
+        return importScorecard(cricheroesMatchId, tournamentSlug, matchSlug, league, Match.MatchStatus.COMPLETED);
+    }
+
+    @Transactional
+    public Match importScorecard(Long cricheroesMatchId, String tournamentSlug, String matchSlug,
+                                 League league, Match.MatchStatus status) {
         ScrapedScorecard sc = scraper.scrapeScorecard(cricheroesMatchId, tournamentSlug, matchSlug);
 
         Team teamA = resolveTeamForImport(sc.teamAId(), sc.teamAName(), league);
@@ -266,7 +317,7 @@ public class CricheroesImportService {
                         .cricheroesId(sc.cricheroesMatchId())
                         .teamA(teamA)
                         .teamB(teamB)
-                        .status(Match.MatchStatus.COMPLETED)
+                        .status(status)
                         .build());
         match.setLeague(league);
         match.setTeamA(teamA);
@@ -275,7 +326,7 @@ public class CricheroesImportService {
         match.setVenue(sc.groundName());
         match.setFormat(sc.matchType());
         match.setOvers(sc.overs());
-        match.setStatus(Match.MatchStatus.COMPLETED);
+        match.setStatus(status);
         match.setArchived(false);
         match.setResultText(buildResultText(sc));
         if (sc.winningTeamName() != null) {

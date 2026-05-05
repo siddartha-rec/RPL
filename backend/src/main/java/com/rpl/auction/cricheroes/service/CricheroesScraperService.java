@@ -11,7 +11,9 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,12 +41,21 @@ public class CricheroesScraperService {
         String city = td.path("city_name").asText(null);
         String logo = td.path("tournament_logo").asText(null);
 
-        List<ScrapedMatchSummary> matches = new ArrayList<>();
-        for (JsonNode m : pp.path("matchResponse").path("data")) {
-            matches.add(parseMatchSummary(m));
+        // Merge matches across past + upcoming + live tabs (cricheroes splits them by status)
+        Map<Long, ScrapedMatchSummary> dedup = new LinkedHashMap<>();
+        ingestMatchList(pp, dedup);
+        for (String tab : List.of("upcoming-matches", "live-matches")) {
+            try {
+                JsonNode tabPp = client.fetchPageProps(
+                        "/tournament/" + ref.id() + "/" + ref.slug() + "/matches/" + tab);
+                ingestMatchList(tabPp, dedup);
+            } catch (CricheroesScrapeException e) {
+                log.warn("Skipping {} for tournament {}: {}", tab, ref.id(), e.getMessage());
+            }
         }
+        List<ScrapedMatchSummary> matches = new ArrayList<>(dedup.values());
 
-        // Fetch teams page separately — past-matches page has empty teamResponse
+        // Fetch teams page separately — match-tab pages have empty teamResponse
         JsonNode teamsPp = client.fetchPageProps("/tournament/" + ref.id() + "/" + ref.slug() + "/teams");
         List<Long> teamIds = new ArrayList<>();
         for (JsonNode t : teamsPp.path("teamResponse").path("data")) {
@@ -53,6 +64,29 @@ public class CricheroesScraperService {
         }
 
         return new ScrapedTournament(cricheroesId, ref.slug(), name, season, seasonDisplayName, city, logo, teamIds, matches);
+    }
+
+    private void ingestMatchList(JsonNode pageProps, Map<Long, ScrapedMatchSummary> dedup) {
+        for (JsonNode m : pageProps.path("matchResponse").path("data")) {
+            ScrapedMatchSummary s = parseMatchSummary(m);
+            if (s.cricheroesMatchId() == null || s.cricheroesMatchId() <= 0) continue;
+            // Earlier list wins on conflict (preserve past-tab status if set), but upgrade if new entry has richer status
+            ScrapedMatchSummary prev = dedup.get(s.cricheroesMatchId());
+            if (prev == null || statusRank(s.cricheroesStatus()) > statusRank(prev.cricheroesStatus())) {
+                dedup.put(s.cricheroesMatchId(), s);
+            }
+        }
+    }
+
+    /** Live > past > upcoming > unknown — pick most-current status when match appears in multiple tabs. */
+    private int statusRank(String status) {
+        if (status == null) return 0;
+        return switch (status.toLowerCase()) {
+            case "live" -> 3;
+            case "past" -> 2;
+            case "upcoming", "scheduled" -> 1;
+            default -> 0;
+        };
     }
 
     public ScrapedTeam scrapeTeam(Long cricheroesTeamId) {
@@ -192,9 +226,10 @@ public class CricheroesScraperService {
         String matchType = m.path("match_type").asText(null);
         Instant start = parseInstant(m.path("match_start_time").asText(null));
         String round = m.path("tournament_round_name").asText(null);
+        String status = m.path("status").asText(null);
         String slug = buildSlug(teamAName, teamBName);
         return new ScrapedMatchSummary(matchId, slug, teamAId, teamAName, teamBId, teamBName,
-                winnerId, winningName, winBy, ground, overs, matchType, start, round);
+                winnerId, winningName, winBy, ground, overs, matchType, start, round, status);
     }
 
     private String buildSlug(String teamA, String teamB) {

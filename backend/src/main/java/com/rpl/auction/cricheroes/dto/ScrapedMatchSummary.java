@@ -16,5 +16,7 @@ public record ScrapedMatchSummary(
         Integer overs,
         String matchType,
         Instant startDateTime,
-        String roundName
+        String roundName,
+        /** Raw status from cricheroes: "past", "live", "upcoming", etc. */
+        String cricheroesStatus
 ) {}
