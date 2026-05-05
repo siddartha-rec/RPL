@@ -12,7 +12,7 @@ public class LeagueRequest {
     @NotBlank
     private String season;
     private String seasonDisplayName;
-    @NotNull @DecimalMin("1.0")
+    @NotNull @DecimalMin("0.0")
     private BigDecimal teamBudget;
     @NotNull @Min(1)
     private Integer maxPlayersPerTeam;
