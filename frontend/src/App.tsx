@@ -20,6 +20,7 @@ import AuditLogsPage from './pages/AuditLogsPage';
 import TournamentsPage from './pages/TournamentsPage';
 import TournamentDetailPage from './pages/TournamentDetailPage';
 import LeagueDetailPage from './pages/LeagueDetailPage';
+import MatchDetailPage from './pages/MatchDetailPage';
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ export default function App() {
                 <Route path="/tournaments" element={<TournamentsPage />} />
                 <Route path="/tournaments/:id" element={<TournamentDetailPage />} />
                 <Route path="/tournaments/:tournamentId/leagues/:leagueId" element={<LeagueDetailPage />} />
+                <Route path="/tournaments/:tournamentId/leagues/:leagueId/matches/:matchId" element={<MatchDetailPage />} />
                 <Route path="/teams" element={<TeamsPage />} />
                 <Route path="/teams/:id" element={<TeamDetailPage />} />
                 <Route path="/players" element={<PlayersPage />} />

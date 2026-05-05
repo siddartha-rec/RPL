@@ -1,6 +1,7 @@
 package com.rpl.auction.match.controller;
 
 import com.rpl.auction.common.dto.ApiResponse;
+import com.rpl.auction.match.dto.MatchDetailResponse;
 import com.rpl.auction.match.dto.MatchResponse;
 import com.rpl.auction.match.entity.Match;
 import com.rpl.auction.match.service.MatchService;
@@ -24,6 +25,11 @@ public class MatchController {
         Match.MatchStatus status = parseStatus(statusParam);
         List<MatchResponse> matches = matchService.findByLeague(leagueId, status);
         return ResponseEntity.ok(ApiResponse.success(matches));
+    }
+
+    @GetMapping("/api/matches/{id}")
+    public ResponseEntity<ApiResponse<MatchDetailResponse>> getDetail(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(matchService.getDetail(id)));
     }
 
     private Match.MatchStatus parseStatus(String s) {

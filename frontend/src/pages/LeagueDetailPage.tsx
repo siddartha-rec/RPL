@@ -203,6 +203,8 @@ function ComingSoonBadge() {
 }
 
 function MatchesPanel({ leagueId }: { leagueId: number }) {
+  const navigate = useNavigate();
+  const { tournamentId } = useParams<{ tournamentId: string }>();
   const [sub, setSub] = useState<MatchTab>('past');
 
   const { data: allMatches, isLoading, error } = useQuery<MatchSummary[]>({
@@ -287,7 +289,9 @@ function MatchesPanel({ leagueId }: { leagueId: number }) {
               ? new Date(m.scheduledAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
               : (isUpcoming ? 'TBD' : '—');
             return (
-              <Box key={m.id} sx={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', p: 2.25,
+              <Box key={m.id}
+                onClick={() => navigate(`/tournaments/${tournamentId}/leagues/${leagueId}/matches/${m.id}`)}
+                sx={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', p: 2.25,
                 position: 'relative',
                 ...(isLive && { borderColor: 'rgba(239,68,68,0.4)', boxShadow: '0 0 0 3px rgba(239,68,68,0.05)' }),
                 '&:hover': { borderColor: 'rgba(96,165,250,0.45)', boxShadow: '0 4px 14px rgba(96,165,250,0.12)' },
