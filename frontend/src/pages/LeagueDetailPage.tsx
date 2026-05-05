@@ -12,6 +12,8 @@ import StarIcon from '@mui/icons-material/Star';
 import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 import { getTournament } from '../api/tournaments';
 import { getLeague } from '../api/leagues';
+import { getLeagueMatches } from '../api/matches';
+import type { MatchSummary, MatchStatus } from '../api/matches';
 import type { League, Tournament } from '../types';
 
 type TabKey = 'matches' | 'points' | 'stats' | 'teams' | 'gallery' | 'heroes';
@@ -120,7 +122,7 @@ export default function LeagueDetailPage() {
       </Box>
 
       {/* Tab content */}
-      {tab === 'matches' && <MatchesPanel />}
+      {tab === 'matches' && <MatchesPanel leagueId={lid} />}
       {tab === 'points' && <PointsTablePanel />}
       {tab === 'stats' && <StatsPanel />}
       {tab === 'teams' && <TeamsPanel />}
@@ -136,31 +138,11 @@ export default function LeagueDetailPage() {
 
 type MatchTab = 'past' | 'live' | 'upcoming';
 
-interface MockMatch {
-  id: number;
-  status: MatchTab;
-  date: string;
-  round: string;
-  teamA: string;
-  teamAScore?: string;
-  teamB: string;
-  teamBScore?: string;
-  result?: string;
-  venue: string;
-  liveLabel?: string;
-}
-
-const MOCK_MATCHES: MockMatch[] = [
-  // Past
-  { id: 1, status: 'past', date: '13 Nov 2025', round: 'Final',         teamA: 'Gang Of Gladiators', teamAScore: '175/6 (20)', teamB: 'Clan Of Champions', teamBScore: '133/9 (20)', result: 'Gang Of Gladiators won by 42 runs',  venue: 'Urban Farms Cricket Ground' },
-  { id: 2, status: 'past', date: '06 Nov 2025', round: 'Semi Final 2',  teamA: 'Clan Of Champions',  teamAScore: '143/8 (20)', teamB: 'Squad of Samurais', teamBScore: '142/9 (20)', result: 'Clan Of Champions won by 1 run',     venue: 'Urban Farms Cricket Ground' },
-  { id: 3, status: 'past', date: '30 Oct 2025', round: 'League',        teamA: 'Tribe of Titans',    teamAScore: '165/7 (20)', teamB: 'Force Of Fighters', teamBScore: '124/9 (20)', result: 'Tribe of Titans won by 41 runs',     venue: 'Urban Farms Cricket Ground' },
-  // Live
-  { id: 10, status: 'live', date: 'Today, 14:30', round: 'Quarter Final', teamA: 'Gang Of Gladiators', teamAScore: '128/3 (12.4)', teamB: 'Tribe of Titans', teamBScore: 'Yet to bat', liveLabel: 'GOG batting · 7.4 overs left', venue: 'Urban Farms Cricket Ground' },
-  // Upcoming
-  { id: 20, status: 'upcoming', date: '21 Nov 2025, 10:30', round: 'Eliminator', teamA: 'Squad of Samurais', teamB: 'Force Of Fighters', venue: 'Urban Farms Cricket Ground' },
-  { id: 21, status: 'upcoming', date: '24 Nov 2025, 14:00', round: 'Semi Final 1', teamA: 'TBD', teamB: 'TBD', venue: 'Urban Farms Cricket Ground' },
-];
+const TAB_TO_BACKEND: Record<MatchTab, MatchStatus> = {
+  past: 'COMPLETED',
+  live: 'LIVE',
+  upcoming: 'SCHEDULED',
+};
 
 const MOCK_POINTS = [
   { rank: 1, team: 'Gang Of Gladiators', p: 6, w: 5, l: 1, t: 0, n: 0, pts: 10, nrr: '+1.42' },
@@ -220,19 +202,27 @@ function ComingSoonBadge() {
   );
 }
 
-function MatchesPanel() {
+function MatchesPanel({ leagueId }: { leagueId: number }) {
   const [sub, setSub] = useState<MatchTab>('past');
+
+  const { data: allMatches, isLoading, error } = useQuery<MatchSummary[]>({
+    queryKey: ['league-matches', leagueId],
+    queryFn: () => getLeagueMatches(leagueId),
+    enabled: !!leagueId,
+  });
+
+  const matches = allMatches ?? [];
   const counts: Record<MatchTab, number> = {
-    past: MOCK_MATCHES.filter(m => m.status === 'past').length,
-    live: MOCK_MATCHES.filter(m => m.status === 'live').length,
-    upcoming: MOCK_MATCHES.filter(m => m.status === 'upcoming').length,
+    past: matches.filter(m => m.status === 'COMPLETED').length,
+    live: matches.filter(m => m.status === 'LIVE').length,
+    upcoming: matches.filter(m => m.status === 'SCHEDULED').length,
   };
   const subTabs: { key: MatchTab; label: string; tone: string }[] = [
     { key: 'past',     label: 'Past',     tone: '#60a5fa' },
     { key: 'live',     label: 'Live',     tone: '#ef4444' },
     { key: 'upcoming', label: 'Upcoming', tone: '#f59e0b' },
   ];
-  const filtered = MOCK_MATCHES.filter(m => m.status === sub);
+  const filtered = matches.filter(m => m.status === TAB_TO_BACKEND[sub]);
 
   return (
     <Box>
@@ -240,7 +230,6 @@ function MatchesPanel() {
         <Typography sx={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1.2px' }}>
           Matches
         </Typography>
-        <ComingSoonBadge />
       </Box>
 
       {/* Sub-tab pills */}
@@ -277,7 +266,11 @@ function MatchesPanel() {
       </Box>
 
       {/* Match cards */}
-      {filtered.length === 0 ? (
+      {isLoading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress size={24} sx={{ color: '#60a5fa' }} /></Box>
+      ) : error ? (
+        <Alert severity="error" sx={{ borderRadius: '12px' }}>Failed to load matches</Alert>
+      ) : filtered.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 6, color: '#64748b',
           background: '#fff', border: '1px dashed #e2e8f0', borderRadius: '14px' }}>
           <SportsCricketIcon sx={{ fontSize: 36, color: '#cbd5e1', mb: 0.75 }} />
@@ -287,55 +280,62 @@ function MatchesPanel() {
         </Box>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          {filtered.map(m => (
-            <Box key={m.id} sx={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', p: 2.25,
-              position: 'relative',
-              ...(m.status === 'live' && { borderColor: 'rgba(239,68,68,0.4)', boxShadow: '0 0 0 3px rgba(239,68,68,0.05)' }),
-              '&:hover': { borderColor: 'rgba(96,165,250,0.45)', boxShadow: '0 4px 14px rgba(96,165,250,0.12)' },
-              transition: 'all 0.2s ease', cursor: 'pointer' }}>
-              {m.status === 'live' && (
-                <Box sx={{ position: 'absolute', top: 12, left: 12, display: 'flex', alignItems: 'center', gap: 0.5,
-                  px: 0.85, py: 0.25, borderRadius: '10px', background: 'rgba(239,68,68,0.12)',
-                  border: '1px solid rgba(239,68,68,0.35)' }}>
-                  <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ef4444', animation: 'pulse 1.2s infinite' }} />
-                  <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#dc2626', letterSpacing: '0.5px' }}>LIVE</Typography>
+          {filtered.map(m => {
+            const isLive = m.status === 'LIVE';
+            const isUpcoming = m.status === 'SCHEDULED';
+            const dateLabel = m.scheduledAt
+              ? new Date(m.scheduledAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+              : (isUpcoming ? 'TBD' : '—');
+            return (
+              <Box key={m.id} sx={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', p: 2.25,
+                position: 'relative',
+                ...(isLive && { borderColor: 'rgba(239,68,68,0.4)', boxShadow: '0 0 0 3px rgba(239,68,68,0.05)' }),
+                '&:hover': { borderColor: 'rgba(96,165,250,0.45)', boxShadow: '0 4px 14px rgba(96,165,250,0.12)' },
+                transition: 'all 0.2s ease', cursor: 'pointer' }}>
+                {isLive && (
+                  <Box sx={{ position: 'absolute', top: 12, left: 12, display: 'flex', alignItems: 'center', gap: 0.5,
+                    px: 0.85, py: 0.25, borderRadius: '10px', background: 'rgba(239,68,68,0.12)',
+                    border: '1px solid rgba(239,68,68,0.35)' }}>
+                    <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ef4444', animation: 'pulse 1.2s infinite' }} />
+                    <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#dc2626', letterSpacing: '0.5px' }}>LIVE</Typography>
+                  </Box>
+                )}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.25, pl: isLive ? 7 : 0 }}>
+                  <Typography sx={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+                    {dateLabel}{m.format ? ` · ${m.format}` : ''}{m.overs ? ` · ${m.overs} ov` : ''}
+                  </Typography>
+                  <Typography sx={{ fontSize: '11px', color: '#94a3b8' }}>{m.venue}</Typography>
                 </Box>
-              )}
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.25, pl: m.status === 'live' ? 7 : 0 }}>
-                <Typography sx={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-                  {m.round} · {m.date}
-                </Typography>
-                <Typography sx={{ fontSize: '11px', color: '#94a3b8' }}>{m.venue}</Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 2 }}>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>{m.teamAName}</Typography>
+                    {m.teamAScore && <Typography sx={{ fontSize: '13px', color: '#0891b2', fontWeight: 600 }}>{m.teamAScore}</Typography>}
+                  </Box>
+                  <Box sx={{ px: 1.5, py: 0.5, borderRadius: '20px', background: '#f1f5f9',
+                    fontSize: '11px', fontWeight: 700, color: '#64748b' }}>VS</Box>
+                  <Box>
+                    <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>{m.teamBName}</Typography>
+                    {m.teamBScore && <Typography sx={{ fontSize: '13px', color: '#0891b2', fontWeight: 600 }}>{m.teamBScore}</Typography>}
+                  </Box>
+                </Box>
+                {m.resultText && !isLive && !isUpcoming && (
+                  <Typography sx={{ fontSize: '12px', color: '#16a34a', fontWeight: 600, mt: 1.5, textAlign: 'center' }}>
+                    {m.resultText}
+                  </Typography>
+                )}
+                {isLive && (
+                  <Typography sx={{ fontSize: '12px', color: '#dc2626', fontWeight: 600, mt: 1.5, textAlign: 'center' }}>
+                    {m.resultText ?? 'In progress'}
+                  </Typography>
+                )}
+                {isUpcoming && (
+                  <Typography sx={{ fontSize: '12px', color: '#d97706', fontWeight: 600, mt: 1.5, textAlign: 'center' }}>
+                    Scheduled
+                  </Typography>
+                )}
               </Box>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>{m.teamA}</Typography>
-                  {m.teamAScore && <Typography sx={{ fontSize: '13px', color: '#0891b2', fontWeight: 600 }}>{m.teamAScore}</Typography>}
-                </Box>
-                <Box sx={{ px: 1.5, py: 0.5, borderRadius: '20px', background: '#f1f5f9',
-                  fontSize: '11px', fontWeight: 700, color: '#64748b' }}>VS</Box>
-                <Box>
-                  <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>{m.teamB}</Typography>
-                  {m.teamBScore && <Typography sx={{ fontSize: '13px', color: '#0891b2', fontWeight: 600 }}>{m.teamBScore}</Typography>}
-                </Box>
-              </Box>
-              {m.result && (
-                <Typography sx={{ fontSize: '12px', color: '#16a34a', fontWeight: 600, mt: 1.5, textAlign: 'center' }}>
-                  {m.result}
-                </Typography>
-              )}
-              {m.liveLabel && (
-                <Typography sx={{ fontSize: '12px', color: '#dc2626', fontWeight: 600, mt: 1.5, textAlign: 'center' }}>
-                  {m.liveLabel}
-                </Typography>
-              )}
-              {m.status === 'upcoming' && (
-                <Typography sx={{ fontSize: '12px', color: '#d97706', fontWeight: 600, mt: 1.5, textAlign: 'center' }}>
-                  Scheduled
-                </Typography>
-              )}
-            </Box>
-          ))}
+            );
+          })}
         </Box>
       )}
     </Box>

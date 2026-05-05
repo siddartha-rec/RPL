@@ -16,6 +16,7 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     Optional<Match> findAnyByCricheroesId(@Param("cricheroesId") Long cricheroesId);
     boolean existsByCricheroesId(Long cricheroesId);
     List<Match> findByLeagueIdOrderByScheduledAtAsc(Long leagueId);
+    List<Match> findByLeagueIdAndStatusOrderByScheduledAtAsc(Long leagueId, Match.MatchStatus status);
 
     @Query("SELECT m.id FROM Match m WHERE m.league.id = :leagueId")
     List<Long> findIdsByLeagueId(@Param("leagueId") Long leagueId);
