@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Button, Dialog, DialogTitle, DialogContent,
-  DialogActions, TextField, CircularProgress, Alert, Card, CardContent,
+  DialogActions, TextField, CircularProgress, Alert,
   Stack, LinearProgress, InputAdornment,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
@@ -17,11 +17,6 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import PersonIcon from '@mui/icons-material/Person';
 import GavelIcon from '@mui/icons-material/Gavel';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
-import StopIcon from '@mui/icons-material/Stop';
-import SkipNextIcon from '@mui/icons-material/SkipNext';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import {
   getLeagues, createLeague, updateLeague, deleteLeague,
 } from '../api/leagues';
@@ -33,14 +28,10 @@ import { importTournament, getImportProgress, checkTournamentImport } from '../a
 import type { ImportProgress as CHProgress, TournamentImportCheck } from '../api/cricheroes';
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import { getTeams } from '../api/teams';
-import { getPlayers, createPlayer, updatePlayer, deletePlayer, importPlayers, getPlayersPaginated } from '../api/players';
+import { createPlayer, updatePlayer, deletePlayer, importPlayers, getPlayersPaginated } from '../api/players';
 import type { PageResponse } from '../types';
-import {
-  getAuctionByLeague, createAuction, startAuction, advanceToLive,
-  pauseAuction, resumeAuction, switchToDraft, completeAuction,
-  putUpPlayer, soldPlayer,
-} from '../api/auctions';
-import type { League, Team, Player, Auction } from '../types';
+import type { League, Team, Player } from '../types';
+import { AuctionControl } from '../components/auction-control';
 
 // ---- Custom Tabs ----
 function CustomTabs({ value, onChange, tabs }: { value: number; onChange: (v: number) => void; tabs: { label: string; icon: React.ReactNode }[] }) {
@@ -1936,12 +1927,7 @@ function PlayersTab() {
 
 // ---- Auction Control Tab ----
 function AuctionControlTab() {
-  const qc = useQueryClient();
   const [selectedLeagueId, setSelectedLeagueId] = useState<number | null>(null);
-  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
-  const [actionError, setActionError] = useState('');
-  const [actionSuccess, setActionSuccess] = useState('');
-
   const { data: leagues } = useQuery<League[]>({
     queryKey: ['leagues'],
     queryFn: getLeagues,
@@ -1956,129 +1942,8 @@ function AuctionControlTab() {
     }
   }, [sortedLeagues, selectedLeagueId]);
 
-  const activeLeague = sortedLeagues.find(l => l.id === selectedLeagueId) ?? null;
-
-  const { data: auction, isLoading, refetch } = useQuery<Auction | null>({
-    queryKey: ['auction-by-league', activeLeague?.id],
-    queryFn: () => getAuctionByLeague(activeLeague!.id).catch(() => null),
-    enabled: !!activeLeague,
-  });
-
-  const auctionId = auction?.id ?? null;
-
-  const { data: availablePlayers } = useQuery<Player[]>({
-    queryKey: ['players', activeLeague?.id],
-    queryFn: () => getPlayers(activeLeague!.id),
-    enabled: !!activeLeague,
-  });
-
-  const doMutation = (fn: () => Promise<unknown>, successMsg: string) => {
-    setActionError('');
-    setActionSuccess('');
-    fn()
-      .then(() => {
-        setActionSuccess(successMsg);
-        refetch();
-        qc.invalidateQueries({ queryKey: ['auction-by-league'] });
-        qc.invalidateQueries({ queryKey: ['players'] });
-      })
-      .catch((e: unknown) => {
-        const msg = e instanceof Error ? e.message : 'Action failed';
-        setActionError(msg);
-      });
-  };
-
-  const createMutation = useMutation({
-    mutationFn: () => createAuction(activeLeague!.id),
-    onSuccess: () => {
-      setActionSuccess('Auction created successfully');
-      qc.invalidateQueries({ queryKey: ['auction-by-league'] });
-      refetch();
-    },
-    onError: () => setActionError('Failed to create auction'),
-  });
-
   if (sortedLeagues.length === 0) {
     return <Alert severity="warning" sx={{ borderRadius: '12px' }}>No leagues found. Create a league first.</Alert>;
-  }
-
-  const auctionStatusColor = (s: string) => {
-    const m: Record<string, string> = { LIVE: '#ef4444', PAUSED: '#f59e0b', COMPLETED: '#4ade80', RETENTION: '#60a5fa', DRAFT: '#60a5fa' };
-    return m[s] ?? '#94a3b8';
-  };
-
-  function ActionButton({
-    label, icon, onClick, disabled, color, variant = 'contained',
-  }: {
-    label: string;
-    icon?: React.ReactNode;
-    onClick: () => void;
-    disabled?: boolean;
-    color: string;
-    variant?: 'contained' | 'outlined';
-  }) {
-    return (
-      <Button
-        variant={variant}
-        onClick={onClick}
-        disabled={disabled}
-        startIcon={icon}
-        sx={{
-          fontWeight: 700,
-          fontSize: '12px',
-          borderRadius: '10px',
-          px: 2,
-          py: 1,
-          ...(variant === 'contained'
-            ? {
-                background: `linear-gradient(135deg, ${color}, ${color}cc)`,
-                color: '#fff',
-                boxShadow: `0 3px 12px ${color}40`,
-                border: 'none',
-                '&:hover': { background: `linear-gradient(135deg, ${color}ee, ${color})`, boxShadow: `0 5px 16px ${color}50` },
-                '&:disabled': { background: '#e2e8f0', color: '#475569', boxShadow: 'none' },
-              }
-            : {
-                border: `1px solid ${color}50`,
-                color,
-                '&:hover': { background: `${color}15`, borderColor: color },
-                '&:disabled': { borderColor: 'rgba(255,255,255,0.1)', color: '#475569' },
-              }),
-          transition: 'all 0.2s ease',
-        }}
-      >
-        {label}
-      </Button>
-    );
-  }
-
-  function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-      <Box
-        sx={{
-          background: '#ffffff',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid #e2e8f0',
-          borderRadius: '16px',
-          mb: 2,
-          overflow: 'hidden',
-        }}
-      >
-        <Box
-          sx={{
-            px: 2.5,
-            py: 1.5,
-            borderBottom: '1px solid #e2e8f0',
-            background: '#f8fafc',
-          }}
-        >
-          <Typography sx={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            {title}
-          </Typography>
-        </Box>
-        <Box sx={{ p: 2.5 }}>{children}</Box>
-      </Box>
-    );
   }
 
   return (
@@ -2087,126 +1952,17 @@ function AuctionControlTab() {
         <Box>
           <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#1e293b' }}>Auction Control</Typography>
           <Typography sx={{ fontSize: '12px', color: '#64748b' }}>
-            Manage auction lifecycle and player flow{activeLeague ? ` — ${activeLeague.name}` : ''}
+            Manage retention + main auction lifecycle
           </Typography>
         </Box>
         <SeasonSelector
           leagues={sortedLeagues}
           activeId={selectedLeagueId}
-          onChange={id => {
-            setSelectedLeagueId(id);
-            setSelectedPlayerId(null);
-            setActionError('');
-            setActionSuccess('');
-          }}
+          onChange={setSelectedLeagueId}
         />
       </Box>
 
-      {actionError && (
-        <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }} onClose={() => setActionError('')}>
-          {actionError}
-        </Alert>
-      )}
-      {actionSuccess && (
-        <Alert severity="success" sx={{ mb: 2, borderRadius: '12px' }} onClose={() => setActionSuccess('')}>
-          {actionSuccess}
-        </Alert>
-      )}
-
-      {/* Status indicator */}
-      <SectionCard title="Auction Status">
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          {isLoading && <CircularProgress size={16} sx={{ color: '#b45309' }} />}
-          {!auction && !isLoading && (
-            <Typography sx={{ fontSize: '13px', color: '#64748b' }}>No auction found. Create one below.</Typography>
-          )}
-          {auction && (
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 1,
-                px: 2,
-                py: 0.75,
-                borderRadius: '12px',
-                background: `${auctionStatusColor(auction.status)}15`,
-                border: `1px solid ${auctionStatusColor(auction.status)}40`,
-              }}
-            >
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: auctionStatusColor(auction.status), ...(auction.status === 'LIVE' && { animation: 'pulse 1s infinite' }) }} />
-              <Typography sx={{ fontSize: '13px', fontWeight: 700, color: auctionStatusColor(auction.status) }}>
-                {auction.status}
-              </Typography>
-            </Box>
-          )}
-        </Box>
-      </SectionCard>
-
-      {/* Lifecycle controls */}
-      <SectionCard title="Lifecycle Controls">
-        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-          <ActionButton label="Create Auction" icon={<AddIcon sx={{ fontSize: 16 }} />} onClick={() => createMutation.mutate()} disabled={createMutation.isPending} color="#6366f1" />
-          <ActionButton label="Start (Retention)" icon={<PlayArrowIcon sx={{ fontSize: 16 }} />} onClick={() => doMutation(() => startAuction(auctionId!), 'Auction started')} disabled={!auction} color="#60a5fa" variant="outlined" />
-          <ActionButton label="Advance to Live" icon={<SkipNextIcon sx={{ fontSize: 16 }} />} onClick={() => doMutation(() => advanceToLive(auctionId!), 'Advanced to live')} disabled={!auction} color="#4ade80" />
-          <ActionButton label="Switch to Draft" onClick={() => doMutation(() => switchToDraft(auctionId!), 'Switched to draft')} disabled={!auction} color="#a78bfa" variant="outlined" />
-          <ActionButton label="Complete" icon={<StopIcon sx={{ fontSize: 16 }} />} onClick={() => doMutation(() => completeAuction(auctionId!), 'Completed')} disabled={!auction} color="#ef4444" />
-        </Stack>
-      </SectionCard>
-
-      {/* Pause / Resume */}
-      <SectionCard title="Pause / Resume">
-        <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-          <ActionButton label="Pause" icon={<PauseIcon sx={{ fontSize: 16 }} />} onClick={() => doMutation(() => pauseAuction(auctionId!), 'Paused')} disabled={!auction} color="#f59e0b" />
-          <ActionButton label="Resume" icon={<PlayArrowIcon sx={{ fontSize: 16 }} />} onClick={() => doMutation(() => resumeAuction(auctionId!), 'Resumed')} disabled={!auction} color="#4ade80" />
-        </Stack>
-      </SectionCard>
-
-      {/* Player controls */}
-      <SectionCard title="Player Control">
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-          <TextField
-            select
-            label="Select Player"
-            size="small"
-            value={selectedPlayerId ?? ''}
-            onChange={e => setSelectedPlayerId(e.target.value ? Number(e.target.value) : null)}
-            SelectProps={{ native: true }}
-            sx={{
-              minWidth: 250,
-              '& .MuiOutlinedInput-root': {
-                background: '#f1f5f9',
-                borderRadius: '10px',
-                '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
-                '&.Mui-focused fieldset': { borderColor: '#f59e0b' },
-              },
-              '& .MuiInputLabel-root.Mui-focused': { color: '#b45309' },
-            }}
-          >
-            <option value="">-- Choose a player --</option>
-            {(availablePlayers ?? [])
-              .filter(p => p.status === 'AVAILABLE' || p.status === 'UNSOLD')
-              .map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.playerNumber ? `#${p.playerNumber} ` : ''}{p.name} ({p.category})
-                </option>
-              ))}
-          </TextField>
-          <ActionButton
-            label="Put Up Player"
-            icon={<PersonIcon sx={{ fontSize: 16 }} />}
-            onClick={() => doMutation(() => putUpPlayer(auctionId!, selectedPlayerId!), `Player put up for auction`)}
-            disabled={!auction || !selectedPlayerId}
-            color="#60a5fa"
-          />
-          <ActionButton
-            label="Mark Sold"
-            icon={<CheckCircleIcon sx={{ fontSize: 16 }} />}
-            onClick={() => doMutation(() => soldPlayer(auctionId!), 'Marked sold/unsold')}
-            disabled={!auction}
-            color="#4ade80"
-          />
-        </Box>
-      </SectionCard>
+      <AuctionControl selectedLeagueId={selectedLeagueId} />
     </Box>
   );
 }
