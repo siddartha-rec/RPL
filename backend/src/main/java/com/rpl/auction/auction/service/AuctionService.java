@@ -565,6 +565,13 @@ public class AuctionService {
                 "teamName", team.getName(),
                 "cost", retentionCost
         ));
+        broadcastBudgetUpdate(auctionId, team);
+
+        // Advance to next team only in turn-based mode (admin-pick doesn't rotate).
+        if (request.getTeamId() == null) {
+            advancePickTeam(auction);
+            auction = auctionRepository.save(auction);
+        }
 
         return enrichAuctionResponse(AuctionResponse.from(auction), auction);
     }
