@@ -482,19 +482,27 @@ public class AuctionService {
             throw new BadRequestException("Auction must be in RETENTION status. Current: " + auction.getStatus());
         }
 
-        if (auction.getCurrentPickTeamId() == null) {
-            throw new BadRequestException("No team is currently picking");
+        // Admin-pick mode: request.teamId overrides the round-robin currentPickTeamId.
+        final Long pickTeamId;
+        if (request.getTeamId() != null) {
+            pickTeamId = request.getTeamId();
+        } else if (auction.getCurrentPickTeamId() != null) {
+            pickTeamId = auction.getCurrentPickTeamId();
+        } else {
+            throw new BadRequestException("No team selected. Provide teamId or set currentPickTeamId.");
         }
 
         final Long retentionLeagueId = auction.getLeagueId();
-        final Long retentionPickTeamId = auction.getCurrentPickTeamId();
         League league = leagueRepository.findById(retentionLeagueId)
                 .orElseThrow(() -> new ResourceNotFoundException("League", retentionLeagueId));
 
-        Team team = teamRepository.findById(retentionPickTeamId)
-                .orElseThrow(() -> new ResourceNotFoundException("Team", retentionPickTeamId));
+        Team team = teamRepository.findById(pickTeamId)
+                .orElseThrow(() -> new ResourceNotFoundException("Team", pickTeamId));
 
-        // Check retention limit
+        if (!team.getLeague().getId().equals(retentionLeagueId)) {
+            throw new BadRequestException("Team " + pickTeamId + " does not belong to league " + retentionLeagueId);
+        }
+
         long retentionCount = draftPickRepository.countByAuctionIdAndTeamIdAndPickType(
                 auctionId, team.getId(), DraftPick.PickType.RETENTION);
         if (retentionCount >= league.getMaxRetentionsPerTeam()) {
@@ -508,14 +516,16 @@ public class AuctionService {
             throw new BadRequestException("Player " + request.getPlayerId() + " is not AVAILABLE. Current: " + player.getStatus());
         }
 
-        // Check budget
-        BigDecimal retentionCost = league.getRetentionCost();
+        // Price: request override OR league.retentionCost.
+        BigDecimal retentionCost = request.getPrice() != null ? request.getPrice() : league.getRetentionCost();
+        if (retentionCost.signum() < 0) {
+            throw new BadRequestException("Retention price must be >= 0");
+        }
         BigDecimal availableBudget = team.getBudget().subtract(team.getBudgetSpent());
         if (retentionCost.compareTo(availableBudget) > 0) {
             throw new BadRequestException("Insufficient budget for retention. Cost: " + retentionCost + ", Available: " + availableBudget);
         }
 
-        // Calculate pick order
         long totalPicks = draftPickRepository.findByAuctionIdOrderByPickOrderAsc(auctionId).size();
         int pickOrder = (int) totalPicks + 1;
         int roundNumber = (int) (retentionCount + 1);
@@ -531,17 +541,14 @@ public class AuctionService {
                 .build();
         draftPickRepository.save(pick);
 
-        // Update player status
         player.setStatus(Player.PlayerStatus.RETAINED);
-        player.setSoldPrice(league.getRetentionCost());
+        player.setSoldPrice(retentionCost);
         player.setTeam(team);
         playerRepository.save(player);
 
-        // Deduct budget
         team.setBudgetSpent(team.getBudgetSpent().add(retentionCost));
         teamRepository.save(team);
 
-        // Create history
         PlayerHistory history = PlayerHistory.builder()
                 .playerId(request.getPlayerId())
                 .leagueId(auction.getLeagueId())
@@ -558,11 +565,6 @@ public class AuctionService {
                 "teamName", team.getName(),
                 "cost", retentionCost
         ));
-        broadcastBudgetUpdate(auctionId, team);
-
-        // Advance to next team
-        advancePickTeam(auction);
-        auction = auctionRepository.save(auction);
 
         return enrichAuctionResponse(AuctionResponse.from(auction), auction);
     }
