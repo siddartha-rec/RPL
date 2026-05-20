@@ -197,12 +197,19 @@ Replace the whole `makeRetentionPick` method (from `@Transactional` line above i
                 "teamName", team.getName(),
                 "cost", retentionCost
         ));
+        broadcastBudgetUpdate(auctionId, team);
+
+        // Advance to next team only in turn-based mode (admin-pick must not rotate).
+        if (request.getTeamId() == null) {
+            advancePickTeam(auction);
+            auction = auctionRepository.save(auction);
+        }
 
         return enrichAuctionResponse(AuctionResponse.from(auction), auction);
     }
 ```
 
-Key changes vs original: (a) `pickTeamId` resolved from request or auction state; (b) team-league sanity check; (c) `retentionCost` resolved from request override or league default; (d) `player.soldPrice = retentionCost` (was hardcoded to `league.getRetentionCost()`).
+Key changes vs original: (a) `pickTeamId` resolved from request or auction state; (b) team-league sanity check (use `team.getLeague().getId()` — `Team` is `@ManyToOne League league`, no `leagueId` getter); (c) `retentionCost` resolved from request override or league default; (d) `player.soldPrice = retentionCost` (was hardcoded to `league.getRetentionCost()`); (e) `advancePickTeam` runs only when no `teamId` override — admin-pick mode does not rotate the round-robin pointer; (f) `broadcastBudgetUpdate` preserved unconditionally.
 
 If the original method had additional trailing code (return/closing brace nuances), keep the original closing brace and re-check with `mvn compile` afterwards.
 
