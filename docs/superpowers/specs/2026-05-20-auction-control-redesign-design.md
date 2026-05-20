@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-20
 **Status:** Design approved, ready for implementation plan
-**Scope:** Frontend-only. Reuses existing backend `Auction` entity + endpoints.
+**Scope:** Frontend-heavy. Reuses existing backend `Auction` entity. One small backend tweak: extend retention-pick endpoint to accept optional `price` + `teamId` (see §3.1).
 
 ---
 
@@ -28,10 +28,21 @@ User stated essence: admin should clearly **start the auction for a season**. On
 
 ## 3. Non-goals
 
-- No new backend tables, endpoints, or migrations.
+- No new backend tables, migrations, or new endpoints.
 - No changes to the Live Auction page (`AuctionPage.tsx`) beyond a deep-link entry.
 - No new authorization model — existing admin permission checks stand.
 - No mobile-specific layout; this is a desktop admin screen.
+
+## 3.1 Allowed backend tweak
+
+The existing `POST /api/auctions/{id}/retention/pick` endpoint is turn-based and uses a fixed `league.retentionCost`. The redesign needs admin-driven team selection + manual per-player price. The tweak is intentionally narrow:
+
+- `PickRequest` gains two **optional** fields: `price: BigDecimal?` and `teamId: Long?`.
+- `AuctionService.makeRetentionPick`:
+  - If `teamId` is provided, use it (admin-pick mode) — skip the `currentPickTeamId` requirement.
+  - If `price` is provided, use it for cost / player.soldPrice / budget deduction. Fall back to `league.retentionCost` when absent.
+  - Validate `price >= 0` and `price <= team.budget - team.budgetSpent`.
+- All existing callers continue to work (both fields optional, current turn-based + fixed-cost behaviour preserved when both null).
 
 ## 4. State machine
 
@@ -168,15 +179,17 @@ All under `frontend/src/pages/AdminPage.tsx` (or extracted to `frontend/src/comp
 
 Extraction trigger: when `AdminPage.tsx` would exceed ~2500 lines (currently 2257), move auction-control components into `frontend/src/components/auction-control/`.
 
-## 8. API surface (no backend changes)
+## 8. API surface
 
-All existing in `frontend/src/api/auctions.ts`:
+All existing endpoints in `frontend/src/api/auctions.ts`:
 
-- `createAuction`, `startAuction`, `advanceToLive`, `pauseAuction`, `resumeAuction`, `completeAuction`, `getAuctionByLeague`, `retentionPick`, `getCompletionCheck`.
+- `createAuction`, `startAuction`, `advanceToLive`, `pauseAuction`, `resumeAuction`, `completeAuction`, `getAuctionByLeague`, `getCompletionCheck`.
+
+**Modified:** `retentionPick(auctionId, playerId, opts?)` — adds optional `{ price, teamId }` second-arg object. Wire format: `POST /api/auctions/{id}/retention/pick` body `{ playerId, price?, teamId? }`.
 
 Removed from this screen (still used by Live Auction page): `putUpPlayer`, `soldPlayer`, `markUnsold`, `undoBid`, `placeBid`, `switchToDraft`.
 
-No new endpoints.
+No new endpoints, no new routes.
 
 ## 9. Validation / errors
 
