@@ -5,8 +5,6 @@ import {
   Box, Typography, CircularProgress, Alert, LinearProgress,
 } from '@mui/material';
 import GroupsIcon from '@mui/icons-material/Groups';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import PersonIcon from '@mui/icons-material/Person';
 import { useNavigate } from 'react-router-dom';
 import { getLeagues } from '../api/leagues';
 import { getTeams } from '../api/teams';

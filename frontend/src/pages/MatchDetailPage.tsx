@@ -50,7 +50,7 @@ export default function MatchDetailPage() {
           <Typography sx={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>
             {dateLabel}{data.format ? ` · ${data.format}` : ''}{data.overs ? ` · ${data.overs} ov` : ''}
           </Typography>
-          <Box sx={{ display: 'inline-block', px: 1.2, py: 0.3, borderRadius: '20px',
+          <Box sx={{ px: 1.2, py: 0.3, borderRadius: '20px',
             background: `${statusColor}15`, border: `1px solid ${statusColor}40`,
             fontSize: '11px', fontWeight: 700, color: statusColor, letterSpacing: '0.3px',
             display: 'flex', alignItems: 'center', gap: 0.5 }}>
