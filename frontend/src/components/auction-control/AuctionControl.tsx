@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Box, Alert, CircularProgress } from '@mui/material';
@@ -69,14 +69,9 @@ export default function AuctionControl({ selectedLeagueId }: AuctionControlProps
     refetch,
   };
 
-  useEffect(() => {
-    setActionError(null);
-    setActionSuccess(null);
-  }, [selectedLeagueId]);
-
   const lifecycleMut = useMutation({
     mutationFn: (fn: () => Promise<unknown>) => fn(),
-    onSuccess: (_d, _v, _ctx) => {
+    onSuccess: () => {
       refetch();
       qc.invalidateQueries({ queryKey: ['auction-by-league'] });
       qc.invalidateQueries({ queryKey: ['players'] });
@@ -243,7 +238,7 @@ export default function AuctionControl({ selectedLeagueId }: AuctionControlProps
   const header = headerByPhase();
 
   return (
-    <Box>
+    <Box key={selectedLeagueId ?? 'none'}>
       {actionError && <Alert severity="error" onClose={() => setActionError(null)} sx={{ borderRadius: '12px', mb: 2 }}>{actionError}</Alert>}
       {actionSuccess && <Alert severity="success" onClose={() => setActionSuccess(null)} sx={{ borderRadius: '12px', mb: 2 }}>{actionSuccess}</Alert>}
 
@@ -263,7 +258,7 @@ export default function AuctionControl({ selectedLeagueId }: AuctionControlProps
         actions={header.actions}
       />
 
-      {ctx && phase.isRetention && auction.status !== 'SETUP' && <RetentionPanel ctx={ctx} />}
+      {ctx && phase.isRetention && auction.status !== 'SETUP' && <RetentionPanel key={ctx.league.id} ctx={ctx} />}
       {ctx && phase.isMain && <MainAuctionPanel ctx={ctx} />}
       {ctx && phase.isComplete && <CompletePanel ctx={ctx} />}
     </Box>
