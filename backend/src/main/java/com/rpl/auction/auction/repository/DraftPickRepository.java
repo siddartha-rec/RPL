@@ -8,11 +8,13 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface DraftPickRepository extends JpaRepository<DraftPick, Long> {
     List<DraftPick> findByAuctionIdOrderByPickOrderAsc(Long auctionId);
     List<DraftPick> findByAuctionIdAndPickType(Long auctionId, DraftPick.PickType pickType);
     long countByAuctionIdAndTeamIdAndPickType(Long auctionId, Long teamId, DraftPick.PickType pickType);
+    Optional<DraftPick> findByAuctionIdAndPlayerIdAndPickType(Long auctionId, Long playerId, DraftPick.PickType pickType);
 
     @Modifying
     @Query("DELETE FROM DraftPick dp WHERE dp.auctionId IN :auctionIds")

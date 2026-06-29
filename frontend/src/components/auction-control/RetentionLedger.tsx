@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Box, Typography, Button, TextField, Alert } from '@mui/material';
+import { Box, Typography, Button, TextField, Alert, IconButton, CircularProgress } from '@mui/material';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import type { Team, Player, League } from '../../types';
-import { retentionPick } from '../../api/auctions';
+import { retentionPick, removeRetention } from '../../api/auctions';
 
 interface RetentionLedgerProps {
   auctionId: number;
@@ -39,6 +40,19 @@ export default function RetentionLedger({ auctionId, league, team, retainedForTe
     },
     onError: (e: { response?: { data?: { message?: string } } }) =>
       setError(e?.response?.data?.message ?? 'Failed to add retention'),
+  });
+
+  const removeMut = useMutation({
+    mutationFn: (playerId: number) => removeRetention(auctionId, playerId),
+    onSuccess: () => {
+      setError(null);
+      qc.invalidateQueries({ queryKey: ['players'] });
+      qc.invalidateQueries({ queryKey: ['teams'] });
+      qc.invalidateQueries({ queryKey: ['auction-by-league'] });
+      refetch();
+    },
+    onError: (e: { response?: { data?: { message?: string } } }) =>
+      setError(e?.response?.data?.message ?? 'Failed to remove retention'),
   });
 
   const selectablePlayers = useMemo(
@@ -80,11 +94,11 @@ export default function RetentionLedger({ auctionId, league, team, retainedForTe
       <Box sx={{ p: 1.75 }}>
         {retainedForTeam.length > 0 ? (
           <Box sx={{ border: '1px solid #e2e8f0', borderRadius: '10px', mb: 1.5, overflow: 'hidden' }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '50px 1fr 90px 90px', p: 1, background: '#f8fafc', fontSize: '10px', fontWeight: 800, color: '#475569', letterSpacing: '0.5px' }}>
-              <div>#</div><div>PLAYER</div><div>CATEGORY</div><div>PRICE</div>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '50px 1fr 90px 90px 44px', p: 1, background: '#f8fafc', fontSize: '10px', fontWeight: 800, color: '#475569', letterSpacing: '0.5px' }}>
+              <div>#</div><div>PLAYER</div><div>CATEGORY</div><div>PRICE</div><div />
             </Box>
             {retainedForTeam.map(p => (
-              <Box key={p.id} sx={{ display: 'grid', gridTemplateColumns: '50px 1fr 90px 90px', p: 1.2, alignItems: 'center', borderTop: '1px solid #f1f5f9' }}>
+              <Box key={p.id} sx={{ display: 'grid', gridTemplateColumns: '50px 1fr 90px 90px 44px', p: 1.2, alignItems: 'center', borderTop: '1px solid #f1f5f9' }}>
                 <Typography sx={{ fontSize: '11px', color: '#94a3b8', fontFamily: 'monospace' }}>{p.playerNumber ? `#${p.playerNumber}` : '—'}</Typography>
                 <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>{p.name}</Typography>
                 <Box>
@@ -93,6 +107,21 @@ export default function RetentionLedger({ auctionId, league, team, retainedForTe
                   </Box>
                 </Box>
                 <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#b45309' }}>{p.soldPrice ?? '—'} CR</Typography>
+                <IconButton
+                  size="small"
+                  title="Remove retention"
+                  disabled={removeMut.isPending}
+                  onClick={() => {
+                    if (window.confirm(`Remove ${p.name} from ${team.name}'s retentions? Their ${p.soldPrice ?? 0} CR will be refunded.`)) {
+                      removeMut.mutate(p.id);
+                    }
+                  }}
+                  sx={{ color: '#dc2626', '&:hover': { background: '#fee2e2' } }}
+                >
+                  {removeMut.isPending && removeMut.variables === p.id
+                    ? <CircularProgress size={14} sx={{ color: '#dc2626' }} />
+                    : <DeleteOutlineIcon sx={{ fontSize: 18 }} />}
+                </IconButton>
               </Box>
             ))}
           </Box>

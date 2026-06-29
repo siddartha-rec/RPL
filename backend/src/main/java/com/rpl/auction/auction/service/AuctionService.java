@@ -577,6 +577,59 @@ public class AuctionService {
     }
 
     @Transactional
+    public AuctionResponse removeRetention(Long auctionId, Long playerId) {
+        Auction auction = getAuctionOrThrow(auctionId);
+        if (auction.getStatus() != Auction.AuctionStatus.RETENTION) {
+            throw new BadRequestException("Auction must be in RETENTION status to edit retentions. Current: " + auction.getStatus());
+        }
+
+        DraftPick pick = draftPickRepository
+                .findByAuctionIdAndPlayerIdAndPickType(auctionId, playerId, DraftPick.PickType.RETENTION)
+                .orElseThrow(() -> new BadRequestException("No retention found for player " + playerId + " in this auction"));
+
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+        if (player.getStatus() != Player.PlayerStatus.RETAINED) {
+            throw new BadRequestException("Player " + playerId + " is not RETAINED. Current: " + player.getStatus());
+        }
+
+        Team team = teamRepository.findById(pick.getTeamId())
+                .orElseThrow(() -> new ResourceNotFoundException("Team", pick.getTeamId()));
+
+        // Refund the retention cost to the team.
+        team.setBudgetSpent(team.getBudgetSpent().subtract(pick.getCost()));
+        teamRepository.save(team);
+
+        // Release the player back to the available pool.
+        player.setStatus(Player.PlayerStatus.AVAILABLE);
+        player.setSoldPrice(null);
+        player.setTeam(null);
+        playerRepository.save(player);
+
+        // Drop the draft pick and the matching history record(s).
+        draftPickRepository.delete(pick);
+        playerHistoryRepository.findByPlayerIdOrderByCreatedAtDesc(playerId).stream()
+                .filter(h -> h.getAcquisitionType() == PlayerHistory.AcquisitionType.RETAINED
+                        && h.getLeagueId().equals(auction.getLeagueId()))
+                .forEach(playerHistoryRepository::delete);
+
+        broadcastEvent(auctionId, "PLAYER_RETENTION_REMOVED", Map.of(
+                "playerId", playerId,
+                "playerName", player.getName(),
+                "teamId", team.getId(),
+                "teamName", team.getName()
+        ));
+        broadcastBudgetUpdate(auctionId, team);
+        audit("RETENTION_REMOVED", auctionId, Map.of(
+                "playerId", playerId,
+                "playerName", player.getName(),
+                "teamId", team.getId(),
+                "refund", pick.getCost()));
+
+        return enrichAuctionResponse(AuctionResponse.from(auction), auction);
+    }
+
+    @Transactional
     public AuctionResponse makeDraftPick(Long auctionId, PickRequest request) {
         Auction auction = getAuctionOrThrow(auctionId);
         if (auction.getStatus() != Auction.AuctionStatus.DRAFT) {

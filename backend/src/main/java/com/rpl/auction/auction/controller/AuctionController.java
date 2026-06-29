@@ -95,6 +95,13 @@ public class AuctionController {
         return ResponseEntity.ok(ApiResponse.success(auctionService.makeRetentionPick(id, request), "Retention pick made"));
     }
 
+    @DeleteMapping("/api/auctions/{id}/retention/{playerId}")
+    public ResponseEntity<ApiResponse<AuctionResponse>> removeRetention(
+            @PathVariable Long id,
+            @PathVariable Long playerId) {
+        return ResponseEntity.ok(ApiResponse.success(auctionService.removeRetention(id, playerId), "Retention removed"));
+    }
+
     @PostMapping("/api/auctions/{id}/draft/pick")
     public ResponseEntity<ApiResponse<AuctionResponse>> draftPick(
             @PathVariable Long id,
