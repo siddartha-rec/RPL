@@ -11,6 +11,8 @@ export const putUpPlayer = (id: number, playerId: number) => api.put<ApiResponse
 export const placeBid = (id: number, teamId: number) => api.post(`/auctions/${id}/bid`, { teamId }).then(r => r.data.data);
 export const soldPlayer = (id: number) => api.put<ApiResponse<Auction>>(`/auctions/${id}/sold`).then(r => r.data.data);
 export const markUnsold = (id: number) => api.put<ApiResponse<Auction>>(`/auctions/${id}/unsold`).then(r => r.data.data);
+export const manualSold = (id: number, teamId: number, price: number) =>
+  api.put<ApiResponse<Auction>>(`/auctions/${id}/sold-manual`, { teamId, price }).then(r => r.data.data);
 export const undoBid = (id: number) => api.put<ApiResponse<Auction>>(`/auctions/${id}/undo-bid`).then(r => r.data.data);
 export const pauseAuction = (id: number) => api.put<ApiResponse<Auction>>(`/auctions/${id}/pause`).then(r => r.data.data);
 export const resumeAuction = (id: number) => api.put<ApiResponse<Auction>>(`/auctions/${id}/resume`).then(r => r.data.data);

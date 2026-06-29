@@ -3,13 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import Grid from '@mui/material/Grid';
 import {
   Box, Typography, CircularProgress, Alert, LinearProgress, Button,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
 } from '@mui/material';
 import GavelIcon from '@mui/icons-material/Gavel';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import SportsCricketIcon from '@mui/icons-material/SportsCricket';
 import SportsIcon from '@mui/icons-material/Sports';
 import PeopleIcon from '@mui/icons-material/People';
-import { getAuctionByLeague, placeBid, soldPlayer, markUnsold, undoBid, putUpPlayer, pauseAuction, resumeAuction, completeAuction, getCompletionCheck } from '../api/auctions';
+import { getAuctionByLeague, placeBid, soldPlayer, markUnsold, manualSold, undoBid, putUpPlayer, pauseAuction, resumeAuction, completeAuction, getCompletionCheck } from '../api/auctions';
 import { getTeams } from '../api/teams';
 import { getLeagues } from '../api/leagues';
 import { getPlayers } from '../api/players';
@@ -290,6 +291,9 @@ function AuctionControls({
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualTeamId, setManualTeamId] = useState<number | ''>('');
+  const [manualPrice, setManualPrice] = useState('');
 
   const isAdmin = hasPermission('user:CREATE') || hasPermission('league:CREATE');
   const isOwner = hasPermission('auction:BID') && !isAdmin;
@@ -315,17 +319,19 @@ function AuctionControls({
     return true;
   }
 
-  async function withBusy(action: () => Promise<unknown>) {
+  async function withBusy(action: () => Promise<unknown>): Promise<boolean> {
     setBusy(true);
     setError(null);
     try {
       await action();
+      return true;
     } catch (e) {
       const msg = (e as { response?: { data?: { message?: string } }; message?: string })
         ?.response?.data?.message
         ?? (e as { message?: string })?.message
         ?? 'Action failed';
       setError(msg);
+      return false;
     } finally {
       setBusy(false);
     }
@@ -334,6 +340,16 @@ function AuctionControls({
   const onBid = (teamId: number) => withBusy(() => placeBid(auction.id, teamId));
   const onSold = () => withBusy(() => soldPlayer(auction.id));
   const onUnsold = () => withBusy(() => markUnsold(auction.id));
+  function openManual() {
+    setManualTeamId(highestTeam?.id ?? '');
+    setManualPrice(String(nextBid || auction.currentBasePrice || ''));
+    setManualOpen(true);
+  }
+  async function onManualSold() {
+    if (manualTeamId === '' || manualPrice === '') return;
+    const ok = await withBusy(() => manualSold(auction.id, Number(manualTeamId), Number(manualPrice)));
+    if (ok) setManualOpen(false);
+  }
   const onUndo = () => withBusy(() => undoBid(auction.id));
   const onPause = () => withBusy(() => pauseAuction(auction.id));
   const onResume = () => withBusy(() => resumeAuction(auction.id));
@@ -544,6 +560,26 @@ function AuctionControls({
             Mark Sold
           </Button>
           <Button
+            onClick={openManual}
+            disabled={busy || !isLive || !hasPlayer || teams.length === 0}
+            sx={{
+              fontWeight: 900,
+              fontSize: '13px',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              color: '#fff',
+              background: 'linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)',
+              border: '1px solid rgba(14,165,233,0.5)',
+              borderRadius: '12px',
+              px: 3,
+              py: 1.1,
+              '&:hover': { background: 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)' },
+              '&:disabled': { background: '#eef2f7', color: '#475569', border: '1px solid #eef2f7' },
+            }}
+          >
+            Manual Sold
+          </Button>
+          <Button
             onClick={onUnsold}
             disabled={busy || !isLive || !hasPlayer}
             sx={{
@@ -676,6 +712,54 @@ function AuctionControls({
           )}
         </Box>
       )}
+
+      {/* Admin: manual sold dialog */}
+      <Dialog open={manualOpen} onClose={() => !busy && setManualOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, fontSize: '16px' }}>
+          Manual Sold{hasPlayer ? ` · ${auction.currentPlayerName ?? 'Player'}` : ''}
+        </DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+          <TextField
+            select
+            label="Team"
+            size="small"
+            value={manualTeamId}
+            onChange={e => setManualTeamId(e.target.value === '' ? '' : Number(e.target.value))}
+            sx={{ mt: 1 }}
+          >
+            {teams.map(t => (
+              <MenuItem key={t.id} value={t.id}>
+                {t.name} · {teamRemaining(t)} CR left
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            label="Price (CR)"
+            type="number"
+            size="small"
+            value={manualPrice}
+            onChange={e => setManualPrice(e.target.value)}
+          />
+          {error && <Alert severity="error" sx={{ fontSize: '12px' }}>{error}</Alert>}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setManualOpen(false)} disabled={busy} sx={{ textTransform: 'none', color: '#475569' }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={onManualSold}
+            disabled={busy || manualTeamId === '' || manualPrice.trim() === '' || Number.isNaN(Number(manualPrice)) || Number(manualPrice) < 0}
+            sx={{
+              textTransform: 'none', fontWeight: 800, color: '#fff',
+              background: 'linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)',
+              borderRadius: '10px', px: 2.5,
+              '&:disabled': { background: '#eef2f7', color: '#94a3b8' },
+            }}
+          >
+            {busy ? 'Selling…' : 'Confirm Sale'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Roster shortfall panel — admin-only, when auction not yet completed */}
       {isAdmin && auction.status !== 'COMPLETED' && completionCheck && !completionCheck.canComplete && (

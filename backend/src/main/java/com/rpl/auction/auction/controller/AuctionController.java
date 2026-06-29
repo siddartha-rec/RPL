@@ -63,6 +63,14 @@ public class AuctionController {
         return ResponseEntity.ok(ApiResponse.success(auctionService.soldPlayer(id), "Player sold"));
     }
 
+    @PutMapping("/api/auctions/{id}/sold-manual")
+    public ResponseEntity<ApiResponse<AuctionResponse>> manualSold(
+            @PathVariable Long id,
+            @Valid @RequestBody ManualSoldRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+                auctionService.manualSold(id, request.getTeamId(), request.getPrice()), "Player sold (manual)"));
+    }
+
     @PutMapping("/api/auctions/{id}/unsold")
     public ResponseEntity<ApiResponse<AuctionResponse>> markUnsold(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(auctionService.markUnsold(id), "Player marked unsold"));

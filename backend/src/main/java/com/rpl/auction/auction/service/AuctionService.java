@@ -321,6 +321,82 @@ public class AuctionService {
     }
 
     @Transactional
+    public AuctionResponse manualSold(Long auctionId, Long teamId, BigDecimal price) {
+        Auction auction = getAuctionOrThrow(auctionId);
+        if (auction.getStatus() != Auction.AuctionStatus.LIVE) {
+            throw new BadRequestException("Auction must be LIVE to sell a player. Current: " + auction.getStatus());
+        }
+        if (auction.getCurrentPlayerId() == null) {
+            throw new BadRequestException("No player is currently up for sale");
+        }
+        if (price == null || price.signum() < 0) {
+            throw new BadRequestException("Sale price must be >= 0");
+        }
+
+        Long playerId = auction.getCurrentPlayerId();
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
+        if (!team.getLeague().getId().equals(auction.getLeagueId())) {
+            throw new BadRequestException("Team " + teamId + " does not belong to this auction's league");
+        }
+
+        BigDecimal availableBudget = team.getBudget().subtract(team.getBudgetSpent());
+        if (price.compareTo(availableBudget) > 0) {
+            throw new BadRequestException("Insufficient budget. Price: " + price + ", Available: " + availableBudget);
+        }
+
+        // Override any in-flight highest bid — the manual sale decides the winner.
+        if (auction.getCurrentHighestBidId() != null) {
+            bidRepository.findById(auction.getCurrentHighestBidId()).ifPresent(b -> {
+                b.setIsWinning(false);
+                bidRepository.save(b);
+            });
+        }
+
+        player.setStatus(Player.PlayerStatus.SOLD);
+        player.setSoldPrice(price);
+        player.setTeam(team);
+        playerRepository.save(player);
+
+        team.setBudgetSpent(team.getBudgetSpent().add(price));
+        teamRepository.save(team);
+
+        PlayerHistory history = PlayerHistory.builder()
+                .playerId(playerId)
+                .leagueId(auction.getLeagueId())
+                .teamId(team.getId())
+                .acquisitionType(PlayerHistory.AcquisitionType.AUCTIONED)
+                .soldPrice(price)
+                .build();
+        playerHistoryRepository.save(history);
+
+        broadcastEvent(auctionId, "PLAYER_SOLD", Map.of(
+                "playerId", playerId,
+                "playerName", player.getName(),
+                "teamId", team.getId(),
+                "teamName", team.getName(),
+                "amount", price
+        ));
+        broadcastBudgetUpdate(auctionId, team);
+        audit("PLAYER_SOLD_MANUAL", auctionId, Map.of(
+                "playerId", playerId,
+                "playerName", player.getName(),
+                "teamId", team.getId(),
+                "teamName", team.getName(),
+                "amount", price));
+
+        auction.setCurrentPlayerId(null);
+        auction.setCurrentBasePrice(null);
+        auction.setCurrentHighestBidId(null);
+        auction = auctionRepository.save(auction);
+
+        return enrichAuctionResponse(AuctionResponse.from(auction), auction);
+    }
+
+    @Transactional
     public AuctionResponse markUnsold(Long auctionId) {
         Auction auction = getAuctionOrThrow(auctionId);
         if (auction.getStatus() != Auction.AuctionStatus.LIVE) {
