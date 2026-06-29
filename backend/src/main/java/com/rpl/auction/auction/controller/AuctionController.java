@@ -102,6 +102,15 @@ public class AuctionController {
         return ResponseEntity.ok(ApiResponse.success(auctionService.removeRetention(id, playerId), "Retention removed"));
     }
 
+    @PutMapping("/api/auctions/{id}/retention/{playerId}")
+    public ResponseEntity<ApiResponse<AuctionResponse>> updateRetention(
+            @PathVariable Long id,
+            @PathVariable Long playerId,
+            @RequestBody UpdateRetentionRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+                auctionService.updateRetentionAmount(id, playerId, request.getPrice()), "Retention amount updated"));
+    }
+
     @PostMapping("/api/auctions/{id}/draft/pick")
     public ResponseEntity<ApiResponse<AuctionResponse>> draftPick(
             @PathVariable Long id,

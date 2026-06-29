@@ -478,9 +478,6 @@ public class AuctionService {
     @Transactional
     public AuctionResponse makeRetentionPick(Long auctionId, PickRequest request) {
         Auction auction = getAuctionOrThrow(auctionId);
-        if (auction.getStatus() != Auction.AuctionStatus.RETENTION) {
-            throw new BadRequestException("Auction must be in RETENTION status. Current: " + auction.getStatus());
-        }
 
         // Admin-pick mode: request.teamId overrides the round-robin currentPickTeamId.
         final Long pickTeamId;
@@ -567,8 +564,8 @@ public class AuctionService {
         ));
         broadcastBudgetUpdate(auctionId, team);
 
-        // Advance to next team only in turn-based mode (admin-pick doesn't rotate).
-        if (request.getTeamId() == null) {
+        // Advance to next team only in turn-based RETENTION mode (admin-pick doesn't rotate; main-auction adds never rotate).
+        if (request.getTeamId() == null && auction.getStatus() == Auction.AuctionStatus.RETENTION) {
             advancePickTeam(auction);
             auction = auctionRepository.save(auction);
         }
@@ -579,9 +576,6 @@ public class AuctionService {
     @Transactional
     public AuctionResponse removeRetention(Long auctionId, Long playerId) {
         Auction auction = getAuctionOrThrow(auctionId);
-        if (auction.getStatus() != Auction.AuctionStatus.RETENTION) {
-            throw new BadRequestException("Auction must be in RETENTION status to edit retentions. Current: " + auction.getStatus());
-        }
 
         DraftPick pick = draftPickRepository
                 .findByAuctionIdAndPlayerIdAndPickType(auctionId, playerId, DraftPick.PickType.RETENTION)
@@ -625,6 +619,69 @@ public class AuctionService {
                 "playerName", player.getName(),
                 "teamId", team.getId(),
                 "refund", pick.getCost()));
+
+        return enrichAuctionResponse(AuctionResponse.from(auction), auction);
+    }
+
+    @Transactional
+    public AuctionResponse updateRetentionAmount(Long auctionId, Long playerId, BigDecimal newPrice) {
+        Auction auction = getAuctionOrThrow(auctionId);
+
+        if (newPrice == null || newPrice.signum() < 0) {
+            throw new BadRequestException("Retention price must be >= 0");
+        }
+
+        DraftPick pick = draftPickRepository
+                .findByAuctionIdAndPlayerIdAndPickType(auctionId, playerId, DraftPick.PickType.RETENTION)
+                .orElseThrow(() -> new BadRequestException("No retention found for player " + playerId + " in this auction"));
+
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Player", playerId));
+        if (player.getStatus() != Player.PlayerStatus.RETAINED) {
+            throw new BadRequestException("Player " + playerId + " is not RETAINED. Current: " + player.getStatus());
+        }
+
+        Team team = teamRepository.findById(pick.getTeamId())
+                .orElseThrow(() -> new ResourceNotFoundException("Team", pick.getTeamId()));
+
+        BigDecimal oldPrice = pick.getCost();
+        BigDecimal delta = newPrice.subtract(oldPrice);
+        BigDecimal newSpent = team.getBudgetSpent().add(delta);
+        if (newSpent.compareTo(team.getBudget()) > 0) {
+            throw new BadRequestException("New retention amount exceeds team budget. Budget: "
+                    + team.getBudget() + ", would spend: " + newSpent);
+        }
+
+        team.setBudgetSpent(newSpent);
+        teamRepository.save(team);
+
+        player.setSoldPrice(newPrice);
+        playerRepository.save(player);
+
+        pick.setCost(newPrice);
+        draftPickRepository.save(pick);
+
+        playerHistoryRepository.findByPlayerIdOrderByCreatedAtDesc(playerId).stream()
+                .filter(h -> h.getAcquisitionType() == PlayerHistory.AcquisitionType.RETAINED
+                        && h.getLeagueId().equals(auction.getLeagueId()))
+                .findFirst()
+                .ifPresent(h -> { h.setSoldPrice(newPrice); playerHistoryRepository.save(h); });
+
+        broadcastEvent(auctionId, "PLAYER_RETENTION_UPDATED", Map.of(
+                "playerId", playerId,
+                "playerName", player.getName(),
+                "teamId", team.getId(),
+                "teamName", team.getName(),
+                "oldPrice", oldPrice,
+                "newPrice", newPrice
+        ));
+        broadcastBudgetUpdate(auctionId, team);
+        audit("RETENTION_AMOUNT_UPDATED", auctionId, Map.of(
+                "playerId", playerId,
+                "playerName", player.getName(),
+                "teamId", team.getId(),
+                "oldPrice", oldPrice,
+                "newPrice", newPrice));
 
         return enrichAuctionResponse(AuctionResponse.from(auction), auction);
     }
