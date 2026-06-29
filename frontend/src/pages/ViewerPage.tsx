@@ -30,6 +30,9 @@ const glass = {
   boxShadow: '0 6px 24px rgba(15,23,42,0.06)',
 };
 
+// Fixed width of the left rail; the logo pill above matches it so they align vertically.
+const LEFT_W = 320;
+
 export default function ViewerPage() {
   const { activeLeague, loading: leagueLoading } = useLeague();
   const leagueId = activeLeague?.id ?? null;
@@ -142,6 +145,16 @@ export default function ViewerPage() {
     return map;
   }, [players]);
 
+  const pulse = useMemo(() => {
+    const sold = players.filter(p => p.status === 'SOLD');
+    const totalSpent = sold.reduce((s, p) => s + (p.soldPrice ?? 0), 0);
+    let top: Player | null = null;
+    for (const p of sold) if (!top || (p.soldPrice ?? 0) > (top.soldPrice ?? 0)) top = p;
+    const topTeam = top?.teamId != null ? teams.find(t => t.id === top!.teamId) ?? null : null;
+    const available = players.filter(p => p.status === 'AVAILABLE').length;
+    return { soldCount: sold.length, totalSpent, top, topTeam, available };
+  }, [players, teams]);
+
   const status = auction?.status;
   const isMainPhase = status === 'LIVE' || status === 'PAUSED';
   const hasPlayer = !!auction?.currentPlayerId;
@@ -156,8 +169,8 @@ export default function ViewerPage() {
     <Box sx={{ ...pageBg, height: '100vh', display: 'flex', flexDirection: 'column', gap: 1.25, p: 1.5 }}>
       {/* Header — logo in its own pill, hero content in a separate pill (mirrors the admin TopBar + GreetingHeader split) */}
       <Box sx={{ flex: '0 0 auto', display: 'flex', alignItems: 'stretch', gap: 1.25, height: 64, zIndex: 1 }}>
-        {/* Logo pill */}
-        <Box sx={{ ...glass, display: 'flex', alignItems: 'center', justifyContent: 'center', px: 3, flex: '0 0 auto' }}>
+        {/* Logo pill — width matches the left rail below */}
+        <Box sx={{ ...glass, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: `0 0 ${LEFT_W}px` }}>
           <Box component="img" src="/recykal-logo.png" alt="Recykal" sx={{ height: 30, opacity: 0.95 }} />
         </Box>
         {/* Hero pill */}
@@ -189,47 +202,86 @@ export default function ViewerPage() {
         </Box>
       </Box>
 
-      {/* Body: spotlight | teams */}
-      <Box sx={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '34% 1fr', gap: 1.25, zIndex: 1 }}>
-        {/* Spotlight */}
-        <Box sx={{ ...glass, p: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5, minHeight: 0 }}>
-          <Typography sx={labelSx}>{hasPlayer ? 'On the block' : 'Standing by'}</Typography>
-          {hasPlayer ? (
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              gap: 1.5, textAlign: 'center', position: 'relative' }}>
-              {timer > 0 && (
-                <Box sx={{ position: 'absolute', top: 0, right: 0, width: 66, height: 66, borderRadius: '50%',
-                  border: '4px solid', borderColor: timer <= 5 ? '#ef4444' : '#16a34a',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: 'monospace', fontWeight: 800, fontSize: 24, color: timer <= 5 ? '#ef4444' : '#16a34a' }}>{timer}</Box>
+      {/* Body: [spotlight + creative] | teams */}
+      <Box sx={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: `${LEFT_W}px 1fr`, gap: 1.25, zIndex: 1 }}>
+        {/* Left rail — bidding player (top) + creative pulse (bottom) */}
+        <Box sx={{ minHeight: 0, display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+          {/* Bidding player */}
+          <Box sx={{ ...glass, p: 2.5, display: 'flex', flexDirection: 'column', gap: 1.25, flex: '1 1 58%', minHeight: 0 }}>
+            <Typography sx={labelSx}>{hasPlayer ? 'On the block' : 'Standing by'}</Typography>
+            {hasPlayer ? (
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: 1, textAlign: 'center', position: 'relative', minHeight: 0 }}>
+                {timer > 0 && (
+                  <Box sx={{ position: 'absolute', top: 0, right: 0, width: 56, height: 56, borderRadius: '50%',
+                    border: '4px solid', borderColor: timer <= 5 ? '#ef4444' : '#16a34a',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: 'monospace', fontWeight: 800, fontSize: 20, color: timer <= 5 ? '#ef4444' : '#16a34a' }}>{timer}</Box>
+                )}
+                <Typography sx={{ fontFamily: 'monospace', fontSize: 11, color: '#94a3b8', letterSpacing: '0.06em' }}>
+                  {auction.currentPlayerId ? `#${auction.currentPlayerId}` : ''} · {cr(auction.currentBasePrice)} base
+                </Typography>
+                <Typography sx={{ fontWeight: 900, fontSize: 'clamp(24px,2.4vw,38px)', lineHeight: 1.05, letterSpacing: '-0.02em',
+                  color: '#0f172a', textWrap: 'balance' }}>
+                  {auction.currentPlayerName ?? 'Player'}
+                </Typography>
+                <Box sx={{ mt: 0.5 }}>
+                  <Typography sx={labelSx}>Current highest bid</Typography>
+                  <Typography sx={{ fontWeight: 900, fontSize: 'clamp(30px,3.4vw,52px)', color: '#b45309', lineHeight: 1.05 }}>
+                    {cr(auction.currentHighestBid)}
+                  </Typography>
+                  <Typography sx={{ fontSize: 15, fontWeight: 700, color: '#475569', mt: 0.5 }}>
+                    {auction.currentHighestBidTeam ?? 'No bids yet'}
+                  </Typography>
+                </Box>
+              </Box>
+            ) : (
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5, textAlign: 'center' }}>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  {[0, 1, 2].map(i => (
+                    <Box key={i} sx={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b',
+                      animation: 'vp-bounce 1.2s infinite', animationDelay: `${i * 0.15}s` }} />
+                  ))}
+                </Box>
+                <Typography sx={{ fontWeight: 800, fontSize: 22, color: '#94a3b8' }}>Next player coming up…</Typography>
+              </Box>
+            )}
+          </Box>
+
+          {/* Creative — Auction Pulse */}
+          <Box sx={{ ...glass, flex: '1 1 42%', minHeight: 0, p: 2, display: 'flex', flexDirection: 'column', gap: 1.25, overflow: 'hidden',
+            position: 'relative' }}>
+            <Box sx={{ position: 'absolute', inset: 0, background: 'radial-gradient(120% 80% at 100% 0%, rgba(245,158,11,0.10), transparent 60%)', pointerEvents: 'none' }} />
+            <Typography sx={labelSx}>Auction Pulse</Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+              <PulseStat value={pulse.soldCount} label="Sold" />
+              <PulseStat value={pulse.available} label="Left" />
+            </Box>
+            <Box sx={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(15,23,42,0.10), transparent)' }} />
+            <Box>
+              <Typography sx={{ ...labelSx, mb: 0.5 }}>Top buy of the day</Typography>
+              {pulse.top ? (
+                <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 1 }}>
+                  <Typography sx={{ fontWeight: 800, fontSize: 16, color: '#0f172a', minWidth: 0,
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {pulse.top.name}
+                    {pulse.topTeam ? <Box component="span" sx={{ color: '#64748b', fontWeight: 600, fontSize: 12 }}> · {pulse.topTeam.shortName || pulse.topTeam.name}</Box> : null}
+                  </Typography>
+                  <Typography sx={{ fontFamily: 'monospace', fontWeight: 900, fontSize: 20, color: '#b45309', flex: '0 0 auto' }}>
+                    {pulse.top.soldPrice ?? 0}
+                  </Typography>
+                </Box>
+              ) : (
+                <Typography sx={{ fontSize: 13, color: '#94a3b8' }}>No sales yet</Typography>
               )}
-              <Typography sx={{ fontFamily: 'monospace', fontSize: 12, color: '#94a3b8', letterSpacing: '0.06em' }}>
-                {auction.currentPlayerId ? `#${auction.currentPlayerId}` : ''} · {cr(auction.currentBasePrice)} base
-              </Typography>
-              <Typography sx={{ fontWeight: 900, fontSize: 'clamp(28px,4vw,52px)', lineHeight: 1.05, letterSpacing: '-0.02em', color: '#0f172a' }}>
-                {auction.currentPlayerName ?? 'Player'}
-              </Typography>
-              <Box sx={{ mt: 1 }}>
-                <Typography sx={labelSx}>Current highest bid</Typography>
-                <Typography sx={{ fontWeight: 900, fontSize: 'clamp(32px,5vw,64px)', color: '#b45309', lineHeight: 1.05 }}>
-                  {cr(auction.currentHighestBid)}
-                </Typography>
-                <Typography sx={{ fontSize: 16, fontWeight: 700, color: '#475569', mt: 0.5 }}>
-                  {auction.currentHighestBidTeam ?? 'No bids yet'}
-                </Typography>
-              </Box>
             </Box>
-          ) : (
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5, textAlign: 'center' }}>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                {[0, 1, 2].map(i => (
-                  <Box key={i} sx={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b',
-                    animation: 'vp-bounce 1.2s infinite', animationDelay: `${i * 0.15}s` }} />
-                ))}
-              </Box>
-              <Typography sx={{ fontWeight: 800, fontSize: 26, color: '#94a3b8' }}>Next player coming up…</Typography>
+            <Box sx={{ mt: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography sx={{ ...labelSx, mb: 0 }}>Total spend</Typography>
+              <Typography sx={{ fontFamily: 'monospace', fontWeight: 900, fontSize: 22, color: '#0f172a' }}>
+                {pulse.totalSpent} <Box component="span" sx={{ fontSize: 12, color: '#94a3b8' }}>CR</Box>
+              </Typography>
             </Box>
-          )}
+          </Box>
         </Box>
 
         {/* Teams */}
@@ -333,6 +385,16 @@ const labelSx = {
   fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase' as const,
   color: '#94a3b8', fontWeight: 700,
 };
+
+function PulseStat({ value, label }: { value: number; label: string }) {
+  return (
+    <Box sx={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.18)', borderRadius: '10px',
+      px: 1.25, py: 1, textAlign: 'center' }}>
+      <Typography sx={{ fontFamily: 'monospace', fontWeight: 900, fontSize: 26, color: '#b45309', lineHeight: 1 }}>{value}</Typography>
+      <Typography sx={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#94a3b8', mt: 0.5 }}>{label}</Typography>
+    </Box>
+  );
+}
 
 function Splash({ text, sub }: { text: string; sub?: string }) {
   return (
