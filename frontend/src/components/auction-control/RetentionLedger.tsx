@@ -144,7 +144,7 @@ export default function RetentionLedger({ auctionId, league, team, retainedForTe
                       <IconButton
                         size="small"
                         title="Save"
-                        disabled={editMut.isPending || editPrice === ''}
+                        disabled={editMut.isPending || editPrice.trim() === '' || Number(editPrice) < 0}
                         onClick={() => editMut.mutate({ playerId: p.id, price: Number(editPrice) })}
                         sx={{ color: '#b45309', '&:hover': { background: '#fef3c7' } }}
                       >
@@ -164,7 +164,7 @@ export default function RetentionLedger({ auctionId, league, team, retainedForTe
                       <IconButton
                         size="small"
                         title="Edit price"
-                        disabled={removeMut.isPending}
+                        disabled={removeMut.isPending || editMut.isPending}
                         onClick={() => { setEditId(p.id); setEditPrice(String(p.soldPrice ?? '')); }}
                         sx={{ color: '#b45309', '&:hover': { background: '#fef3c7' } }}
                       >
