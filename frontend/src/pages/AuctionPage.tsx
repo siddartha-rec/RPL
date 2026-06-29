@@ -456,7 +456,10 @@ function AuctionControls({
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             {teams.map(team => {
               const enabled = canTeamBid(team) && !busy;
-              const color = team.color || '#888';
+              const color = team.color || '#64748b';
+              // Alpha-suffix hex only works on 6-digit colors; for 3-digit/named, fall back to solid.
+              const isHex6 = /^#[0-9a-fA-F]{6}$/.test(color);
+              const alpha = (a: string) => (isHex6 ? `${color}${a}` : color);
               const remaining = teamRemaining(team);
               const isHighest = highestTeam?.id === team.id;
               return (
@@ -474,16 +477,16 @@ function AuctionControls({
                     textTransform: 'none',
                     color: enabled ? '#fff' : '#475569',
                     background: enabled
-                      ? `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)`
+                      ? `linear-gradient(135deg, ${color} 0%, ${alpha('cc')} 100%)`
                       : '#eef2f7',
-                    border: `1px solid ${enabled ? color + '88' : '#e2e8f0'}`,
-                    boxShadow: enabled ? `0 4px 14px ${color}40` : 'none',
+                    border: `1px solid ${enabled ? alpha('88') : '#e2e8f0'}`,
+                    boxShadow: enabled ? `0 4px 14px ${alpha('40')}` : 'none',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'flex-start',
                     gap: 0.25,
                     '&:hover': enabled
-                      ? { transform: 'translateY(-2px)', boxShadow: `0 6px 20px ${color}60` }
+                      ? { transform: 'translateY(-2px)', boxShadow: `0 6px 20px ${alpha('60')}` }
                       : {},
                     '&:disabled': { color: '#475569', background: '#eef2f7', border: '1px solid #e2e8f0' },
                     transition: 'transform 0.15s ease, box-shadow 0.2s ease',
