@@ -36,6 +36,16 @@ const glass = {
 // Fixed width of the left rail; the logo pill above matches it so they align vertically.
 const LEFT_W = 320;
 
+// Rotating "not live yet" status lines (cycled on the splash, Claude-Code style).
+const PITCH_PHRASES = [
+  'Pitch inspection in progress',
+  'Covers are on',
+  'Waiting on the toss',
+  'Rain delay',
+  'Tea break — play resumes soon',
+  'Players in the dugout',
+];
+
 export default function ViewerPage() {
   const { activeLeague, loading: leagueLoading } = useLeague();
   const { logout } = useAuth();
@@ -139,6 +149,13 @@ export default function ViewerPage() {
     return () => clearInterval(t);
   }, []);
 
+  // Rotating status line for the "not live" splash.
+  const [phraseIdx, setPhraseIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setPhraseIdx(i => (i + 1) % PITCH_PHRASES.length), 12000);
+    return () => clearInterval(t);
+  }, []);
+
   const soldByTeam = useMemo(() => {
     const map = new Map<number, Player[]>();
     for (const p of players) {
@@ -168,7 +185,7 @@ export default function ViewerPage() {
   if (leagueLoading || auctionQ.isLoading) return <Splash text="Loading…" />;
   if (!activeLeague) return <Splash text="No active league" />;
   if (!auction || !isMainPhase) {
-    return <Splash text="Pitch inspection in progress" sub={activeLeague.name} />;
+    return <Splash text={PITCH_PHRASES[phraseIdx]} sub={activeLeague.name} rotating />;
   }
 
   return (
@@ -408,12 +425,26 @@ function PulseStat({ value, label }: { value: number; label: string }) {
   );
 }
 
-function Splash({ text, sub }: { text: string; sub?: string }) {
+function Splash({ text, sub, rotating }: { text: string; sub?: string; rotating?: boolean }) {
   return (
     <Box sx={{ ...pageBg, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
       <Box component="img" src="/recykal-logo.png" alt="Recykal" sx={{ height: 44, position: 'relative', zIndex: 1 }} />
-      <Typography sx={{ fontWeight: 800, fontSize: 24, color: '#0f172a', position: 'relative', zIndex: 1 }}>{text}</Typography>
+      {rotating && (
+        <Box sx={{ display: 'flex', gap: 1, position: 'relative', zIndex: 1 }}>
+          {[0, 1, 2].map(i => (
+            <Box key={i} sx={{ width: 9, height: 9, borderRadius: '50%', background: '#f59e0b',
+              animation: 'vp-bounce 1.2s infinite', animationDelay: `${i * 0.15}s` }} />
+          ))}
+        </Box>
+      )}
+      <Typography key={text} sx={{ fontWeight: 800, fontSize: 24, color: '#0f172a', position: 'relative', zIndex: 1,
+        animation: rotating ? 'vp-fade 0.5s ease' : 'none' }}>{text}</Typography>
       {sub && <Typography sx={{ fontSize: 14, color: '#64748b', position: 'relative', zIndex: 1 }}>{sub}</Typography>}
+      <style>{`
+        @keyframes vp-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes vp-bounce { 0%,100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(-6px); opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+      `}</style>
     </Box>
   );
 }
