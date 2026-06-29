@@ -168,7 +168,7 @@ export default function ViewerPage() {
   if (leagueLoading || auctionQ.isLoading) return <Splash text="Loading…" />;
   if (!activeLeague) return <Splash text="No active league" />;
   if (!auction || !isMainPhase) {
-    return <Splash text="Auction is not live yet" sub={activeLeague.name} />;
+    return <Splash text="Pitch inspection in progress" sub={activeLeague.name} />;
   }
 
   return (
