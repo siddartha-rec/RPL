@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, IconButton, Tooltip } from '@mui/material';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useNavigate } from 'react-router-dom';
 import { getAuctionByLeague } from '../api/auctions';
 import { getTeams } from '../api/teams';
 import { getPlayers } from '../api/players';
+import { useAuth } from '../context/AuthContext';
 import { useLeague } from '../context/LeagueContext';
 import { useSse } from '../hooks/useSse';
 import { CRICKET_BANTER } from '../data/cricketBanter';
@@ -35,6 +38,9 @@ const LEFT_W = 320;
 
 export default function ViewerPage() {
   const { activeLeague, loading: leagueLoading } = useLeague();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const onLogout = () => { logout(); navigate('/login', { replace: true }); };
   const leagueId = activeLeague?.id ?? null;
 
   const auctionQ = useQuery<Auction | null>({
@@ -199,6 +205,12 @@ export default function ViewerPage() {
             <Typography sx={{ fontFamily: 'monospace', fontSize: 12, letterSpacing: '0.12em', fontWeight: 800,
               color: status === 'LIVE' ? '#b91c1c' : '#b45309' }}>{status}</Typography>
           </Box>
+          <Tooltip title="Sign out">
+            <IconButton onClick={onLogout} aria-label="Sign out" sx={{ flex: '0 0 auto', color: '#64748b',
+              '&:hover': { background: 'rgba(15,23,42,0.05)', color: '#0f172a' } }}>
+              <LogoutIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Box>
       </Box>
 
