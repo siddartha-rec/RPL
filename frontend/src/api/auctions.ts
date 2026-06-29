@@ -20,6 +20,8 @@ export const retentionPick = (id: number, playerId: number, opts: RetentionPickO
   api.post(`/auctions/${id}/retention/pick`, { playerId, ...opts }).then(r => r.data.data);
 export const removeRetention = (id: number, playerId: number) =>
   api.delete<ApiResponse<Auction>>(`/auctions/${id}/retention/${playerId}`).then(r => r.data.data);
+export const updateRetention = (id: number, playerId: number, price: number) =>
+  api.put<ApiResponse<Auction>>(`/auctions/${id}/retention/${playerId}`, { price }).then(r => r.data.data);
 export const draftPick = (id: number, playerId: number) => api.post(`/auctions/${id}/draft/pick`, { playerId }).then(r => r.data.data);
 export const completeAuction = (id: number, force = false) =>
   api.put<ApiResponse<Auction>>(`/auctions/${id}/complete${force ? '?force=true' : ''}`).then(r => r.data.data);

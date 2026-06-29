@@ -2,8 +2,11 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Box, Typography, Button, TextField, Alert, IconButton, CircularProgress } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 import type { Team, Player, League } from '../../types';
-import { retentionPick, removeRetention } from '../../api/auctions';
+import { retentionPick, removeRetention, updateRetention } from '../../api/auctions';
 
 interface RetentionLedgerProps {
   auctionId: number;
@@ -19,6 +22,8 @@ export default function RetentionLedger({ auctionId, league, team, retainedForTe
   const [playerId, setPlayerId] = useState<number | ''>('');
   const [price, setPrice] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [editPrice, setEditPrice] = useState('');
 
   const usedSlots = retainedForTeam.length;
   const spent = retainedForTeam.reduce((s, p) => s + (p.soldPrice ?? 0), 0);
@@ -53,6 +58,21 @@ export default function RetentionLedger({ auctionId, league, team, retainedForTe
     },
     onError: (e: { response?: { data?: { message?: string } } }) =>
       setError(e?.response?.data?.message ?? 'Failed to remove retention'),
+  });
+
+  const editMut = useMutation({
+    mutationFn: ({ playerId, price }: { playerId: number; price: number }) =>
+      updateRetention(auctionId, playerId, price),
+    onSuccess: () => {
+      setEditId(null);
+      setError(null);
+      qc.invalidateQueries({ queryKey: ['players'] });
+      qc.invalidateQueries({ queryKey: ['teams'] });
+      qc.invalidateQueries({ queryKey: ['auction-by-league'] });
+      refetch();
+    },
+    onError: (e: { response?: { data?: { message?: string } } }) =>
+      setError(e?.response?.data?.message ?? 'Failed to update amount'),
   });
 
   const selectablePlayers = useMemo(
@@ -94,11 +114,11 @@ export default function RetentionLedger({ auctionId, league, team, retainedForTe
       <Box sx={{ p: 1.75 }}>
         {retainedForTeam.length > 0 ? (
           <Box sx={{ border: '1px solid #e2e8f0', borderRadius: '10px', mb: 1.5, overflow: 'hidden' }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '50px 1fr 90px 90px 44px', p: 1, background: '#f8fafc', fontSize: '10px', fontWeight: 800, color: '#475569', letterSpacing: '0.5px' }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '50px 1fr 90px 90px 76px', p: 1, background: '#f8fafc', fontSize: '10px', fontWeight: 800, color: '#475569', letterSpacing: '0.5px' }}>
               <div>#</div><div>PLAYER</div><div>CATEGORY</div><div>PRICE</div><div />
             </Box>
             {retainedForTeam.map(p => (
-              <Box key={p.id} sx={{ display: 'grid', gridTemplateColumns: '50px 1fr 90px 90px 44px', p: 1.2, alignItems: 'center', borderTop: '1px solid #f1f5f9' }}>
+              <Box key={p.id} sx={{ display: 'grid', gridTemplateColumns: '50px 1fr 90px 90px 76px', p: 1.2, alignItems: 'center', borderTop: '1px solid #f1f5f9' }}>
                 <Typography sx={{ fontSize: '11px', color: '#94a3b8', fontFamily: 'monospace' }}>{p.playerNumber ? `#${p.playerNumber}` : '—'}</Typography>
                 <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>{p.name}</Typography>
                 <Box>
@@ -106,22 +126,68 @@ export default function RetentionLedger({ auctionId, league, team, retainedForTe
                     {p.category}
                   </Box>
                 </Box>
-                <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#b45309' }}>{p.soldPrice ?? '—'} CR</Typography>
-                <IconButton
-                  size="small"
-                  title="Remove retention"
-                  disabled={removeMut.isPending}
-                  onClick={() => {
-                    if (window.confirm(`Remove ${p.name} from ${team.name}'s retentions? Their ${p.soldPrice ?? 0} CR will be refunded.`)) {
-                      removeMut.mutate(p.id);
-                    }
-                  }}
-                  sx={{ color: '#dc2626', '&:hover': { background: '#fee2e2' } }}
-                >
-                  {removeMut.isPending && removeMut.variables === p.id
-                    ? <CircularProgress size={14} sx={{ color: '#dc2626' }} />
-                    : <DeleteOutlineIcon sx={{ fontSize: 18 }} />}
-                </IconButton>
+                {editId === p.id ? (
+                  <TextField
+                    size="small"
+                    type="number"
+                    value={editPrice}
+                    onChange={e => setEditPrice(e.target.value)}
+                    sx={{ '& .MuiOutlinedInput-root': { fontSize: '12px', borderRadius: '6px', '&.Mui-focused fieldset': { borderColor: '#f59e0b' } } }}
+                    inputProps={{ style: { padding: '4px 6px' } }}
+                  />
+                ) : (
+                  <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#b45309' }}>{p.soldPrice ?? '—'} CR</Typography>
+                )}
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  {editId === p.id ? (
+                    <>
+                      <IconButton
+                        size="small"
+                        title="Save"
+                        disabled={editMut.isPending || editPrice === ''}
+                        onClick={() => editMut.mutate({ playerId: p.id, price: Number(editPrice) })}
+                        sx={{ color: '#b45309', '&:hover': { background: '#fef3c7' } }}
+                      >
+                        {editMut.isPending ? <CircularProgress size={14} sx={{ color: '#b45309' }} /> : <CheckIcon sx={{ fontSize: 16 }} />}
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        title="Cancel"
+                        onClick={() => setEditId(null)}
+                        sx={{ color: '#475569', '&:hover': { background: '#f1f5f9' } }}
+                      >
+                        <CloseIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </>
+                  ) : (
+                    <>
+                      <IconButton
+                        size="small"
+                        title="Edit price"
+                        disabled={removeMut.isPending}
+                        onClick={() => { setEditId(p.id); setEditPrice(String(p.soldPrice ?? '')); }}
+                        sx={{ color: '#b45309', '&:hover': { background: '#fef3c7' } }}
+                      >
+                        <EditOutlinedIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        title="Remove retention"
+                        disabled={removeMut.isPending}
+                        onClick={() => {
+                          if (window.confirm(`Remove ${p.name} from ${team.name}'s retentions? Their ${p.soldPrice ?? 0} CR will be refunded.`)) {
+                            removeMut.mutate(p.id);
+                          }
+                        }}
+                        sx={{ color: '#dc2626', '&:hover': { background: '#fee2e2' } }}
+                      >
+                        {removeMut.isPending && removeMut.variables === p.id
+                          ? <CircularProgress size={14} sx={{ color: '#dc2626' }} />
+                          : <DeleteOutlineIcon sx={{ fontSize: 16 }} />}
+                      </IconButton>
+                    </>
+                  )}
+                </Box>
               </Box>
             ))}
           </Box>

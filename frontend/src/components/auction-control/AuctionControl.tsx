@@ -2,7 +2,8 @@ import type { ReactElement } from 'react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Box, Alert, CircularProgress } from '@mui/material';
+import { Box, Alert, CircularProgress, Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddIcon from '@mui/icons-material/Add';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
@@ -258,7 +259,16 @@ export default function AuctionControl({ selectedLeagueId }: AuctionControlProps
         actions={header.actions}
       />
 
-      {ctx && phase.isRetention && auction.status !== 'NOT_STARTED' && <RetentionPanel key={ctx.league.id} ctx={ctx} />}
+      {ctx && auction.status !== 'NOT_STARTED' && (
+        <Accordion defaultExpanded={phase.isRetention} sx={{ mt: 1.5, borderRadius: '12px', '&:before': { display: 'none' } }} disableGutters>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#1e293b' }}>Edit Retentions</Typography>
+          </AccordionSummary>
+          <AccordionDetails sx={{ p: 0 }}>
+            <RetentionPanel key={ctx.league.id} ctx={ctx} />
+          </AccordionDetails>
+        </Accordion>
+      )}
       {ctx && phase.isMain && <MainAuctionPanel ctx={ctx} />}
       {ctx && phase.isComplete && <CompletePanel ctx={ctx} />}
     </Box>
