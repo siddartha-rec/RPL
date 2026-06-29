@@ -220,7 +220,7 @@ export default function ViewerPage() {
         <Box sx={{ minHeight: 0, display: 'flex', flexDirection: 'column', gap: 1.25 }}>
           {/* Bidding player */}
           <Box sx={{ ...glass, p: 2.5, display: 'flex', flexDirection: 'column', gap: 1.25, flex: '1 1 58%', minHeight: 0 }}>
-            <Typography sx={labelSx}>{hasPlayer ? 'On the block' : 'Standing by'}</Typography>
+            <Typography sx={labelSx}>{hasPlayer ? 'At the crease' : 'Drinks break'}</Typography>
             {hasPlayer ? (
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 gap: 1, textAlign: 'center', position: 'relative', minHeight: 0 }}>
@@ -238,12 +238,12 @@ export default function ViewerPage() {
                   {auction.currentPlayerName ?? 'Player'}
                 </Typography>
                 <Box sx={{ mt: 0.5 }}>
-                  <Typography sx={labelSx}>Current highest bid</Typography>
+                  <Typography sx={labelSx}>Highest knock</Typography>
                   <Typography sx={{ fontWeight: 900, fontSize: 'clamp(30px,3.4vw,52px)', color: '#b45309', lineHeight: 1.05 }}>
                     {cr(auction.currentHighestBid)}
                   </Typography>
                   <Typography sx={{ fontSize: 15, fontWeight: 700, color: '#475569', mt: 0.5 }}>
-                    {auction.currentHighestBidTeam ?? 'No bids yet'}
+                    {auction.currentHighestBidTeam ?? 'Zero rizzzz…'}
                   </Typography>
                 </Box>
               </Box>
@@ -255,7 +255,7 @@ export default function ViewerPage() {
                       animation: 'vp-bounce 1.2s infinite', animationDelay: `${i * 0.15}s` }} />
                   ))}
                 </Box>
-                <Typography sx={{ fontWeight: 800, fontSize: 22, color: '#94a3b8' }}>Next player coming up…</Typography>
+                <Typography sx={{ fontWeight: 800, fontSize: 22, color: '#94a3b8' }}>Padding up…</Typography>
               </Box>
             )}
           </Box>
@@ -264,14 +264,14 @@ export default function ViewerPage() {
           <Box sx={{ ...glass, flex: '1 1 42%', minHeight: 0, p: 2, display: 'flex', flexDirection: 'column', gap: 1.25, overflow: 'hidden',
             position: 'relative' }}>
             <Box sx={{ position: 'absolute', inset: 0, background: 'radial-gradient(120% 80% at 100% 0%, rgba(245,158,11,0.10), transparent 60%)', pointerEvents: 'none' }} />
-            <Typography sx={labelSx}>Auction Pulse</Typography>
+            <Typography sx={labelSx}>The Pitch Report</Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-              <PulseStat value={pulse.soldCount} label="Sold" />
-              <PulseStat value={pulse.available} label="Left" />
+              <PulseStat value={pulse.soldCount} label="Snagged" />
+              <PulseStat value={pulse.available} label="On deck" />
             </Box>
             <Box sx={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(15,23,42,0.10), transparent)' }} />
             <Box>
-              <Typography sx={{ ...labelSx, mb: 0.5 }}>Top buy of the day</Typography>
+              <Typography sx={{ ...labelSx, mb: 0.5 }}>Marquee pick</Typography>
               {pulse.top ? (
                 <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 1 }}>
                   <Typography sx={{ fontWeight: 800, fontSize: 16, color: '#0f172a', minWidth: 0,
@@ -288,7 +288,7 @@ export default function ViewerPage() {
               )}
             </Box>
             <Box sx={{ mt: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography sx={{ ...labelSx, mb: 0 }}>Total spend</Typography>
+              <Typography sx={{ ...labelSx, mb: 0 }}>Purse burnt</Typography>
               <Typography sx={{ fontFamily: 'monospace', fontWeight: 900, fontSize: 22, color: '#0f172a' }}>
                 {pulse.totalSpent} <Box component="span" sx={{ fontSize: 12, color: '#94a3b8' }}>CR</Box>
               </Typography>
@@ -312,12 +312,12 @@ export default function ViewerPage() {
                     <Typography sx={{ fontWeight: 900, fontSize: 14, color: '#0f172a' }}>{team.shortName || team.name}</Typography>
                   </Box>
                   <Typography sx={{ fontFamily: 'monospace', fontSize: 11, color: '#64748b', mt: 0.5 }}>
-                    {left} CR left · {roster.length} bought
+                    {left} CR purse left · {roster.length} capped
                   </Typography>
                 </Box>
                 <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', p: 0.75, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                   {roster.length === 0 && (
-                    <Typography sx={{ fontSize: 11, color: '#94a3b8', p: 1, textAlign: 'center' }}>No buys yet</Typography>
+                    <Typography sx={{ fontSize: 11, color: '#94a3b8', p: 1, textAlign: 'center' }}>Nobody capped yet</Typography>
                   )}
                   {roster.map(p => {
                     const fresh = p.id === freshSoldId;
@@ -348,7 +348,7 @@ export default function ViewerPage() {
         <Box sx={{ display: 'flex', alignItems: 'center', px: 1.75, background: '#f59e0b', color: '#3a2a06',
           fontFamily: 'monospace', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', flex: '0 0 auto',
           borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px' }}>
-          LATEST
+          STUMP MIC
         </Box>
         <Box sx={{ flex: 1, overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
           {ticker.length === 0 ? (
