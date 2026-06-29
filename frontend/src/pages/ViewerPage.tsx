@@ -154,32 +154,38 @@ export default function ViewerPage() {
 
   return (
     <Box sx={{ ...pageBg, height: '100vh', display: 'flex', flexDirection: 'column', gap: 1.25, p: 1.5 }}>
-      {/* Header pill — same glass + cursive quote as the admin greeting bar */}
-      <Box sx={{ ...glass, flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 2.5, px: 2.5, height: 64, zIndex: 1 }}>
-        <Box component="img" src="/recykal-logo.png" alt="Recykal" sx={{ height: 32, flex: '0 0 auto' }} />
-        <Typography sx={{ fontWeight: 800, fontSize: '1.25rem', letterSpacing: '-0.015em', color: '#0f172a',
-          whiteSpace: 'nowrap', flex: '0 0 auto' }}>
-          {greeting()} 👋
-        </Typography>
-        <Box aria-hidden sx={{ width: '1px', height: 26, flex: '0 0 auto',
-          background: 'linear-gradient(180deg, transparent, rgba(15,23,42,0.18) 50%, transparent)' }} />
-        <Typography sx={{ fontFamily: '"Caveat","Bradley Hand",cursive', fontWeight: 600, fontSize: '1.35rem',
-          background: 'linear-gradient(90deg,#0891b2 0%,#f59e0b 100%)', WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent', backgroundClip: 'text', flex: 1, minWidth: 0,
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          '&::before': { content: '"\\201C"' }, '&::after': { content: '"\\201D"' } }}>
-          {CRICKET_BANTER[quoteIdx]}
-        </Typography>
-        <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap', flex: '0 0 auto' }}>
-          {activeLeague.name}
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5, borderRadius: 999, flex: '0 0 auto',
-          background: status === 'LIVE' ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.14)',
-          border: `1px solid ${status === 'LIVE' ? 'rgba(239,68,68,0.4)' : 'rgba(245,158,11,0.45)'}` }}>
-          <Box sx={{ width: 8, height: 8, borderRadius: '50%', background: status === 'LIVE' ? '#ef4444' : '#f59e0b',
-            animation: status === 'LIVE' ? 'vp-blink 1.4s infinite' : 'none' }} />
-          <Typography sx={{ fontFamily: 'monospace', fontSize: 12, letterSpacing: '0.12em', fontWeight: 800,
-            color: status === 'LIVE' ? '#b91c1c' : '#b45309' }}>{status}</Typography>
+      {/* Header — logo in its own pill, hero content in a separate pill (mirrors the admin TopBar + GreetingHeader split) */}
+      <Box sx={{ flex: '0 0 auto', display: 'flex', alignItems: 'stretch', gap: 1.25, height: 64, zIndex: 1 }}>
+        {/* Logo pill */}
+        <Box sx={{ ...glass, display: 'flex', alignItems: 'center', justifyContent: 'center', px: 3, flex: '0 0 auto' }}>
+          <Box component="img" src="/recykal-logo.png" alt="Recykal" sx={{ height: 30, opacity: 0.95 }} />
+        </Box>
+        {/* Hero pill */}
+        <Box sx={{ ...glass, flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 2.5, px: 2.5 }}>
+          <Typography sx={{ fontWeight: 800, fontSize: '1.25rem', letterSpacing: '-0.015em', color: '#0f172a',
+            whiteSpace: 'nowrap', flex: '0 0 auto' }}>
+            {greeting()} 👋
+          </Typography>
+          <Box aria-hidden sx={{ width: '1px', height: 26, flex: '0 0 auto',
+            background: 'linear-gradient(180deg, transparent, rgba(15,23,42,0.18) 50%, transparent)' }} />
+          <Typography sx={{ fontFamily: '"Caveat","Bradley Hand",cursive', fontWeight: 600, fontSize: '1.35rem',
+            background: 'linear-gradient(90deg,#0891b2 0%,#f59e0b 100%)', WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent', backgroundClip: 'text', flex: 1, minWidth: 0,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            '&::before': { content: '"\\201C"' }, '&::after': { content: '"\\201D"' } }}>
+            {CRICKET_BANTER[quoteIdx]}
+          </Typography>
+          <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap', flex: '0 0 auto' }}>
+            {activeLeague.name}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5, borderRadius: 999, flex: '0 0 auto',
+            background: status === 'LIVE' ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.14)',
+            border: `1px solid ${status === 'LIVE' ? 'rgba(239,68,68,0.4)' : 'rgba(245,158,11,0.45)'}` }}>
+            <Box sx={{ width: 8, height: 8, borderRadius: '50%', background: status === 'LIVE' ? '#ef4444' : '#f59e0b',
+              animation: status === 'LIVE' ? 'vp-blink 1.4s infinite' : 'none' }} />
+            <Typography sx={{ fontFamily: 'monospace', fontSize: 12, letterSpacing: '0.12em', fontWeight: 800,
+              color: status === 'LIVE' ? '#b91c1c' : '#b45309' }}>{status}</Typography>
+          </Box>
         </Box>
       </Box>
 
