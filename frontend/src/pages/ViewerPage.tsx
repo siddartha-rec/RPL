@@ -85,7 +85,6 @@ export default function ViewerPage() {
       case 'PLAYER_UP':
         auctionQ.refetch();
         setTimer((d.timerSeconds as number) ?? 30);
-        pushTicker('up', `Up next: ${d.playerName as string ?? 'Player'}`);
         break;
       case 'BID_PLACED':
         auctionQ.refetch();
@@ -248,7 +247,7 @@ export default function ViewerPage() {
                     fontFamily: 'monospace', fontWeight: 800, fontSize: 20, color: timer <= 5 ? '#ef4444' : '#16a34a' }}>{timer}</Box>
                 )}
                 <Typography sx={{ fontFamily: 'monospace', fontSize: 11, color: '#94a3b8', letterSpacing: '0.06em' }}>
-                  {auction.currentPlayerId ? `#${auction.currentPlayerId}` : ''} · {cr(auction.currentBasePrice)} base
+                  {cr(auction.currentBasePrice)} base
                 </Typography>
                 <Typography sx={{ fontWeight: 900, fontSize: 'clamp(24px,2.4vw,38px)', lineHeight: 1.05, letterSpacing: '-0.02em',
                   color: '#0f172a', textWrap: 'balance' }}>
