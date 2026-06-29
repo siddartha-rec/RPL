@@ -111,7 +111,7 @@ export default function AuctionControl({ selectedLeagueId }: AuctionControlProps
           icon={<AddIcon />}
           label="NO AUCTION YET"
           title="Create the auction for this season"
-          subtitle={`${league.name} — auction record will be initialised in SETUP status.`}
+          subtitle={`${league.name} — auction record will be initialised in NOT_STARTED status.`}
           tone="neutral"
           actions={[
             {
@@ -128,7 +128,7 @@ export default function AuctionControl({ selectedLeagueId }: AuctionControlProps
   }
 
   const headerByPhase = (): { icon: ReactElement; label: string; title: string; subtitle: string; tone: 'neutral' | 'blue' | 'live' | 'success'; actions: PhaseAction[] } => {
-    if (auction.status === 'SETUP') {
+    if (auction.status === 'NOT_STARTED') {
       return {
         icon: <PlayArrowIcon />,
         label: 'PHASE 1 OF 2 · SETUP',
@@ -258,7 +258,7 @@ export default function AuctionControl({ selectedLeagueId }: AuctionControlProps
         actions={header.actions}
       />
 
-      {ctx && phase.isRetention && auction.status !== 'SETUP' && <RetentionPanel key={ctx.league.id} ctx={ctx} />}
+      {ctx && phase.isRetention && auction.status !== 'NOT_STARTED' && <RetentionPanel key={ctx.league.id} ctx={ctx} />}
       {ctx && phase.isMain && <MainAuctionPanel ctx={ctx} />}
       {ctx && phase.isComplete && <CompletePanel ctx={ctx} />}
     </Box>
