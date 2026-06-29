@@ -330,7 +330,7 @@ export default function ViewerPage() {
                     <Typography sx={{ fontWeight: 900, fontSize: 14, color: '#0f172a' }}>{team.shortName || team.name}</Typography>
                   </Box>
                   <Typography sx={{ fontFamily: 'monospace', fontSize: 11, color: '#64748b', mt: 0.5 }}>
-                    {left} CR purse left · {roster.length} capped
+                    {left} $$ left · {roster.length} capped
                   </Typography>
                 </Box>
                 <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', p: 0.75, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
