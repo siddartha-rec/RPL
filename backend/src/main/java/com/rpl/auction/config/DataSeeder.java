@@ -32,7 +32,8 @@ public class DataSeeder implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         if (userRepository.existsByUsername("admin")) {
-            log.info("Seed data already exists, skipping.");
+            log.info("Seed data already exists, skipping core seed.");
+            ensureViewer();
             return;
         }
         log.info("Seeding initial data...");
@@ -91,5 +92,30 @@ public class DataSeeder implements ApplicationRunner {
                 .displayName("Admin").email("admin@rpl.com").isActive(true).permissionGroups(Set.of(superAdmin)).build());
 
         log.info("Seed data created successfully. Default login: admin / admin123");
+
+        ensureViewer();
+    }
+
+    /**
+     * Idempotently ensures a read-only "Viewer" group + viewer user exist for the
+     * big-screen spectator auction view. Runs on every boot (also when core seed is skipped).
+     */
+    private void ensureViewer() {
+        if (userRepository.existsByUsername("viewer")) return;
+
+        Set<Permission> viewerPerms = new HashSet<>();
+        String[][] grants = {{"auction", "READ"}, {"team", "READ"}, {"player", "READ"}, {"dashboard", "READ"}};
+        for (String[] g : grants) {
+            permissionRepository.findByModuleNameAndName(g[0], g[1]).ifPresent(viewerPerms::add);
+        }
+
+        PermissionGroup viewerGroup = permissionGroupRepository.findByName("Viewer")
+                .orElseGet(() -> permissionGroupRepository.save(PermissionGroup.builder()
+                        .name("Viewer").description("Read-only live auction spectator").permissions(viewerPerms).build()));
+
+        userRepository.save(User.builder().username("viewer").passwordHash(passwordEncoder.encode("viewer123"))
+                .displayName("Viewer").email("viewer@rpl.com").isActive(true).permissionGroups(Set.of(viewerGroup)).build());
+
+        log.info("Viewer user ensured. Login: viewer / viewer123");
     }
 }

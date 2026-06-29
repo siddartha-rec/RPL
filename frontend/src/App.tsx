@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -8,19 +9,23 @@ import theme from './theme';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-import TeamsPage from './pages/TeamsPage';
-import TeamDetailPage from './pages/TeamDetailPage';
-import PlayersPage from './pages/PlayersPage';
-import AuctionPage from './pages/AuctionPage';
-import ResultsPage from './pages/ResultsPage';
-import HistoryPage from './pages/HistoryPage';
-import AdminPage from './pages/AdminPage';
-import AuditLogsPage from './pages/AuditLogsPage';
-import TournamentsPage from './pages/TournamentsPage';
-import TournamentDetailPage from './pages/TournamentDetailPage';
-import LeagueDetailPage from './pages/LeagueDetailPage';
-import MatchDetailPage from './pages/MatchDetailPage';
+
+// Route-level code splitting: each page ships in its own chunk so the
+// initial bundle stays small and navigations load only what they need.
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const TeamsPage = lazy(() => import('./pages/TeamsPage'));
+const TeamDetailPage = lazy(() => import('./pages/TeamDetailPage'));
+const PlayersPage = lazy(() => import('./pages/PlayersPage'));
+const AuctionPage = lazy(() => import('./pages/AuctionPage'));
+const ResultsPage = lazy(() => import('./pages/ResultsPage'));
+const HistoryPage = lazy(() => import('./pages/HistoryPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const AuditLogsPage = lazy(() => import('./pages/AuditLogsPage'));
+const TournamentsPage = lazy(() => import('./pages/TournamentsPage'));
+const TournamentDetailPage = lazy(() => import('./pages/TournamentDetailPage'));
+const LeagueDetailPage = lazy(() => import('./pages/LeagueDetailPage'));
+const MatchDetailPage = lazy(() => import('./pages/MatchDetailPage'));
+const ViewerPage = lazy(() => import('./pages/ViewerPage'));
 
 const queryClient = new QueryClient();
 
@@ -35,6 +40,16 @@ export default function App() {
             <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route element={<ProtectedRoute />}>
+              <Route
+                path="/viewer"
+                element={
+                  <ProtectedRoute permission="auction:READ">
+                    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#0b1220' }} />}>
+                      <ViewerPage />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
               <Route element={<Layout />}>
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/tournaments" element={<TournamentsPage />} />

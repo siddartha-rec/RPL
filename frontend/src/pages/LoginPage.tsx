@@ -12,7 +12,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import SportsCricketIcon from '@mui/icons-material/SportsCricket';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, isViewerPermissions } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
@@ -29,8 +29,8 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await login(username, password);
-      navigate('/');
+      const u = await login(username, password);
+      navigate(isViewerPermissions(u.permissions) ? '/viewer' : '/');
     } catch {
       setError('Invalid username or password. Please try again.');
     } finally {
