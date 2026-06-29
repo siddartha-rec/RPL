@@ -158,12 +158,17 @@ export default function ViewerPage() {
   const soldByTeam = useMemo(() => {
     const map = new Map<number, Player[]>();
     for (const p of players) {
-      if (p.status === 'SOLD' && p.teamId != null) {
+      if ((p.status === 'SOLD' || p.status === 'RETAINED') && p.teamId != null) {
         if (!map.has(p.teamId)) map.set(p.teamId, []);
         map.get(p.teamId)!.push(p);
       }
     }
-    for (const list of map.values()) list.sort((a, b) => (b.soldPrice ?? 0) - (a.soldPrice ?? 0));
+    // Retained first, then by price desc.
+    for (const list of map.values()) list.sort((a, b) => {
+      const ra = a.status === 'RETAINED' ? 1 : 0, rb = b.status === 'RETAINED' ? 1 : 0;
+      if (ra !== rb) return rb - ra;
+      return (b.soldPrice ?? 0) - (a.soldPrice ?? 0);
+    });
     return map;
   }, [players]);
 
@@ -345,9 +350,16 @@ export default function ViewerPage() {
                         background: fresh ? 'rgba(245,158,11,0.16)' : 'transparent',
                         border: fresh ? '1px solid rgba(245,158,11,0.5)' : '1px solid transparent',
                         animation: fresh ? 'vp-pop 0.4s ease' : 'none' }}>
-                        <Typography sx={{ fontSize: 12, fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {p.name}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+                          {p.status === 'RETAINED' && (
+                            <Box component="span" sx={{ flex: '0 0 auto', fontFamily: 'monospace', fontSize: 8.5, fontWeight: 800,
+                              letterSpacing: '0.04em', color: '#1d4ed8', background: 'rgba(37,99,235,0.12)',
+                              border: '1px solid rgba(37,99,235,0.25)', borderRadius: '4px', px: 0.4, py: 0.1 }}>RET</Box>
+                          )}
+                          <Typography sx={{ fontSize: 12, fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {p.name}
+                          </Typography>
+                        </Box>
                         <Typography sx={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 800, color: '#b45309', flex: '0 0 auto' }}>
                           {p.soldPrice ?? 0}
                         </Typography>
