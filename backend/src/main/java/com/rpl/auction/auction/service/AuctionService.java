@@ -644,7 +644,7 @@ public class AuctionService {
         Team team = teamRepository.findById(pick.getTeamId())
                 .orElseThrow(() -> new ResourceNotFoundException("Team", pick.getTeamId()));
 
-        BigDecimal oldPrice = pick.getCost();
+        BigDecimal oldPrice = pick.getCost() != null ? pick.getCost() : BigDecimal.ZERO;
         BigDecimal delta = newPrice.subtract(oldPrice);
         BigDecimal newSpent = team.getBudgetSpent().add(delta);
         if (newSpent.compareTo(team.getBudget()) > 0) {
@@ -665,7 +665,10 @@ public class AuctionService {
                 .filter(h -> h.getAcquisitionType() == PlayerHistory.AcquisitionType.RETAINED
                         && h.getLeagueId().equals(auction.getLeagueId()))
                 .findFirst()
-                .ifPresent(h -> { h.setSoldPrice(newPrice); playerHistoryRepository.save(h); });
+                .ifPresentOrElse(
+                        h -> { h.setSoldPrice(newPrice); playerHistoryRepository.save(h); },
+                        () -> log.warn("No RETAINED PlayerHistory found for player {} in league {}; soldPrice not synced",
+                                playerId, auction.getLeagueId()));
 
         broadcastEvent(auctionId, "PLAYER_RETENTION_UPDATED", Map.of(
                 "playerId", playerId,
