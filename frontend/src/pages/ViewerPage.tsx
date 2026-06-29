@@ -316,15 +316,15 @@ export default function ViewerPage() {
         {/* Teams — cricket art backdrop, its own image (page bg stays separate) */}
         <Box sx={{ ...glass, p: 1.5, minHeight: 0, display: 'grid',
           gridTemplateColumns: `repeat(${Math.max(teams.length, 1)}, 1fr)`, gap: 1,
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.42), rgba(255,255,255,0.55)), url(/View_Team_list.png) center/cover no-repeat' }}>
+          background: 'url(/View_Team_list.png) center/cover no-repeat' }}>
           {teams.map(team => {
             const roster = soldByTeam.get(team.id) ?? [];
             const left = team.budget - team.budgetSpent;
             const color = /^#[0-9a-fA-F]{6}$/.test(team.color) ? team.color : '#64748b';
             return (
               <Box key={team.id} sx={{ minHeight: 0, display: 'flex', flexDirection: 'column',
-                background: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.7)', borderRadius: '12px',
-                overflow: 'hidden', boxShadow: '0 2px 10px rgba(15,23,42,0.05)' }}>
+                background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.6)', borderRadius: '12px',
+                overflow: 'hidden', boxShadow: '0 2px 10px rgba(15,23,42,0.06)' }}>
                 <Box sx={{ p: 1.25, borderBottom: '1px solid #eef2f7', background: `linear-gradient(180deg, ${color}1f, transparent)` }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                     <Box sx={{ width: 14, height: 14, borderRadius: '4px', background: color, flex: '0 0 auto' }} />
