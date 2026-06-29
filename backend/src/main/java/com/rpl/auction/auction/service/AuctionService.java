@@ -661,14 +661,17 @@ public class AuctionService {
         pick.setCost(newPrice);
         draftPickRepository.save(pick);
 
-        playerHistoryRepository.findByPlayerIdOrderByCreatedAtDesc(playerId).stream()
+        List<PlayerHistory> retainedHistory = playerHistoryRepository.findByPlayerIdOrderByCreatedAtDesc(playerId).stream()
                 .filter(h -> h.getAcquisitionType() == PlayerHistory.AcquisitionType.RETAINED
                         && h.getLeagueId().equals(auction.getLeagueId()))
-                .findFirst()
-                .ifPresentOrElse(
-                        h -> { h.setSoldPrice(newPrice); playerHistoryRepository.save(h); },
-                        () -> log.warn("No RETAINED PlayerHistory found for player {} in league {}; soldPrice not synced",
-                                playerId, auction.getLeagueId()));
+                .toList();
+        if (retainedHistory.isEmpty()) {
+            log.warn("No RETAINED PlayerHistory found for player {} in league {}; soldPrice not synced",
+                    playerId, auction.getLeagueId());
+        } else {
+            // Keep symmetric with removeRetention, which clears all matching rows.
+            retainedHistory.forEach(h -> { h.setSoldPrice(newPrice); playerHistoryRepository.save(h); });
+        }
 
         broadcastEvent(auctionId, "PLAYER_RETENTION_UPDATED", Map.of(
                 "playerId", playerId,
