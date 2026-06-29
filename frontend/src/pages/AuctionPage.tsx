@@ -475,7 +475,7 @@ function AuctionControls({
                     color: enabled ? '#fff' : '#475569',
                     background: enabled
                       ? `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)`
-                      : '#0f172a',
+                      : '#eef2f7',
                     border: `1px solid ${enabled ? color + '88' : '#e2e8f0'}`,
                     boxShadow: enabled ? `0 4px 14px ${color}40` : 'none',
                     display: 'flex',
@@ -485,7 +485,7 @@ function AuctionControls({
                     '&:hover': enabled
                       ? { transform: 'translateY(-2px)', boxShadow: `0 6px 20px ${color}60` }
                       : {},
-                    '&:disabled': { opacity: 0.55 },
+                    '&:disabled': { color: '#475569', background: '#eef2f7', border: '1px solid #e2e8f0' },
                     transition: 'transform 0.15s ease, box-shadow 0.2s ease',
                   }}
                 >
@@ -980,7 +980,6 @@ function PlayerStage({
             background: flashState === 'SOLD'
               ? 'linear-gradient(135deg, rgba(22,101,52,0.92) 0%, rgba(21,128,61,0.92) 100%)'
               : 'linear-gradient(135deg, rgba(127,29,29,0.92) 0%, rgba(153,27,27,0.92) 100%)',
-            backdropFilter: 'blur(4px)',
             '@keyframes flashIn': {
               '0%': { opacity: 0, transform: 'scale(0.85)' },
               '20%': { opacity: 1, transform: 'scale(1.04)' },
@@ -1233,7 +1232,6 @@ function BidFeed({ log }: { log: BidEntry[] }) {
     <Box
       sx={{
         background: '#ffffff',
-        backdropFilter: 'blur(12px)',
         border: '1px solid #e2e8f0',
         borderRadius: '20px',
         height: '100%',
@@ -1373,7 +1371,6 @@ function TeamPurseBar({ teamPurses, lastBidTeamId }: { teamPurses: TeamPurse[]; 
               <Box
                 sx={{
                   background: '#ffffff',
-                  backdropFilter: 'blur(8px)',
                   borderRadius: '14px',
                   overflow: 'hidden',
                   border: isActive ? `1px solid ${tc}70` : '1px solid #eef2f7',
@@ -1712,7 +1709,6 @@ export default function AuctionPage() {
           <Box
             sx={{
               background: 'linear-gradient(145deg, #ffffff 0%, #ffffff 100%)',
-              backdropFilter: 'blur(16px)',
               border: '1px solid #e2e8f0',
               borderRadius: '22px',
               overflow: 'hidden',
