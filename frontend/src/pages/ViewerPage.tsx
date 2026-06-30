@@ -189,11 +189,12 @@ export default function ViewerPage() {
   const pulse = useMemo(() => {
     const sold = players.filter(p => p.status === 'SOLD');
     const totalSpent = sold.reduce((s, p) => s + (p.soldPrice ?? 0), 0);
-    let top: Player | null = null;
-    for (const p of sold) if (!top || (p.soldPrice ?? 0) > (top.soldPrice ?? 0)) top = p;
-    const topTeam = top?.teamId != null ? teams.find(t => t.id === top!.teamId) ?? null : null;
+    const top3 = [...sold]
+      .sort((a, b) => (b.soldPrice ?? 0) - (a.soldPrice ?? 0))
+      .slice(0, 3)
+      .map(p => ({ p, team: p.teamId != null ? teams.find(t => t.id === p.teamId) ?? null : null }));
     const available = players.filter(p => p.status === 'AVAILABLE').length;
-    return { soldCount: sold.length, totalSpent, top, topTeam, available };
+    return { soldCount: sold.length, totalSpent, top3, available };
   }, [players, teams]);
 
   const status = auction?.status;
@@ -326,20 +327,23 @@ export default function ViewerPage() {
               <PulseStat value={pulse.available} label="On deck" />
             </Box>
             <Box sx={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(15,23,42,0.10), transparent)' }} />
-            <Box>
-              <Typography sx={{ ...labelSx, mb: 0.5 }}>Marquee pick</Typography>
-              {pulse.top ? (
-                <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 1 }}>
-                  <Typography sx={{ fontWeight: 800, fontSize: 16, color: '#0f172a', minWidth: 0,
+            <Box sx={{ minHeight: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+              <Typography sx={{ ...labelSx, mb: 0.5 }}>Marquee picks · top 3</Typography>
+              {pulse.top3.length ? pulse.top3.map(({ p, team }, i) => (
+                <Box key={p.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  <Box sx={{ flex: '0 0 auto', width: 16, height: 16, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: 'monospace', fontWeight: 800, fontSize: 9, color: '#fff',
+                    background: i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : '#c08457' }}>{i + 1}</Box>
+                  <Typography sx={{ flex: 1, minWidth: 0, fontWeight: 700, fontSize: 13, color: '#0f172a',
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {pulse.top.name}
-                    {pulse.topTeam ? <Box component="span" sx={{ color: '#64748b', fontWeight: 600, fontSize: 12 }}> · {pulse.topTeam.shortName || pulse.topTeam.name}</Box> : null}
+                    {p.name}
+                    {team ? <Box component="span" sx={{ color: '#94a3b8', fontWeight: 600, fontSize: 11 }}> · {team.shortName || team.name}</Box> : null}
                   </Typography>
-                  <Typography sx={{ fontFamily: 'monospace', fontWeight: 900, fontSize: 20, color: '#b45309', flex: '0 0 auto' }}>
-                    {pulse.top.soldPrice ?? 0}
+                  <Typography sx={{ fontFamily: 'monospace', fontWeight: 900, fontSize: 15, color: '#b45309', flex: '0 0 auto' }}>
+                    {p.soldPrice ?? 0}
                   </Typography>
                 </Box>
-              ) : (
+              )) : (
                 <Typography sx={{ fontSize: 13, color: '#94a3b8' }}>No sales yet</Typography>
               )}
             </Box>
