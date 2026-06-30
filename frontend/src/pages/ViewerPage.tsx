@@ -96,17 +96,23 @@ export default function ViewerPage() {
       case 'TIMER_TICK':
         setTimer((d.timerSeconds as number) ?? (d.seconds as number) ?? 0);
         break;
-      case 'PLAYER_SOLD':
-        auctionQ.refetch(); teamsQ.refetch(); playersQ.refetch();
+      case 'PLAYER_SOLD': {
+        // Refetch now and again shortly after — the event can arrive before the
+        // server transaction commits, so the first fetch may still be stale.
+        const pull = () => { auctionQ.refetch(); teamsQ.refetch(); playersQ.refetch(); };
+        pull(); setTimeout(pull, 900);
         setTimer(0);
         setFreshSoldId((d.playerId as number) ?? null);
         pushTicker('sold', `SOLD: ${d.playerName as string ?? ''} → ${d.teamName as string ?? ''} @ ${cr((d.amount as number) ?? (d.soldPrice as number))}`);
         break;
-      case 'PLAYER_UNSOLD':
-        auctionQ.refetch(); playersQ.refetch();
+      }
+      case 'PLAYER_UNSOLD': {
+        const pull = () => { auctionQ.refetch(); playersQ.refetch(); };
+        pull(); setTimeout(pull, 900);
         setTimer(0);
         pushTicker('unsold', `UNSOLD: ${d.playerName as string ?? ''}`);
         break;
+      }
       case 'BUDGET_UPDATE':
       case 'BUDGET_UPDATED':
         teamsQ.refetch();

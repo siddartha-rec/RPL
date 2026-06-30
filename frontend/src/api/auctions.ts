@@ -8,7 +8,8 @@ export const getAuctionByLeague = (leagueId: number) =>
 export const startAuction = (id: number) => api.put<ApiResponse<Auction>>(`/auctions/${id}/start`).then(r => r.data.data);
 export const advanceToLive = (id: number) => api.put<ApiResponse<Auction>>(`/auctions/${id}/advance-to-live`).then(r => r.data.data);
 export const putUpPlayer = (id: number, playerId: number) => api.put<ApiResponse<Auction>>(`/auctions/${id}/next-player/${playerId}`).then(r => r.data.data);
-export const placeBid = (id: number, teamId: number) => api.post(`/auctions/${id}/bid`, { teamId }).then(r => r.data.data);
+export const placeBid = (id: number, teamId: number, increment?: number) =>
+  api.post(`/auctions/${id}/bid`, { teamId, increment }).then(r => r.data.data);
 export const soldPlayer = (id: number) => api.put<ApiResponse<Auction>>(`/auctions/${id}/sold`).then(r => r.data.data);
 export const markUnsold = (id: number) => api.put<ApiResponse<Auction>>(`/auctions/${id}/unsold`).then(r => r.data.data);
 export const manualSold = (id: number, teamId: number, price: number) =>

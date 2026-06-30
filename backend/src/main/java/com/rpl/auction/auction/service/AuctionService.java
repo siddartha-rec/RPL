@@ -179,16 +179,24 @@ public class AuctionService {
         League league = leagueRepository.findById(auction.getLeagueId())
                 .orElseThrow(() -> new ResourceNotFoundException("League", auction.getLeagueId()));
 
+        // Increment: auctioneer's choice for this bid, else the league default.
+        BigDecimal increment = (request.getIncrement() != null && request.getIncrement().signum() > 0)
+                ? request.getIncrement()
+                : league.getBidIncrement();
+
         // Calculate bid amount
         BigDecimal bidAmount;
         long bidCount = bidRepository.countByAuctionIdAndPlayerId(auctionId, auction.getCurrentPlayerId());
         if (bidCount == 0) {
-            bidAmount = auction.getCurrentBasePrice();
+            // Opening bid is the base price, but a zero/absent base opens at the increment
+            // so the first click isn't a 0 CR bid.
+            BigDecimal base = auction.getCurrentBasePrice();
+            bidAmount = (base != null && base.signum() > 0) ? base : increment;
         } else {
-            // Get current highest bid and add increment
+            // Get current highest bid and add the increment
             Bid currentHighestBid = bidRepository.findById(auction.getCurrentHighestBidId())
                     .orElseThrow(() -> new ResourceNotFoundException("Bid", auction.getCurrentHighestBidId()));
-            bidAmount = currentHighestBid.getAmount().add(league.getBidIncrement());
+            bidAmount = currentHighestBid.getAmount().add(increment);
 
             // Cannot bid for own player
             if (currentHighestBid.getTeamId().equals(request.getTeamId())) {

@@ -294,6 +294,17 @@ function AuctionControls({
   const [manualOpen, setManualOpen] = useState(false);
   const [manualTeamId, setManualTeamId] = useState<number | ''>('');
   const [manualPrice, setManualPrice] = useState('');
+  const [bidStep, setBidStep] = useState<number>(bidIncrement || 1);
+
+  // Sync the step to the league default until the auctioneer picks one.
+  const stepTouched = useRef(false);
+  useEffect(() => {
+    if (!stepTouched.current && bidIncrement > 0) setBidStep(bidIncrement);
+  }, [bidIncrement]);
+  const stepOptions = useMemo(
+    () => Array.from(new Set([0.25, 0.5, 1, 2, 5, 10, bidIncrement].filter(v => v > 0))).sort((a, b) => a - b),
+    [bidIncrement],
+  );
 
   const isAdmin = hasPermission('user:CREATE') || hasPermission('league:CREATE');
   const isOwner = hasPermission('auction:BID') && !isAdmin;
@@ -304,9 +315,8 @@ function AuctionControls({
   const highestTeam = teams.find(t => t.name === auction.currentHighestBidTeam);
   const hasAnyBid = !!auction.currentHighestBidTeam;
   const highestBid = auction.currentHighestBid ?? 0;
-  const nextBid = hasAnyBid
-    ? highestBid + bidIncrement
-    : auction.currentBasePrice ?? 0;
+  const baseOpen = (auction.currentBasePrice ?? 0) > 0 ? (auction.currentBasePrice ?? 0) : bidStep;
+  const nextBid = hasAnyBid ? highestBid + bidStep : baseOpen;
 
   function teamRemaining(team: Team): number {
     return team.budget - team.budgetSpent;
@@ -337,7 +347,7 @@ function AuctionControls({
     }
   }
 
-  const onBid = (teamId: number) => withBusy(() => placeBid(auction.id, teamId));
+  const onBid = (teamId: number) => withBusy(() => placeBid(auction.id, teamId, bidStep));
   const onSold = () => withBusy(() => soldPlayer(auction.id));
   const onUnsold = () => withBusy(() => markUnsold(auction.id));
   function openManual() {
@@ -464,11 +474,28 @@ function AuctionControls({
       {/* Admin: per-team bid panel */}
       {isAdmin && teams.length > 0 && (
         <Box>
-          <Typography
-            sx={{ fontSize: '10px', fontWeight: 800, color: '#64748b', letterSpacing: '1.5px', mb: 1, textTransform: 'uppercase' }}
-          >
-            Auctioneer · Bid for Team {hasPlayer && `· Next: ${nextBid} CR`}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1, flexWrap: 'wrap' }}>
+            <Typography
+              sx={{ fontSize: '10px', fontWeight: 800, color: '#64748b', letterSpacing: '1.5px', textTransform: 'uppercase' }}
+            >
+              Auctioneer · Bid for Team {hasPlayer && `· Next: ${nextBid} CR`}
+            </Typography>
+            <Box
+              component="select"
+              value={bidStep}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { stepTouched.current = true; setBidStep(Number(e.target.value)); }}
+              title="Bid increment"
+              sx={{
+                fontSize: '11px', fontWeight: 700, color: '#0f172a', background: '#fff',
+                border: '1px solid #cbd5e1', borderRadius: '8px', px: 1, py: 0.5, cursor: 'pointer',
+                '&:focus': { outline: 'none', borderColor: '#f59e0b' },
+              }}
+            >
+              {stepOptions.map(v => (
+                <option key={v} value={v}>+{v} CR / bid</option>
+              ))}
+            </Box>
+          </Box>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             {teams.map(team => {
               const enabled = canTeamBid(team) && !busy;
