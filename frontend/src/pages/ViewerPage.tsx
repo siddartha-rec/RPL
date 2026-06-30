@@ -340,7 +340,7 @@ export default function ViewerPage() {
                     {team ? <Box component="span" sx={{ color: '#94a3b8', fontWeight: 600, fontSize: 11 }}> · {team.shortName || team.name}</Box> : null}
                   </Typography>
                   <Typography sx={{ fontFamily: 'monospace', fontWeight: 900, fontSize: 15, color: '#b45309', flex: '0 0 auto' }}>
-                    {p.soldPrice ?? 0}
+                    {p.soldPrice ?? 0}<Box component="span" sx={{ fontSize: 9, color: '#94a3b8', fontWeight: 700 }}> Cr</Box>
                   </Typography>
                 </Box>
               )) : (
@@ -400,7 +400,7 @@ export default function ViewerPage() {
                           </Typography>
                         </Box>
                         <Typography sx={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 800, color: '#b45309', flex: '0 0 auto' }}>
-                          {p.soldPrice ?? 0}
+                          {p.soldPrice ?? 0}<Box component="span" sx={{ fontSize: 9, color: '#94a3b8', fontWeight: 700 }}> Cr</Box>
                         </Typography>
                       </Box>
                     );
