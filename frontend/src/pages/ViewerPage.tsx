@@ -321,7 +321,7 @@ export default function ViewerPage() {
           </Box>
 
           {/* Creative — Auction Pulse */}
-          <Box sx={{ ...glass, flex: '1 1 42%', minHeight: 0, p: 2, display: 'flex', flexDirection: 'column', gap: 1.25, overflow: 'hidden',
+          <Box sx={{ ...glass, flex: '1 1 42%', minHeight: 0, p: 2, display: 'flex', flexDirection: 'column', gap: 1.25, overflowY: 'auto',
             position: 'relative' }}>
             <Box sx={{ position: 'absolute', inset: 0, background: 'radial-gradient(120% 80% at 100% 0%, rgba(245,158,11,0.10), transparent 60%)', pointerEvents: 'none' }} />
             <Typography sx={labelSx}>The Pitch Report</Typography>
@@ -350,7 +350,8 @@ export default function ViewerPage() {
                 <Typography sx={{ fontSize: 13, color: '#94a3b8' }}>No sales yet</Typography>
               )}
             </Box>
-            <Box sx={{ mt: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box sx={{ mt: 0.5, pt: 1, borderTop: '1px solid rgba(15,23,42,0.08)', flex: '0 0 auto',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography sx={{ ...labelSx, mb: 0 }}>Purse burnt</Typography>
               <Typography sx={{ fontFamily: 'monospace', fontWeight: 900, fontSize: 22, color: '#0f172a' }}>
                 {money(pulse.totalSpent)} <Box component="span" sx={{ fontSize: 12, color: '#94a3b8' }}>CR</Box>
