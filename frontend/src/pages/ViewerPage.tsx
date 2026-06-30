@@ -72,6 +72,7 @@ export default function ViewerPage() {
 
   const [ticker, setTicker] = useState<TickerItem[]>([]);
   const [freshSoldId, setFreshSoldId] = useState<number | null>(null);
+  const [justSold, setJustSold] = useState<{ name: string; team: string; price: number } | null>(null);
   const [timer, setTimer] = useState(0);
   const tickIdRef = useRef(0);
 
@@ -85,6 +86,7 @@ export default function ViewerPage() {
       case 'PLAYER_UP':
         auctionQ.refetch();
         setTimer((d.timerSeconds as number) ?? 30);
+        setJustSold(null);
         break;
       case 'BID_PLACED':
         auctionQ.refetch();
@@ -103,6 +105,11 @@ export default function ViewerPage() {
         pull(); setTimeout(pull, 900);
         setTimer(0);
         setFreshSoldId((d.playerId as number) ?? null);
+        setJustSold({
+          name: (d.playerName as string) ?? 'Player',
+          team: (d.teamName as string) ?? '',
+          price: ((d.amount as number) ?? (d.soldPrice as number) ?? 0),
+        });
         pushTicker('sold', `SOLD: ${d.playerName as string ?? ''} → ${d.teamName as string ?? ''} @ ${cr((d.amount as number) ?? (d.soldPrice as number))}`);
         break;
       }
@@ -110,6 +117,7 @@ export default function ViewerPage() {
         const pull = () => { auctionQ.refetch(); playersQ.refetch(); };
         pull(); setTimeout(pull, 900);
         setTimer(0);
+        setJustSold(null);
         pushTicker('unsold', `UNSOLD: ${d.playerName as string ?? ''}`);
         break;
       }
@@ -247,7 +255,7 @@ export default function ViewerPage() {
         <Box sx={{ minHeight: 0, display: 'flex', flexDirection: 'column', gap: 1.25 }}>
           {/* Bidding player */}
           <Box sx={{ ...glass, p: 2.5, display: 'flex', flexDirection: 'column', gap: 1.25, flex: '1 1 58%', minHeight: 0 }}>
-            <Typography sx={labelSx}>{hasPlayer ? 'At the crease' : 'Drinks break'}</Typography>
+            <Typography sx={labelSx}>{hasPlayer ? 'At the crease' : justSold ? 'Going, going… gone!' : 'Drinks break'}</Typography>
             {hasPlayer ? (
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 gap: 1, textAlign: 'center', position: 'relative', minHeight: 0 }}>
@@ -261,7 +269,7 @@ export default function ViewerPage() {
                   {cr(auction.currentBasePrice)} base
                 </Typography>
                 <Typography sx={{ fontWeight: 900, fontSize: 'clamp(24px,2.4vw,38px)', lineHeight: 1.05, letterSpacing: '-0.02em',
-                  color: '#0f172a', textWrap: 'balance' }}>
+                  color: '#0f172a', textWrap: 'balance', overflowWrap: 'anywhere', maxWidth: '100%' }}>
                   {auction.currentPlayerName ?? 'Player'}
                 </Typography>
                 <Box sx={{ mt: 0.5 }}>
@@ -269,10 +277,31 @@ export default function ViewerPage() {
                   <Typography sx={{ fontWeight: 900, fontSize: 'clamp(30px,3.4vw,52px)', color: '#b45309', lineHeight: 1.05 }}>
                     {cr(auction.currentHighestBid)}
                   </Typography>
-                  <Typography sx={{ fontSize: 15, fontWeight: 700, color: '#475569', mt: 0.5 }}>
+                  <Typography sx={{ fontSize: 15, fontWeight: 700, color: '#475569', mt: 0.5, overflowWrap: 'anywhere' }}>
                     {auction.currentHighestBidTeam ?? 'Zero rizzzz…'}
                   </Typography>
                 </Box>
+              </Box>
+            ) : justSold ? (
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: 1, textAlign: 'center', position: 'relative', minHeight: 0 }}>
+                {/* SOLD watermark */}
+                <Typography aria-hidden sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 900, fontSize: 'clamp(56px,9vw,120px)', color: 'rgba(22,163,74,0.12)', letterSpacing: '0.05em',
+                  transform: 'rotate(-14deg)', pointerEvents: 'none', userSelect: 'none' }}>SOLD</Typography>
+                <Typography sx={{ ...labelSx, color: '#16a34a' }}>Sold for</Typography>
+                <Typography sx={{ fontWeight: 900, fontSize: 'clamp(30px,3.4vw,52px)', color: '#16a34a', lineHeight: 1.05 }}>
+                  {cr(justSold.price)}
+                </Typography>
+                <Typography sx={{ fontWeight: 900, fontSize: 'clamp(22px,2.2vw,34px)', lineHeight: 1.1, letterSpacing: '-0.02em',
+                  color: '#0f172a', textWrap: 'balance', overflowWrap: 'anywhere', maxWidth: '100%' }}>
+                  {justSold.name}
+                </Typography>
+                {justSold.team && (
+                  <Typography sx={{ fontSize: 15, fontWeight: 700, color: '#475569', overflowWrap: 'anywhere' }}>
+                    → {justSold.team}
+                  </Typography>
+                )}
               </Box>
             ) : (
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5, textAlign: 'center' }}>

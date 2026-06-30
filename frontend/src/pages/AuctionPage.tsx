@@ -294,17 +294,21 @@ function AuctionControls({
   const [manualOpen, setManualOpen] = useState(false);
   const [manualTeamId, setManualTeamId] = useState<number | ''>('');
   const [manualPrice, setManualPrice] = useState('');
-  const [bidStep, setBidStep] = useState<number>(bidIncrement || 1);
+  const [bidStep, setBidStep] = useState<number>(bidIncrement || 0.05);
 
   // Sync the step to the league default until the auctioneer picks one.
   const stepTouched = useRef(false);
   useEffect(() => {
     if (!stepTouched.current && bidIncrement > 0) setBidStep(bidIncrement);
   }, [bidIncrement]);
+  // Increments in cricket money: lakhs (<1 Cr) then crores.
   const stepOptions = useMemo(
-    () => Array.from(new Set([0.25, 0.5, 1, 2, 5, 10, bidIncrement].filter(v => v > 0))).sort((a, b) => a - b),
+    () => Array.from(new Set(
+      [0.05, 0.1, 0.15, 0.2, 1.25, 1.5, 2.25, 2.5, 3.25, 3.5, 4.25, 4.5, 5, bidIncrement].filter(v => v > 0),
+    )).sort((a, b) => a - b),
     [bidIncrement],
   );
+  const fmtStep = (v: number) => (v < 1 ? `${Math.round(v * 100)} Lakhs` : `${v} Cr`);
 
   const isAdmin = hasPermission('user:CREATE') || hasPermission('league:CREATE');
   const isOwner = hasPermission('auction:BID') && !isAdmin;
@@ -492,7 +496,7 @@ function AuctionControls({
               }}
             >
               {stepOptions.map(v => (
-                <option key={v} value={v}>+{v} CR / bid</option>
+                <option key={v} value={v}>+{fmtStep(v)} / bid</option>
               ))}
             </Box>
           </Box>
