@@ -12,7 +12,8 @@ import { useSse } from '../hooks/useSse';
 import { CRICKET_BANTER } from '../data/cricketBanter';
 import type { Auction, Team, Player, AuctionEvent } from '../types';
 
-const cr = (n: number | undefined | null) => `${n ?? 0} CR`;
+const money = (n: number | undefined | null) => (Number(n) || 0).toFixed(2);
+const cr = (n: number | undefined | null) => `${money(n)} CR`;
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -340,7 +341,7 @@ export default function ViewerPage() {
                     {team ? <Box component="span" sx={{ color: '#94a3b8', fontWeight: 600, fontSize: 11 }}> · {team.shortName || team.name}</Box> : null}
                   </Typography>
                   <Typography sx={{ fontFamily: 'monospace', fontWeight: 900, fontSize: 15, color: '#b45309', flex: '0 0 auto' }}>
-                    {p.soldPrice ?? 0}<Box component="span" sx={{ fontSize: 9, color: '#94a3b8', fontWeight: 700 }}> Cr</Box>
+                    {money(p.soldPrice)}<Box component="span" sx={{ fontSize: 9, color: '#94a3b8', fontWeight: 700 }}> Cr</Box>
                   </Typography>
                 </Box>
               )) : (
@@ -350,7 +351,7 @@ export default function ViewerPage() {
             <Box sx={{ mt: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography sx={{ ...labelSx, mb: 0 }}>Purse burnt</Typography>
               <Typography sx={{ fontFamily: 'monospace', fontWeight: 900, fontSize: 22, color: '#0f172a' }}>
-                {pulse.totalSpent} <Box component="span" sx={{ fontSize: 12, color: '#94a3b8' }}>CR</Box>
+                {money(pulse.totalSpent)} <Box component="span" sx={{ fontSize: 12, color: '#94a3b8' }}>CR</Box>
               </Typography>
             </Box>
           </Box>
@@ -374,7 +375,7 @@ export default function ViewerPage() {
                     <Typography sx={{ fontWeight: 900, fontSize: 14, color: '#0f172a' }}>{team.shortName || team.name}</Typography>
                   </Box>
                   <Typography sx={{ fontFamily: 'monospace', fontSize: 11, color: '#64748b', mt: 0.5 }}>
-                    {left} $$ left · {roster.length} capped
+                    {money(left)} $$ left · {roster.length} capped
                   </Typography>
                 </Box>
                 <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', p: 0.75, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
@@ -400,7 +401,7 @@ export default function ViewerPage() {
                           </Typography>
                         </Box>
                         <Typography sx={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 800, color: '#b45309', flex: '0 0 auto' }}>
-                          {p.soldPrice ?? 0}<Box component="span" sx={{ fontSize: 9, color: '#94a3b8', fontWeight: 700 }}> Cr</Box>
+                          {money(p.soldPrice)}<Box component="span" sx={{ fontSize: 9, color: '#94a3b8', fontWeight: 700 }}> Cr</Box>
                         </Typography>
                       </Box>
                     );
