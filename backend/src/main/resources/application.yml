@@ -4,6 +4,12 @@ spring:
     username: root
     password: root@123
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 5
+      connection-timeout: 20000
+      # Logs a stack trace if a connection is held longer than this (ms) — surfaces leaks.
+      leak-detection-threshold: 30000
   jpa:
     hibernate:
       ddl-auto: update
