@@ -48,7 +48,7 @@ export function useSse(auctionId: number | null, onEvent: (event: AuctionEvent) 
 
       es.onerror = () => {
         es.close();
-        reconnectTimer = setTimeout(connect, 3000);
+        reconnectTimer = setTimeout(connect, 1500);
       };
     };
 

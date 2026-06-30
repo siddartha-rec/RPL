@@ -56,17 +56,21 @@ export default function ViewerPage() {
   const onLogout = () => { logout(); navigate('/login', { replace: true }); };
   const leagueId = activeLeague?.id ?? null;
 
+  // SSE is the primary live channel; these polls are a fast self-heal if an event is
+  // ever missed (e.g. SSE reconnecting after a backend blip) so the board never sits stale.
   const auctionQ = useQuery<Auction | null>({
     queryKey: ['viewer-auction', leagueId],
     queryFn: () => getAuctionByLeague(leagueId!).catch(() => null),
     enabled: !!leagueId,
-    refetchInterval: 20000,
+    refetchInterval: 4000,
   });
   const teamsQ = useQuery<Team[]>({
     queryKey: ['viewer-teams', leagueId], queryFn: () => getTeams(leagueId!), enabled: !!leagueId,
+    refetchInterval: 10000,
   });
   const playersQ = useQuery<Player[]>({
     queryKey: ['viewer-players', leagueId], queryFn: () => getPlayers(leagueId!), enabled: !!leagueId,
+    refetchInterval: 10000,
   });
 
   const auction = auctionQ.data ?? null;

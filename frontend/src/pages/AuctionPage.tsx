@@ -29,7 +29,7 @@ function timerColor(seconds: number): string {
 }
 
 function formatCR(value: number): string {
-  return `${value} CR`;
+  return `${(Number(value) || 0).toFixed(2)} CR`;
 }
 
 /* ─────────────────────────── types ───────────────────────────── */
@@ -461,7 +461,7 @@ function AuctionControls({
             transition: 'transform 0.2s ease, background 0.25s ease',
           }}
         >
-          {hasPlayer ? `BID ${nextBid} CR — ${myTeam.shortName ?? myTeam.name}` : 'PLACE BID'}
+          {hasPlayer ? `BID ${formatCR(nextBid)} — ${myTeam.shortName ?? myTeam.name}` : 'PLACE BID'}
         </Button>
       )}
 
@@ -482,7 +482,7 @@ function AuctionControls({
             <Typography
               sx={{ fontSize: '10px', fontWeight: 800, color: '#64748b', letterSpacing: '1.5px', textTransform: 'uppercase' }}
             >
-              Auctioneer · Bid for Team {hasPlayer && `· Next: ${nextBid} CR`}
+              Auctioneer · Bid for Team {hasPlayer && `· Next: ${formatCR(nextBid)}`}
             </Typography>
             <Box
               component="select"
@@ -558,7 +558,7 @@ function AuctionControls({
                     )}
                   </Box>
                   <Box sx={{ fontSize: '10px', fontWeight: 700, opacity: 0.85, letterSpacing: '0.3px' }}>
-                    {remaining} CR left
+                    {formatCR(remaining)} left
                   </Box>
                 </Button>
               );
@@ -760,7 +760,7 @@ function AuctionControls({
           >
             {teams.map(t => (
               <MenuItem key={t.id} value={t.id}>
-                {t.name} · {teamRemaining(t)} CR left
+                {t.name} · {formatCR(teamRemaining(t))} left
               </MenuItem>
             ))}
           </TextField>
