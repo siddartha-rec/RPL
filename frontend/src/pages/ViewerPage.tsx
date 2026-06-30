@@ -14,6 +14,8 @@ import type { Auction, Team, Player, AuctionEvent } from '../types';
 
 const money = (n: number | undefined | null) => (Number(n) || 0).toFixed(2);
 const cr = (n: number | undefined | null) => `${money(n)} CR`;
+const titleCase = (s: string | undefined | null) =>
+  (s ?? '').replace(/\S+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -272,7 +274,7 @@ export default function ViewerPage() {
                 </Typography>
                 <Typography sx={{ fontWeight: 900, fontSize: 'clamp(24px,2.4vw,38px)', lineHeight: 1.05, letterSpacing: '-0.02em',
                   color: '#0f172a', textWrap: 'balance', overflowWrap: 'anywhere', maxWidth: '100%' }}>
-                  {auction.currentPlayerName ?? 'Player'}
+                  {titleCase(auction.currentPlayerName) || 'Player'}
                 </Typography>
                 <Box sx={{ mt: 0.5 }}>
                   <Typography sx={labelSx}>Highest knock</Typography>
@@ -297,7 +299,7 @@ export default function ViewerPage() {
                 </Typography>
                 <Typography sx={{ fontWeight: 900, fontSize: 'clamp(22px,2.2vw,34px)', lineHeight: 1.1, letterSpacing: '-0.02em',
                   color: '#0f172a', textWrap: 'balance', overflowWrap: 'anywhere', maxWidth: '100%' }}>
-                  {justSold.name}
+                  {titleCase(justSold.name)}
                 </Typography>
                 {justSold.team && (
                   <Typography sx={{ fontSize: 15, fontWeight: 700, color: '#475569', overflowWrap: 'anywhere' }}>
@@ -337,7 +339,7 @@ export default function ViewerPage() {
                     background: i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : '#c08457' }}>{i + 1}</Box>
                   <Typography sx={{ flex: 1, minWidth: 0, fontWeight: 700, fontSize: 13, color: '#0f172a',
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {p.name}
+                    {titleCase(p.name)}
                     {team ? <Box component="span" sx={{ color: '#94a3b8', fontWeight: 600, fontSize: 11 }}> · {team.shortName || team.name}</Box> : null}
                   </Typography>
                   <Typography sx={{ fontFamily: 'monospace', fontWeight: 900, fontSize: 15, color: '#b45309', flex: '0 0 auto' }}>
@@ -397,7 +399,7 @@ export default function ViewerPage() {
                               border: '1px solid rgba(37,99,235,0.25)', borderRadius: '4px', px: 0.4, py: 0.1 }}>RET</Box>
                           )}
                           <Typography sx={{ fontSize: 12, fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {p.name}
+                            {titleCase(p.name)}
                           </Typography>
                         </Box>
                         <Typography sx={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 800, color: '#b45309', flex: '0 0 auto' }}>
